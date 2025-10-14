@@ -24,7 +24,7 @@ const Sidebar = () => {
           </div>
           <div>
             <p className="text-sm font-bold text-gray-800">Hospital Regional</p>
-            <p className="text-xs text-gray-500">Dr. Franco Ravera Zunino</p>
+            <p className="text-xs text-gray-500">Dr. Franco Ravera Zuninoo</p>
           </div>
         </div>
       </div>

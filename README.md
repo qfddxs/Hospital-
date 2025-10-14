@@ -1,16 +1,87 @@
-# React + Vite
+# Sistema Integral de Gestión de Campos Clínicos
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema web para la gestión de campos clínicos del Hospital Regional Dr. Franco Ravera Zunino.
 
-Currently, two official plugins are available:
+## Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Dashboard**: Resumen general con métricas clave, alertas y actividad reciente
+- **Capacidad Formadora**: Gestión de centros formadores y sus capacidades
+- **Solicitud de Cupos**: Administración de solicitudes de cupos clínicos
+- **Gestión de Alumnos**: Control de estudiantes en rotación
+- **Control de Asistencia**: Registro y seguimiento de asistencia diaria
+- **Retribuciones y Reportes**: Gestión de pagos a centros formadores
+- **Gestión Documental**: Sistema de archivos y documentos
+- **Reportes Estratégicos**: Indicadores y métricas del sistema
 
-## React Compiler
+## Tecnologías
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19** - Framework de UI
+- **Vite** - Build tool
+- **React Router DOM** - Navegación
+- **Tailwind CSS 4** - Estilos
+- **JavaScript/ES6+**
 
-## Expanding the ESLint configuration
+## Instalación
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
+npm run dev
+
+# Compilar para producción
+npm run build
+
+# Vista previa de producción
+npm run preview
+```
+
+## Estructura del Proyecto
+
+```
+src/
+├── components/
+│   ├── Layout/         # Componentes de estructura (Header, Sidebar, MainLayout)
+│   └── UI/             # Componentes reutilizables (Button, Table, StatCard, etc.)
+├── pages/              # Páginas principales del sistema
+├── data/               # Datos mock para desarrollo
+├── App.jsx             # Configuración de rutas
+├── main.jsx            # Punto de entrada
+└── index.css           # Estilos globales
+```
+
+## Datos Mock
+
+El sistema actualmente utiliza datos simulados (`src/data/mockData.js`) que incluyen:
+- Estadísticas generales
+- Centros formadores
+- Estudiantes
+- Solicitudes de cupos
+- Registros de asistencia
+- Retribuciones
+- Documentos
+- Indicadores estratégicos
+
+## Desarrollo
+
+Para agregar nuevas funcionalidades:
+
+1. Crear los componentes necesarios en `src/components/`
+2. Agregar nuevas páginas en `src/pages/`
+3. Configurar las rutas en `src/App.jsx`
+4. Actualizar los datos mock en `src/data/mockData.js`
+
+## Estado del Proyecto
+
+✅ Interfaz completa implementada
+✅ Todas las secciones navegables
+✅ Datos mock configurados
+✅ Diseño responsive con Tailwind CSS
+⏳ Pendiente: Integración con backend real
+⏳ Pendiente: Autenticación de usuarios
+⏳ Pendiente: Exportación real de reportes
+
+## Licencia
+
+Proyecto privado - Hospital Regional

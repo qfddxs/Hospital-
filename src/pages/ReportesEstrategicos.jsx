@@ -1,5 +1,13 @@
 import Button from '../components/UI/Button';
 import { indicadoresEstrategicos, estudiantes, centrosFormadores } from '../data/mockData';
+import {
+  ArrowDownTrayIcon,
+  DocumentArrowDownIcon,
+  ChartBarIcon,
+  ArrowTrendingUpIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
 
 const ReportesEstrategicos = () => {
   return (
@@ -11,11 +19,13 @@ const ReportesEstrategicos = () => {
           <p className="text-gray-600 mt-1">Indicadores y métricas clave del sistema</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">
-            📥 Exportar PDF
+          <Button variant="outline" className="flex items-center gap-2">
+            <DocumentArrowDownIcon className="w-5 h-5 text-gray-700" />
+            <span>Exportar PDF</span>
           </Button>
-          <Button variant="outline">
-            📊 Exportar Excel
+          <Button variant="outline" className="flex items-center gap-2">
+            <ArrowDownTrayIcon className="w-5 h-5 text-gray-700" />
+            <span>Exportar Excel</span>
           </Button>
         </div>
       </div>
@@ -62,7 +72,7 @@ const ReportesEstrategicos = () => {
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribución por Programa</h3>
           <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
             <div className="text-center text-gray-500">
-              <span className="text-4xl">📊</span>
+              <ChartBarIcon className="w-10 h-10 mx-auto text-gray-500" />
               <p className="mt-2">Gráfico de distribución</p>
               <p className="text-sm mt-1">Medicina General: 70%</p>
               <p className="text-sm">Especialidades: 30%</p>
@@ -75,7 +85,7 @@ const ReportesEstrategicos = () => {
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Tendencia de Asistencia</h3>
           <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
             <div className="text-center text-gray-500">
-              <span className="text-4xl">📈</span>
+              <ArrowTrendingUpIcon className="w-10 h-10 mx-auto text-gray-500" />
               <p className="mt-2">Gráfico de tendencia</p>
               <p className="text-sm mt-1">Últimos 6 meses</p>
             </div>
@@ -125,12 +135,12 @@ const ReportesEstrategicos = () => {
             <strong>Período:</strong> {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
           </p>
           <ul className="space-y-2">
-            <li>✓ Sistema operando con {indicadoresEstrategicos.centrosActivos} centros formadores activos</li>
-            <li>✓ {indicadoresEstrategicos.estudiantesTotales} estudiantes en rotaciones activas</li>
-            <li>✓ Tasa de asistencia promedio del {indicadoresEstrategicos.tasaAsistenciaPromedio}%, superior al objetivo del 85%</li>
-            <li>✓ Satisfacción estudiantil de {indicadoresEstrategicos.satisfaccionEstudiantes}/5, indicando buena calidad formativa</li>
-            <li>✓ {indicadoresEstrategicos.rotacionesCompletadas} rotaciones completadas exitosamente en el período</li>
-            <li>⚠️ {estudiantes.filter(e => e.asistencia < 80).length} estudiantes requieren seguimiento por baja asistencia</li>
+            <li className="flex items-center gap-2"><CheckCircleIcon className="w-5 h-5 text-teal-600" /> Sistema operando con {indicadoresEstrategicos.centrosActivos} centros formadores activos</li>
+            <li className="flex items-center gap-2"><CheckCircleIcon className="w-5 h-5 text-teal-600" /> {indicadoresEstrategicos.estudiantesTotales} estudiantes en rotaciones activas</li>
+            <li className="flex items-center gap-2"><CheckCircleIcon className="w-5 h-5 text-teal-600" /> Tasa de asistencia promedio del {indicadoresEstrategicos.tasaAsistenciaPromedio}%, superior al objetivo del 85%</li>
+            <li className="flex items-center gap-2"><CheckCircleIcon className="w-5 h-5 text-teal-600" /> Satisfacción estudiantil de {indicadoresEstrategicos.satisfaccionEstudiantes}/5, indicando buena calidad formativa</li>
+            <li className="flex items-center gap-2"><CheckCircleIcon className="w-5 h-5 text-teal-600" /> {indicadoresEstrategicos.rotacionesCompletadas} rotaciones completadas exitosamente en el período</li>
+            <li className="flex items-center gap-2"><ExclamationTriangleIcon className="w-5 h-5 text-yellow-600" /> {estudiantes.filter(e => e.asistencia < 80).length} estudiantes requieren seguimiento por baja asistencia</li>
           </ul>
         </div>
       </div>

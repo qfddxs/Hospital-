@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import { estudiantes, registrosAsistencia } from '../data/mockData';
+import { ArchiveBoxArrowDownIcon, UserIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
 
 const ControlAsistencia = () => {
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date().toISOString().split('T')[0]);
@@ -69,8 +70,9 @@ const ControlAsistencia = () => {
           <h2 className="text-2xl font-bold text-gray-800">Control de Asistencia</h2>
           <p className="text-gray-600 mt-1">Registro y seguimiento de asistencia diaria</p>
         </div>
-        <Button variant="primary">
-          💾 Guardar Asistencia
+        <Button variant="primary" className="flex items-center gap-2">
+          <ArchiveBoxArrowDownIcon className="w-5 h-5 text-white" />
+          <span>Guardar Asistencia</span>
         </Button>
       </div>
 
@@ -153,8 +155,9 @@ const ControlAsistencia = () => {
               </button>
             </div>
           </div>
-          <Button variant="outline">
-            📥 Exportar Reporte
+          <Button variant="primary" className="flex items-center gap-2">
+          <DocumentArrowDownIcon className="w-5 h-5 text-white" />
+          <span>Exportar Reporte</span>
           </Button>
         </div>
       </div>

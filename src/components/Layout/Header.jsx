@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BellIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 
 const Header = () => {
   const [tipoUsuario, setTipoUsuario] = useState('pregrado');
@@ -39,13 +40,13 @@ const Header = () => {
 
           {/* Notificaciones */}
           <button className="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg">
-            <span className="text-xl">🔔</span>
+            <BellIcon className="w-5 h-5" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
 
           {/* Configuración */}
           <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg">
-            <span className="text-xl">⚙️</span>
+            <Cog6ToothIcon className="w-5 h-5" />
           </button>
 
           {/* Perfil de Usuario */}

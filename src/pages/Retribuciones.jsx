@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import { retribuciones } from '../data/mockData';
+import { DocumentArrowDownIcon, EyeIcon, BanknotesIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 
 const Retribuciones = () => {
   const [filtroPeriodo, setFiltroPeriodo] = useState('todos');
@@ -67,9 +68,10 @@ const Retribuciones = () => {
           <p className="text-gray-600 mt-1">Gestión de pagos a centros formadores</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">
-            📥 Exportar Reporte
-          </Button>
+          <Button variant="secondary" className="flex items-center gap-2">
+          <DocumentArrowDownIcon className="w-5 h-5 text-black" />
+          <span>Exportar Reporte</span>
+        </Button>
           <Button variant="primary">
             + Nueva Retribución
           </Button>
@@ -109,7 +111,7 @@ const Retribuciones = () => {
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Resumen de Retribuciones por Período</h3>
         <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
           <div className="text-center text-gray-500">
-            <span className="text-4xl">📊</span>
+            <ChartBarIcon className="w-10 h-10 mx-auto text-gray-500" />
             <p className="mt-2">Gráfico de retribuciones por período</p>
             <p className="text-sm mt-1">(Visualización de datos históricos)</p>
           </div>

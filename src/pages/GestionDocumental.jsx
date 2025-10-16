@@ -2,6 +2,17 @@ import { useState } from 'react';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import { documentos } from '../data/mockData';
+import {
+  DocumentTextIcon,
+  ClipboardDocumentListIcon,
+  ChartBarIcon,
+  FolderIcon,
+  ArrowUpTrayIcon,
+  FolderOpenIcon,
+  EyeIcon,
+  ArrowDownTrayIcon,
+  TrashIcon
+} from '@heroicons/react/24/outline';
 
 const GestionDocumental = () => {
   const [mostrarSubida, setMostrarSubida] = useState(false);
@@ -12,9 +23,16 @@ const GestionDocumental = () => {
       header: 'Nombre', 
       render: (row) => (
         <div className="flex items-center gap-2">
-          <span className="text-xl">
-            {row.tipo === 'convenio' ? '📄' : row.tipo === 'reglamento' ? '📋' : 
-             row.tipo === 'evaluacion' ? '📊' : '📁'}
+          <span>
+            {row.tipo === 'convenio' ? (
+              <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+            ) : row.tipo === 'reglamento' ? (
+              <ClipboardDocumentListIcon className="w-5 h-5 text-teal-600" />
+            ) : row.tipo === 'evaluacion' ? (
+              <ChartBarIcon className="w-5 h-5 text-green-600" />
+            ) : (
+              <FolderIcon className="w-5 h-5 text-gray-600" />
+            )}
           </span>
           <span className="font-medium">{row.nombre}</span>
         </div>
@@ -26,10 +44,16 @@ const GestionDocumental = () => {
     { 
       header: 'Acciones', 
       render: () => (
-        <div className="flex gap-2">
-          <button className="text-blue-600 hover:text-blue-800 text-sm">Ver</button>
-          <button className="text-teal-600 hover:text-teal-800 text-sm">Descargar</button>
-          <button className="text-red-600 hover:text-red-800 text-sm">Eliminar</button>
+        <div className="flex gap-3">
+          <button className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm">
+            <EyeIcon className="w-4 h-4" /> Ver
+          </button>
+          <button className="flex items-center gap-1 text-teal-600 hover:text-teal-800 text-sm">
+            <ArrowDownTrayIcon className="w-4 h-4" /> Descargar
+          </button>
+          <button className="flex items-center gap-1 text-red-600 hover:text-red-800 text-sm">
+            <TrashIcon className="w-4 h-4" /> Eliminar
+          </button>
         </div>
       )
     }
@@ -49,8 +73,9 @@ const GestionDocumental = () => {
           <h2 className="text-2xl font-bold text-gray-800">Gestión Documental</h2>
           <p className="text-gray-600 mt-1">Administración de documentos y archivos del sistema</p>
         </div>
-        <Button variant="primary" onClick={() => setMostrarSubida(!mostrarSubida)}>
-          📤 Subir Documento
+        <Button variant="primary" onClick={() => setMostrarSubida(!mostrarSubida)} className="flex items-center gap-2">
+          <ArrowUpTrayIcon className="w-5 h-5 text-white" />
+          <span>Subir Documento</span>
         </Button>
       </div>
 
@@ -86,7 +111,7 @@ const GestionDocumental = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Archivo</label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <span className="text-4xl">📁</span>
+                <FolderOpenIcon className="w-10 h-10 text-gray-500 mx-auto" />
                 <p className="mt-2 text-sm text-gray-600">Arrastra archivos aquí o haz clic para seleccionar</p>
                 <input type="file" className="hidden" />
               </div>

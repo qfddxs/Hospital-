@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
 import MainLayout from './components/Layout/MainLayout';
 import Dashboard from './pages/Dashboard';
 import CapacidadFormadora from './pages/CapacidadFormadora';
@@ -13,7 +14,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<MainLayout />}>
+        {/* Página de login como página principal */}
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        
+        {/* Dashboard y páginas protegidas */}
+        <Route path="/dashboard" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="capacidad-formadora" element={<CapacidadFormadora />} />
           <Route path="solicitud-cupos" element={<SolicitudCupos />} />

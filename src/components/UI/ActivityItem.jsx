@@ -1,3 +1,5 @@
+import { ClipboardDocumentListIcon, CheckCircleIcon, FolderIcon } from '@heroicons/react/24/outline';
+
 const ActivityItem = ({ titulo, descripcion, tipo }) => {
   const iconoBg = {
     solicitud: 'bg-blue-100 text-blue-600',
@@ -6,14 +8,14 @@ const ActivityItem = ({ titulo, descripcion, tipo }) => {
   };
 
   const iconos = {
-    solicitud: '📄',
-    asistencia: '✓',
-    documento: '📁'
+    solicitud: <ClipboardDocumentListIcon className="w-5 h-5" />,
+    asistencia: <CheckCircleIcon className="w-5 h-5" />,
+    documento: <FolderIcon className="w-5 h-5" />
   };
 
   return (
     <div className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-      <div className={`${iconoBg[tipo]} w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0`}>
+      <div className={`${iconoBg[tipo]} w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0`}>
         {iconos[tipo]}
       </div>
       <div className="flex-1 min-w-0">

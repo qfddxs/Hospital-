@@ -9,3 +9,59 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Estilos específicos para la página de login */
+.login-container {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.login-form {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.medical-icon {
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.medical-icon:hover {
+  transform: scale(1.1);
+  color: #0d9488;
+}
+
+/* Animación sutil para el círculo de iconos */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.floating-icons {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Estilo para los inputs con placeholder personalizado */
+input::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
+
+/* Efecto de focus mejorado */
+input:focus {
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+/* Estilo para el botón de login */
+.login-button {
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  transition: all 0.3s ease;
+}
+
+.login-button:hover {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(20, 184, 166, 0.3);
+}

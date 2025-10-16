@@ -2,6 +2,13 @@ import StatCard from '../components/UI/StatCard';
 import AlertBox from '../components/UI/AlertBox';
 import ActivityItem from '../components/UI/ActivityItem';
 import DateCard from '../components/UI/DateCard';
+import {
+  UserGroupIcon,
+  AcademicCapIcon,
+  CalendarDaysIcon,
+  ClipboardDocumentListIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
 import { estadisticasGenerales, alertas, actividadReciente, proximasFechas } from '../data/mockData';
 
 const Dashboard = () => {
@@ -28,28 +35,28 @@ const Dashboard = () => {
           title="Cupos Totales"
           value={estadisticasGenerales.cuposTotales.valor}
           change={estadisticasGenerales.cuposTotales.cambio}
-          icon="👥"
+          icon={<UserGroupIcon className="w-7 h-7 text-blue-600" />}
           iconBg="bg-blue-100"
         />
         <StatCard
           title="Estudiantes Activos"
           value={estadisticasGenerales.estudiantesActivos.valor}
           change={estadisticasGenerales.estudiantesActivos.cambio}
-          icon="🎓"
+          icon={<AcademicCapIcon className="w-7 h-7 text-green-600" />}
           iconBg="bg-green-100"
         />
         <StatCard
           title="Rotaciones en Curso"
           value={estadisticasGenerales.rotacionesEnCurso.valor}
           change={estadisticasGenerales.rotacionesEnCurso.cambio}
-          icon="📅"
+          icon={<CalendarDaysIcon className="w-7 h-7 text-purple-600" />}
           iconBg="bg-purple-100"
         />
         <StatCard
           title="Solicitudes Pendientes"
           value={estadisticasGenerales.solicitudesPendientes.valor}
           change={estadisticasGenerales.solicitudesPendientes.cambio}
-          icon="📝"
+          icon={<ClipboardDocumentListIcon className="w-7 h-7 text-orange-600" />}
           iconBg="bg-orange-100"
         />
       </div>

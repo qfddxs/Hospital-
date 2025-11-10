@@ -2,16 +2,37 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../assets/Logo.png';
 import logoCircular from '../assets/logoCircular.png';
+import apiClient from '../../api.js'; // Importa tu cliente axios configurado
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [username, setUsername] = useState(''); // Usaremos el RUT como username
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Por ahora redirige directamente al dashboard sin validar
-    navigate('/dashboard');
+    setError(''); // Limpiar errores previos
+
+    try {
+      // Usa apiClient para la petición de login.
+      // El endpoint es solo 'token/' porque la baseURL ya está en apiClient.
+      const response = await apiClient.post('token/', {
+        username: username, // Django espera 'username'
+        password: password,
+      });
+
+      // Guarda los tokens en localStorage
+      localStorage.setItem('access_token', response.data.access);
+      localStorage.setItem('refresh_token', response.data.refresh);
+
+      navigate('/dashboard');
+    } catch (err) {
+      setError('RUT o contraseña incorrectos. Por favor, intente de nuevo.');
+      console.error('Error de autenticación:', err);
+    }
   };
 
   return (
@@ -38,11 +59,19 @@ const LoginPage = () => {
           {/* Formulario */}
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Campo de RUT */}
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <span className="block sm:inline">{error}</span>
+              </div>
+            )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
                 RUT
               </label>
               <input
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 type="text"
                 placeholder="12.345.678-9"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -51,11 +80,14 @@ const LoginPage = () => {
 
             {/* Campo de contraseña */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
                 <input
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -121,7 +153,7 @@ const LoginPage = () => {
             {/* Botón de login */}
             <button
               type="submit"
-              className="w-full login-button text-white py-3 px-4 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+              className="w-full login-button text-white py-3 px-4 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 bg-teal-600 hover:bg-teal-700"
             >
               Login
             </button>          

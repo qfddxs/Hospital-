@@ -59,12 +59,6 @@ const Sidebar = () => {
       label: 'Gestión Documental', 
       icon: DocumentTextIcon,
       description: 'Administración de documentos'
-    },
-    { 
-      path: '/dashboard/reportes-estrategicos', 
-      label: 'Reportes Estratégicos', 
-      icon: ChartBarIcon,
-      description: 'Indicadores y reportes'
     }
   ];
 

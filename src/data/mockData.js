@@ -299,12 +299,3 @@ export const documentos = [
   }
 ];
 
-export const indicadoresEstrategicos = {
-  tasaAsistenciaPromedio: 89.5,
-  satisfaccionEstudiantes: 4.2,
-  tasaAprobacion: 94.8,
-  centrosActivos: 12,
-  estudiantesTotales: 892,
-  rotacionesCompletadas: 45
-};
-

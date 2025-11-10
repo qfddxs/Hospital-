@@ -2,30 +2,47 @@
 
 Sistema web para la gestión de campos clínicos del Hospital Regional Dr. Franco Ravera Zunino.
 
-## Características
+## 🚀 Características
 
 - **Dashboard**: Resumen general con métricas clave, alertas y actividad reciente
-- **Capacidad Formadora**: Gestión de centros formadores y sus capacidades
+- **Capacidad Formadora**: Gestión de centros formadores con importación masiva desde CSV/Excel
 - **Solicitud de Cupos**: Administración de solicitudes de cupos clínicos
 - **Gestión de Alumnos**: Control de estudiantes en rotación
 - **Control de Asistencia**: Registro y seguimiento de asistencia diaria
 - **Retribuciones y Reportes**: Gestión de pagos a centros formadores
-- **Gestión Documental**: Sistema de archivos y documentos
-- **Reportes Estratégicos**: Indicadores y métricas del sistema
+- **Gestión Documental**: Sistema completo de archivos y documentos con versionado
+- **Portal de Centros**: Acceso para centros formadores con permisos específicos
 
-## Tecnologías
+## 🛠️ Tecnologías
 
+### Frontend
 - **React 19** - Framework de UI
-- **Vite** - Build tool
-- **React Router DOM** - Navegación
-- **Tailwind CSS 4** - Estilos
+- **Vite** - Build tool y dev server
+- **React Router DOM** - Navegación SPA
+- **Tailwind CSS 4** - Framework de estilos
+- **Heroicons** - Iconos
 - **JavaScript/ES6+**
 
-## Instalación
+### Backend
+- **Supabase** - Backend as a Service
+  - PostgreSQL Database
+  - Authentication
+  - Storage
+  - Row Level Security (RLS)
+
+## 📦 Instalación
 
 ```bash
+# Clonar el repositorio
+git clone [url-del-repo]
+cd Hospital-
+
 # Instalar dependencias
 npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales de Supabase
 
 # Iniciar servidor de desarrollo
 npm run dev
@@ -37,51 +54,153 @@ npm run build
 npm run preview
 ```
 
-## Estructura del Proyecto
+## 🗄️ Configuración de Base de Datos
+
+Ver documentación completa en [`docs/README.md`](docs/README.md)
+
+### Inicio Rápido
+
+1. Crea un proyecto en [Supabase](https://supabase.com)
+2. Ejecuta los scripts SQL en orden:
+   ```bash
+   # Schema completo
+   supabase/schema-completo.sql
+   
+   # Políticas de seguridad
+   supabase/politicas-seguridad.sql
+   
+   # (Opcional) Datos de ejemplo
+   supabase/datos-ejemplo.sql
+   ```
+
+## 📁 Estructura del Proyecto
 
 ```
-src/
-├── components/
-│   ├── Layout/         # Componentes de estructura (Header, Sidebar, MainLayout)
-│   └── UI/             # Componentes reutilizables (Button, Table, StatCard, etc.)
-├── pages/              # Páginas principales del sistema
-├── data/               # Datos mock para desarrollo
-├── App.jsx             # Configuración de rutas
-├── main.jsx            # Punto de entrada
-└── index.css           # Estilos globales
+Hospital-/
+├── src/
+│   ├── components/
+│   │   ├── Layout/         # Header, Sidebar, MainLayout
+│   │   └── UI/             # Componentes reutilizables
+│   ├── pages/              # Páginas principales
+│   │   ├── auth/           # Login, registro
+│   │   └── portal/         # Portal de centros formadores
+│   ├── data/               # Datos mock (desarrollo)
+│   ├── App.jsx             # Configuración de rutas
+│   ├── main.jsx            # Punto de entrada
+│   ├── supabaseClient.js   # Cliente de Supabase
+│   └── index.css           # Estilos globales
+├── supabase/               # Scripts SQL de Supabase
+│   ├── schema-completo.sql
+│   ├── politicas-seguridad.sql
+│   └── datos-ejemplo.sql
+├── docs/
+│   └── guides/             # Guías y documentación
+├── public/                 # Assets estáticos
+└── dist/                   # Build de producción
 ```
 
-## Datos Mock
+## 🔑 Variables de Entorno
 
-El sistema actualmente utiliza datos simulados (`src/data/mockData.js`) que incluyen:
-- Estadísticas generales
-- Centros formadores
-- Estudiantes
-- Solicitudes de cupos
-- Registros de asistencia
-- Retribuciones
-- Documentos
-- Indicadores estratégicos
+Crea un archivo `.env` en la raíz del proyecto:
 
-## Desarrollo
+```env
+VITE_SUPABASE_URL=tu_supabase_url
+VITE_SUPABASE_ANON_KEY=tu_supabase_anon_key
+```
 
-Para agregar nuevas funcionalidades:
+## 🎯 Funcionalidades Principales
 
-1. Crear los componentes necesarios en `src/components/`
-2. Agregar nuevas páginas en `src/pages/`
-3. Configurar las rutas en `src/App.jsx`
-4. Actualizar los datos mock en `src/data/mockData.js`
+### Capacidad Formadora
+- ✅ CRUD completo de centros formadores
+- ✅ Importación masiva desde CSV/Excel
+- ✅ Gestión de capacidades y especialidades
+- ✅ Detección automática de columnas
 
-## Estado del Proyecto
+### Gestión Documental
+- ✅ Subida y descarga de documentos
+- ✅ Categorización y etiquetado
+- ✅ Versionado de documentos
+- ✅ Historial de acciones
+- ✅ Permisos granulares
+- ✅ Búsqueda avanzada
 
-✅ Interfaz completa implementada
-✅ Todas las secciones navegables
-✅ Datos mock configurados
-✅ Diseño responsive con Tailwind CSS
-⏳ Pendiente: Integración con backend real
-⏳ Pendiente: Autenticación de usuarios
-⏳ Pendiente: Exportación real de reportes
+### Portal de Centros
+- ✅ Autenticación con Supabase Auth
+- ✅ Vista personalizada por centro
+- ✅ Solicitud de cupos
+- ✅ Seguimiento de solicitudes
 
-## Licencia
+## 📊 Base de Datos
 
-Proyecto privado - Hospital Regional
+### Tablas Principales
+- `centros_formadores` - Universidades e instituciones
+- `servicios_clinicos` - Servicios del hospital
+- `tutores` - Tutores clínicos
+- `alumnos` - Estudiantes en rotación
+- `rotaciones` - Asignaciones
+- `asistencias` - Registro de asistencia
+- `retribuciones` - Cálculos económicos
+- `solicitudes_cupos` - Solicitudes de cupos
+- `documentos` - Sistema documental
+- `usuarios` - Usuarios del sistema
+
+Ver schema completo en [`supabase/schema-completo.sql`](supabase/schema-completo.sql)
+
+## 🔐 Seguridad
+
+- Row Level Security (RLS) habilitado en todas las tablas
+- Políticas específicas por rol de usuario
+- Autenticación con Supabase Auth
+- Tokens JWT para sesiones
+- Permisos granulares en documentos
+
+## 📖 Documentación
+
+- **[Documentación General](docs/README.md)** - Guía completa del sistema
+- **[Guías Técnicas](docs/guides/README.md)** - Guías de implementación
+- **[Schema de Base de Datos](supabase/schema-completo.sql)** - Estructura completa
+
+## 🚧 Estado del Proyecto
+
+### Completado ✅
+- Interfaz completa implementada
+- Todas las secciones navegables
+- Integración con Supabase
+- Sistema de autenticación
+- Gestión documental completa
+- Portal de centros formadores
+- Importación masiva de datos
+- Políticas de seguridad (RLS)
+
+### En Desarrollo 🔄
+- Módulo de retribuciones
+- Reportes avanzados
+- Notificaciones en tiempo real
+- Dashboard con datos en vivo
+
+### Pendiente ⏳
+- Exportación de reportes a PDF/Excel
+- Integración con sistemas externos
+- App móvil
+- Módulo de evaluaciones
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📝 Licencia
+
+Proyecto privado - Hospital Regional Dr. Franco Ravera Zunino
+
+## 📞 Contacto
+
+Para soporte o consultas, contactar al equipo de desarrollo del hospital.
+
+---
+
+**Versión:** 2.0  
+**Última actualización:** Noviembre 2025

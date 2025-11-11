@@ -40,11 +40,14 @@ export const UserRoleProvider = ({ children }) => {
           .select('rol, centro_formador_id')
           .eq('user_id', user.id)
           .eq('activo', true)
-          .single();
+          .maybeSingle();
 
         if (error) {
-          // Si no existe en usuarios_centros, es admin por defecto
-          console.log('Usuario no encontrado en usuarios_centros, asumiendo admin');
+          console.error('Error al consultar usuarios_centros:', error);
+          setUserRole('admin');
+          setCentroFormadorId(null);
+        } else if (!data) {
+          // Si no existe en usuarios_centros, es personal del hospital (admin)
           setUserRole('admin');
           setCentroFormadorId(null);
         } else {

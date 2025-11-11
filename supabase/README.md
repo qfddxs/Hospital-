@@ -1,143 +1,99 @@
-# Supabase - Base de Datos
+# Scripts SQL para Supabase
 
-Esta carpeta contiene todos los archivos SQL para la configuración de la base de datos en Supabase.
+Este directorio contiene todos los scripts SQL necesarios para configurar la base de datos en Supabase.
 
-## 📋 Archivos Principales
+## 🚀 Inicio Rápido
 
-### Para Nueva Instalación
-
-Ejecuta estos archivos en orden:
-
-1. **`schema-completo.sql`** ⭐
-   - Schema consolidado con todas las tablas
-   - Funciones y triggers
-   - Índices optimizados
-   - Comentarios y documentación
-
-2. **`politicas-seguridad.sql`** ⭐
-   - Políticas de Row Level Security (RLS)
-   - Permisos por tabla
-   - Políticas específicas para portal de centros
-
-3. **`datos-ejemplo.sql`** (Opcional)
-   - Datos de prueba
-   - Categorías de documentos
-   - Centros formadores de ejemplo
-   - Servicios, tutores y alumnos
-
-## 🚀 Instalación Rápida
-
-### Opción 1: Supabase Dashboard
-1. Ve a tu proyecto en [Supabase](https://supabase.com)
-2. Abre el SQL Editor
-3. Copia y ejecuta el contenido de cada archivo en orden
-
-### Opción 2: CLI de PostgreSQL
-```bash
-psql -h db.xxx.supabase.co -U postgres -d postgres -f schema-completo.sql
-psql -h db.xxx.supabase.co -U postgres -d postgres -f politicas-seguridad.sql
-psql -h db.xxx.supabase.co -U postgres -d postgres -f datos-ejemplo.sql
-```
-
-### Opción 3: Supabase CLI
-```bash
-supabase db push
-```
-
-## 📁 Archivos Históricos
-
-Los archivos con prefijo `supabase-` son migraciones históricas:
-
-- `supabase-schema.sql` - Schema base original
-- `supabase-add-capacidad.sql` - Agregar campos de capacidad
-- `supabase-add-solicitudes.sql` - Tabla de solicitudes
-- `supabase-gestion-documental.sql` - Sistema documental
-- `supabase-portal-centros.sql` - Portal de centros
-- `supabase-fix-*.sql` - Correcciones varias
-
-**Nota:** Para nuevas instalaciones, usa solo los archivos principales. Los históricos se mantienen como referencia.
-
-## 🔄 Actualización de Base de Datos Existente
-
-Si ya tienes una base de datos y necesitas actualizarla:
-
-1. Haz backup de tu base de datos actual
-2. Revisa los archivos de migración históricos
-3. Aplica solo los cambios necesarios
-4. Verifica que no haya conflictos
-
-## 📊 Estructura de Tablas
-
-### Gestión de Centros
-- `centros_formadores` - Universidades e instituciones
-- `servicios_clinicos` - Servicios del hospital
-- `tutores` - Tutores clínicos
-- `alumnos` - Estudiantes
-
-### Rotaciones y Asistencia
-- `rotaciones` - Asignaciones de alumnos
-- `asistencias` - Registro de asistencia
-- `retribuciones` - Cálculos económicos
-
-### Solicitudes
-- `solicitudes_cupos` - Solicitudes de cupos
-
-### Documentos
-- `documentos` - Documentos del sistema
-- `documentos_categorias` - Categorías
-- `documentos_historial` - Historial de acciones
-- `documentos_permisos` - Permisos de acceso
-
-### Usuarios
-- `usuarios` - Usuarios del sistema
-- `usuarios_centros` - Vinculación con centros
-
-## 🔐 Seguridad
-
-Todas las tablas tienen Row Level Security (RLS) habilitado:
-
-- Lectura pública para usuarios autenticados
-- Escritura controlada por políticas
-- Centros formadores solo ven sus datos
-- Admins tienen acceso completo
-
-## 🛠️ Funciones Útiles
+Para un proyecto nuevo de Supabase, ejecuta en orden:
 
 ```sql
--- Calcular retribuciones de un mes
-SELECT * FROM calcular_retribuciones(3, 2025);
+1. 00-schema-completo.sql      -- Crea todas las tablas y triggers
+2. 01-rls-policies.sql         -- Configura políticas de seguridad RLS
+3. datos-ejemplo-demo.sql      -- (Opcional) Datos de ejemplo para demo
+```
 
--- Estadísticas de documentos
-SELECT * FROM obtener_estadisticas_documentos();
+## 📁 Archivos Principales
 
--- Actualizar documentos vencidos
-SELECT actualizar_estado_documentos();
+### ⭐ Archivos Esenciales
 
--- Obtener centro del usuario actual
-SELECT get_user_centro_formador();
+- **`00-schema-completo.sql`** - Schema completo del sistema
+  - Todas las tablas (centros_formadores, solicitudes_cupos, alumnos, etc.)
+  - Índices y constraints
+  - Triggers para updated_at
+  - Comentarios de documentación
+
+- **`01-rls-policies.sql`** - Políticas de seguridad Row Level Security
+  - Políticas para centros formadores
+  - Políticas para personal del hospital
+  - Separación de permisos por rol
+
+- **`datos-ejemplo-demo.sql`** - Datos de ejemplo para demostración
+  - 5 centros formadores (pregrado y postgrado)
+  - 7 solicitudes de cupos (pendientes, aprobadas, rechazadas)
+  - Datos realistas para presentaciones
+
+### 🛠️ Archivos Útiles
+
+- **`limpiar-centros-formadores.sql`** - Limpia datos de prueba
+- **`crear-tabla-solicitudes-cupos.sql`** - Referencia de tabla solicitudes
+- **`crear-tabla-usuarios-centros.sql`** - Referencia de tabla usuarios_centros
+- **`ARCHIVOS_A_ELIMINAR.md`** - Lista de archivos obsoletos
+
+## 📊 Estructura de la Base de Datos
+
+```
+centros_formadores          -- Universidades e instituciones
+    ↓
+usuarios_centros           -- Vincula Auth con centros
+    ↓
+solicitudes_cupos          -- Solicitudes de cupos clínicos
+    ↓
+alumnos                    -- Estudiantes en rotación
+    ↓
+rotaciones                 -- Rotaciones clínicas
+    ↓
+asistencias                -- Control de asistencia
+```
+
+## 🔐 Seguridad (RLS)
+
+El sistema implementa Row Level Security para:
+
+- **Centros Formadores:** Solo ven y editan su propia información
+- **Hospital:** Ve y gestiona todo el sistema
+- **Solicitudes:** Centros ven las suyas, hospital ve todas
+
+## 🎯 Casos de Uso
+
+### Configuración Inicial
+```sql
+-- 1. Crear schema
+\i 00-schema-completo.sql
+
+-- 2. Configurar seguridad
+\i 01-rls-policies.sql
+
+-- 3. Insertar datos de ejemplo (opcional)
+\i datos-ejemplo-demo.sql
+```
+
+### Limpiar Datos de Prueba
+```sql
+\i limpiar-centros-formadores.sql
 ```
 
 ## 📝 Notas Importantes
 
-- Siempre haz backup antes de ejecutar migraciones
-- Verifica las políticas RLS después de cambios
-- Los triggers se actualizan automáticamente
-- Los índices mejoran el rendimiento de consultas
+- Ejecutar los scripts en el orden indicado
+- Verificar que no haya errores antes de continuar
+- Los datos de ejemplo son opcionales (solo para demo)
+- Las políticas RLS son críticas para la seguridad
 
-## 🆘 Problemas Comunes
+## 🗑️ Archivos Obsoletos
 
-### Error de permisos
-Verifica que las políticas RLS estén correctamente configuradas en `politicas-seguridad.sql`
+Ver `ARCHIVOS_A_ELIMINAR.md` para lista de archivos que pueden eliminarse (ya consolidados).
 
-### Constraint violations
-Revisa que los datos cumplan con las restricciones (ej: capacidad_disponible <= capacidad_total)
+## 📚 Documentación Adicional
 
-### Funciones no encontradas
-Asegúrate de ejecutar primero `schema-completo.sql` que incluye todas las funciones
-
-## 📞 Soporte
-
-Para más información, consulta:
-- [Documentación principal](../docs/README.md)
-- [Guías técnicas](../docs/guides/README.md)
-- [Documentación de Supabase](https://supabase.com/docs)
+- Ver `docs/SEPARACION_PROYECTOS.md` para arquitectura del sistema
+- Ver `docs/guides/` para guías de implementación

@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BellIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { useSession } from '../../context/SessionContext';
+import { useNivelFormacion } from '../../context/NivelFormacionContext';
 
 const Header = () => {
-  const [tipoUsuario, setTipoUsuario] = useState('pregrado');
+  const { nivelFormacion, setNivelFormacion } = useNivelFormacion();
   const { user, signOut } = useSession();
   const navigate = useNavigate();
 
@@ -26,9 +26,9 @@ const Header = () => {
           {/* Tabs Pregrado/Postgrado */}
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
-              onClick={() => setTipoUsuario('pregrado')}
+              onClick={() => setNivelFormacion('pregrado')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                tipoUsuario === 'pregrado'
+                nivelFormacion === 'pregrado'
                   ? 'bg-teal-500 text-white'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
@@ -36,9 +36,9 @@ const Header = () => {
               Pregrado
             </button>
             <button
-              onClick={() => setTipoUsuario('postgrado')}
+              onClick={() => setNivelFormacion('postgrado')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                tipoUsuario === 'postgrado'
+                nivelFormacion === 'postgrado'
                   ? 'bg-teal-500 text-white'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
@@ -46,17 +46,6 @@ const Header = () => {
               Postgrado
             </button>
           </div>
-
-          {/* Notificaciones */}
-          <button className="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg">
-            <BellIcon className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-
-          {/* Configuración */}
-          <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg">
-            <Cog6ToothIcon className="w-5 h-5" />
-          </button>
 
           {/* Cerrar sesión */}
           <button 

@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import Modal from '../components/UI/Modal';
-import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, ExclamationTriangleIcon, CalendarDaysIcon } from '@heroicons/react/24/solid';
 
 const GestionAlumnos = () => {
   const [alumnos, setAlumnos] = useState([]);
@@ -26,6 +26,21 @@ const GestionAlumnos = () => {
   });
   const [formError, setFormError] = useState('');
 
+  // Estados para rotaciones
+  const [rotaciones, setRotaciones] = useState([]);
+  const [serviciosClinicos, setServiciosClinicos] = useState([]);
+  const [tutores, setTutores] = useState([]);
+  const [rotacionFormData, setRotacionFormData] = useState({
+    alumno_id: '',
+    servicio_id: '',
+    tutor_id: '',
+    fecha_inicio: '',
+    fecha_termino: '',
+    horas_semanales: 40,
+    observaciones: '',
+    estado: 'activa'
+  });
+
   const isModalOpen = modalState.type !== null;
   const closeModal = () => {
     setModalState({ type: null, data: null });
@@ -39,14 +54,14 @@ const GestionAlumnos = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       // Obtener centros formadores
       const { data: centros, error: centrosError } = await supabase
         .from('centros_formadores')
         .select('id, nombre')
         .eq('activo', true)
         .order('nombre');
-      
+
       if (centrosError) throw centrosError;
       setCentrosFormadores(centros || []);
 
@@ -58,9 +73,51 @@ const GestionAlumnos = () => {
           centro_formador:centros_formadores(id, nombre)
         `)
         .order('apellidos');
-      
+
       if (alumnosError) throw alumnosError;
       setAlumnos(alumnosData || []);
+
+      // Obtener rotaciones con servicios y tutores
+      const { data: rotacionesData, error: rotacionesError } = await supabase
+        .from('rotaciones')
+        .select(`
+          *,
+          servicio:servicios_clinicos(id, nombre),
+          tutor:tutores(id, nombres, apellidos)
+        `)
+        .order('fecha_inicio', { ascending: false });
+
+      if (!rotacionesError) {
+        setRotaciones(rotacionesData || []);
+      }
+
+      // Obtener servicios clínicos
+      const { data: serviciosData, error: serviciosError } = await supabase
+        .from('servicios_clinicos')
+        .select('*')
+        .eq('activo', true)
+        .order('nombre');
+
+      if (serviciosError) {
+        console.error('Error cargando servicios:', serviciosError);
+      } else {
+        console.log('Servicios cargados:', serviciosData);
+        setServiciosClinicos(serviciosData || []);
+      }
+
+      // Obtener tutores
+      const { data: tutoresData, error: tutoresError } = await supabase
+        .from('tutores')
+        .select('*')
+        .eq('activo', true)
+        .order('apellidos');
+
+      if (tutoresError) {
+        console.error('Error cargando tutores:', tutoresError);
+      } else {
+        console.log('Tutores cargados:', tutoresData);
+        setTutores(tutoresData || []);
+      }
     } catch (err) {
       setError('No se pudieron cargar los alumnos.');
       console.error('Error:', err);
@@ -71,43 +128,75 @@ const GestionAlumnos = () => {
 
   const columns = [
     { header: 'RUT', accessor: 'rut' },
-    { 
-      header: 'Nombre Completo', 
+    {
+      header: 'Nombre Completo',
       render: (row) => `${row.nombres} ${row.apellidos}`
     },
     { header: 'Carrera', accessor: 'carrera' },
     { header: 'Nivel', accessor: 'nivel' },
-    { 
-      header: 'Centro Formador', 
+    {
+      header: 'Centro Formador',
       render: (row) => row.centro_formador?.nombre || '-'
     },
-    { 
-      header: 'Email', 
+    {
+      header: 'Email',
       accessor: 'email',
       render: (row) => <span className="text-xs">{row.email || '-'}</span>
     },
-    { 
-      header: 'Estado', 
+    {
+      header: 'Estado',
       render: (row) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-          row.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-        }`}>
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${row.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+          }`}>
           {row.activo ? 'Activo' : 'Inactivo'}
         </span>
       )
     },
-    { 
-      header: 'Acciones', 
+    {
+      header: 'Rotación Actual',
+      render: (row) => {
+        const rotacionesAlumno = getRotacionesAlumno(row.id);
+        const rotacionActiva = rotacionesAlumno.find(r => r.estado === 'activa');
+        return (
+          <div className="flex items-center gap-2">
+            {rotacionActiva ? (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  {rotacionActiva.servicio?.nombre || 'Servicio no especificado'}
+                </span>
+                <button 
+                  onClick={() => handleRotacionClick(row)} 
+                  className="text-xs text-blue-600 hover:text-blue-800 underline"
+                  title="Cambiar rotación"
+                >
+                  Cambiar
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => handleRotacionClick(row)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+              >
+                <CalendarDaysIcon className="w-4 h-4" />
+                Asignar Rotación
+              </button>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      header: 'Acciones',
       render: (row) => (
-        <div className="flex items-center gap-2">
-          <button onClick={() => handleViewClick(row)} className="p-1 text-blue-600 hover:text-blue-800" title="Ver Detalles">
-            <EyeIcon className="w-5 h-5" />
+        <div className="flex items-center gap-1">
+          <button onClick={() => handleViewClick(row)} className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors" title="Ver Detalles">
+            <EyeIcon className="w-4 h-4" />
           </button>
-          <button onClick={() => handleEditClick(row)} className="p-1 text-gray-600 hover:text-gray-800" title="Editar">
-            <PencilIcon className="w-5 h-5" />
+          <button onClick={() => handleEditClick(row)} className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded transition-colors" title="Editar">
+            <PencilIcon className="w-4 h-4" />
           </button>
-          <button onClick={() => handleDeleteClick(row)} className="p-1 text-red-600 hover:text-red-800" title="Eliminar">
-            <TrashIcon className="w-5 h-5" />
+          <button onClick={() => handleDeleteClick(row)} className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+            <TrashIcon className="w-4 h-4" />
           </button>
         </div>
       )
@@ -116,8 +205,8 @@ const GestionAlumnos = () => {
 
   const datosFiltrados = alumnos.filter(alumno => {
     const nombreCompleto = `${alumno.nombres} ${alumno.apellidos}`.toLowerCase();
-    const cumpleBusqueda = nombreCompleto.includes(busqueda.toLowerCase()) || 
-                          alumno.rut.includes(busqueda);
+    const cumpleBusqueda = nombreCompleto.includes(busqueda.toLowerCase()) ||
+      alumno.rut.includes(busqueda);
     const cumpleCarrera = filtroCarrera === 'todos' || alumno.carrera === filtroCarrera;
     return cumpleBusqueda && cumpleCarrera;
   });
@@ -181,7 +270,7 @@ const GestionAlumnos = () => {
 
   const confirmDelete = async () => {
     if (modalState.type !== 'delete' || !modalState.data) return;
-    
+
     try {
       const { error } = await supabase
         .from('alumnos')
@@ -234,6 +323,64 @@ const GestionAlumnos = () => {
     setModalState({ type: 'delete', data: alumno });
   };
 
+  const handleRotacionClick = (alumno = null) => {
+    setRotacionFormData({
+      alumno_id: alumno?.id || '',
+      servicio_id: '',
+      tutor_id: '',
+      fecha_inicio: '',
+      fecha_termino: '',
+      horas_semanales: 40,
+      observaciones: '',
+      estado: 'activa'
+    });
+    setModalState({ type: 'rotacion', data: alumno });
+  };
+
+  const handleRotacionMasivaClick = () => {
+    setRotacionFormData({
+      alumno_id: '',
+      servicio_id: '',
+      tutor_id: '',
+      fecha_inicio: '',
+      fecha_termino: '',
+      horas_semanales: 40,
+      observaciones: '',
+      estado: 'activa'
+    });
+    setModalState({ type: 'rotacion', data: null });
+  };
+
+  const handleRotacionInputChange = (e) => {
+    const { name, value } = e.target;
+    setRotacionFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRotacionSubmit = async (e) => {
+    e.preventDefault();
+    setFormError('');
+
+    try {
+      const { data, error } = await supabase
+        .from('rotaciones')
+        .insert([rotacionFormData])
+        .select();
+
+      if (error) throw error;
+
+      setRotaciones(prev => [...prev, data[0]]);
+      closeModal();
+      alert('Rotación asignada exitosamente');
+    } catch (err) {
+      setFormError(err.message || 'Error al asignar rotación');
+      console.error('Error:', err);
+    }
+  };
+
+  const getRotacionesAlumno = (alumnoId) => {
+    return rotaciones.filter(r => r.alumno_id === alumnoId);
+  };
+
   if (loading) return <p>Cargando alumnos...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -245,14 +392,24 @@ const GestionAlumnos = () => {
           <h2 className="text-2xl font-bold text-gray-800">Gestión de Alumnos</h2>
           <p className="text-gray-600 mt-1">Administración de estudiantes en rotación</p>
         </div>
-        <Button variant="primary" onClick={handleAddClick} className="flex items-center gap-2">
-          <PlusIcon className="w-5 h-5" />
-          Agregar Alumno
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            variant="secondary" 
+            onClick={handleRotacionMasivaClick}
+            className="flex items-center gap-2 bg-purple-600 text-white hover:bg-purple-700"
+          >
+            <CalendarDaysIcon className="w-5 h-5" />
+            Asignar Rotaciones
+          </Button>
+          <Button variant="primary" onClick={handleAddClick} className="flex items-center gap-2">
+            <PlusIcon className="w-5 h-5" />
+            Agregar Alumno
+          </Button>
+        </div>
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <p className="text-sm text-gray-600">Total Alumnos</p>
           <p className="text-2xl font-bold text-gray-800">{alumnos.length}</p>
@@ -264,9 +421,21 @@ const GestionAlumnos = () => {
           </p>
         </div>
         <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Centros Formadores</p>
-          <p className="text-2xl font-bold text-gray-800">
-            {new Set(alumnos.map(a => a.centro_formador_id).filter(Boolean)).size}
+          <p className="text-sm text-gray-600">En Rotación</p>
+          <p className="text-2xl font-bold text-purple-600">
+            {alumnos.filter(a => {
+              const rotacionesAlumno = getRotacionesAlumno(a.id);
+              return rotacionesAlumno.find(r => r.estado === 'activa');
+            }).length}
+          </p>
+        </div>
+        <div className="bg-white rounded-lg p-4 shadow-sm">
+          <p className="text-sm text-gray-600">Sin Rotación</p>
+          <p className="text-2xl font-bold text-orange-600">
+            {alumnos.filter(a => {
+              const rotacionesAlumno = getRotacionesAlumno(a.id);
+              return !rotacionesAlumno.find(r => r.estado === 'activa') && a.activo;
+            }).length}
           </p>
         </div>
       </div>
@@ -305,14 +474,15 @@ const GestionAlumnos = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <Modal 
-          isOpen={isModalOpen} 
-          onClose={closeModal} 
+        <Modal
+          isOpen={isModalOpen}
+          onClose={closeModal}
           title={
             modalState.type === 'add' ? 'Agregar Nuevo Alumno' :
-            modalState.type === 'edit' ? 'Editar Alumno' :
-            modalState.type === 'view' ? 'Detalles del Alumno' :
-            'Confirmar Eliminación'
+              modalState.type === 'edit' ? 'Editar Alumno' :
+                modalState.type === 'view' ? 'Detalles del Alumno' :
+                  modalState.type === 'rotacion' ? 'Asignar Rotación Clínica' :
+                    'Confirmar Eliminación'
           }
         >
           {modalState.type === 'view' ? (
@@ -329,6 +499,197 @@ const GestionAlumnos = () => {
               <div className="flex justify-end pt-4">
                 <Button variant="secondary" onClick={closeModal}>Cerrar</Button>
               </div>
+            </div>
+          ) : modalState.type === 'rotacion' ? (
+            <div>
+              {/* Información del alumno o selector */}
+              {modalState.data ? (
+                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                  <p className="text-sm text-gray-700">
+                    <strong>Alumno:</strong> {modalState.data.nombres} {modalState.data.apellidos}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Carrera:</strong> {modalState.data.carrera}
+                  </p>
+                </div>
+              ) : (
+                <div className="mb-4">
+                  <label htmlFor="alumno_select" className="block text-sm font-medium text-gray-700 mb-2">
+                    Seleccionar Alumno *
+                  </label>
+                  <select
+                    id="alumno_select"
+                    value={rotacionFormData.alumno_id}
+                    onChange={(e) => {
+                      const alumnoId = e.target.value;
+                      setRotacionFormData(prev => ({ ...prev, alumno_id: alumnoId }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                    required
+                  >
+                    <option value="">Seleccione un alumno...</option>
+                    {alumnos
+                      .filter(a => a.activo)
+                      .sort((a, b) => a.apellidos.localeCompare(b.apellidos))
+                      .map(alumno => {
+                        const rotacionesAlumno = getRotacionesAlumno(alumno.id);
+                        const tieneRotacionActiva = rotacionesAlumno.find(r => r.estado === 'activa');
+                        return (
+                          <option key={alumno.id} value={alumno.id}>
+                            {alumno.apellidos}, {alumno.nombres} - {alumno.carrera}
+                            {tieneRotacionActiva ? ' (Ya tiene rotación activa)' : ''}
+                          </option>
+                        );
+                      })}
+                  </select>
+                </div>
+              )}
+
+              {/* Mostrar rotaciones existentes del alumno seleccionado */}
+              {(modalState.data?.id || rotacionFormData.alumno_id) && 
+               getRotacionesAlumno(modalState.data?.id || rotacionFormData.alumno_id).length > 0 && (
+                <div className="mb-4">
+                  <h4 className="font-semibold text-sm mb-2">Rotaciones Anteriores:</h4>
+                  <div className="space-y-2">
+                    {getRotacionesAlumno(modalState.data?.id || rotacionFormData.alumno_id).map(rot => (
+                      <div key={rot.id} className="text-xs bg-gray-50 p-2 rounded">
+                        <span className={`font-medium ${rot.estado === 'activa' ? 'text-green-600' : 'text-gray-600'}`}>
+                          {rot.servicio?.nombre || 'Servicio no especificado'}
+                        </span>
+                        {rot.tutor && ` - ${rot.tutor.nombres} ${rot.tutor.apellidos}`}
+                        {' - '}
+                        {new Date(rot.fecha_inicio).toLocaleDateString()} a {new Date(rot.fecha_termino).toLocaleDateString()}
+                        {' '}
+                        <span className={`px-2 py-1 rounded text-xs ${rot.estado === 'activa' ? 'bg-green-100 text-green-800' :
+                            rot.estado === 'completada' ? 'bg-blue-100 text-blue-800' :
+                              'bg-gray-100 text-gray-800'
+                          }`}>
+                          {rot.estado}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleRotacionSubmit} className="space-y-4">
+                {formError && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{formError}</div>}
+
+                <div>
+                  <label htmlFor="servicio_id" className="block text-sm font-medium text-gray-700 mb-1">
+                    Servicio Clínico *
+                  </label>
+                  <select
+                    id="servicio_id"
+                    name="servicio_id"
+                    value={rotacionFormData.servicio_id}
+                    onChange={handleRotacionInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                  >
+                    <option value="">Seleccione un servicio...</option>
+                    {serviciosClinicos.map(servicio => (
+                      <option key={servicio.id} value={servicio.id}>
+                        {servicio.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  {serviciosClinicos.length === 0 && (
+                    <p className="text-xs text-gray-500 mt-1">No hay servicios clínicos disponibles. Ejecuta el script crear-servicios-tutores.sql</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="fecha_inicio" className="block text-sm font-medium text-gray-700 mb-1">
+                      Fecha de Inicio *
+                    </label>
+                    <input
+                      type="date"
+                      id="fecha_inicio"
+                      name="fecha_inicio"
+                      value={rotacionFormData.fecha_inicio}
+                      onChange={handleRotacionInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="fecha_termino" className="block text-sm font-medium text-gray-700 mb-1">
+                      Fecha de Término *
+                    </label>
+                    <input
+                      type="date"
+                      id="fecha_termino"
+                      name="fecha_termino"
+                      value={rotacionFormData.fecha_termino}
+                      onChange={handleRotacionInputChange}
+                      required
+                      min={rotacionFormData.fecha_inicio}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="tutor_id" className="block text-sm font-medium text-gray-700 mb-1">
+                    Tutor Responsable
+                  </label>
+                  <select
+                    id="tutor_id"
+                    name="tutor_id"
+                    value={rotacionFormData.tutor_id}
+                    onChange={handleRotacionInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                  >
+                    <option value="">Seleccione un tutor...</option>
+                    {tutores.map(tutor => (
+                      <option key={tutor.id} value={tutor.id}>
+                        {tutor.nombres} {tutor.apellidos}
+                      </option>
+                    ))}
+                  </select>
+                  {tutores.length === 0 && (
+                    <p className="text-xs text-gray-500 mt-1">No hay tutores disponibles. Ejecuta el script crear-servicios-tutores.sql</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="horas_semanales" className="block text-sm font-medium text-gray-700 mb-1">
+                    Horas Semanales
+                  </label>
+                  <input
+                    type="number"
+                    id="horas_semanales"
+                    name="horas_semanales"
+                    value={rotacionFormData.horas_semanales}
+                    onChange={handleRotacionInputChange}
+                    min="1"
+                    max="60"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="observaciones" className="block text-sm font-medium text-gray-700 mb-1">
+                    Observaciones
+                  </label>
+                  <textarea
+                    id="observaciones"
+                    name="observaciones"
+                    value={rotacionFormData.observaciones}
+                    onChange={handleRotacionInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="Información adicional sobre la rotación..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button type="button" variant="secondary" onClick={closeModal}>Cancelar</Button>
+                  <Button type="submit" variant="primary">Asignar Rotación</Button>
+                </div>
+              </form>
             </div>
           ) : modalState.type === 'delete' ? (
             <div>
@@ -351,7 +712,7 @@ const GestionAlumnos = () => {
           ) : (
             <form onSubmit={handleFormSubmit} className="space-y-4">
               {formError && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{formError}</div>}
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="rut" className="block text-sm font-medium text-gray-700 mb-1">RUT *</label>

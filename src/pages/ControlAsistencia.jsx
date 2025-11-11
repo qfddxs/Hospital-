@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
-import { CheckIcon, XMarkIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
+import { 
+  CheckIcon, 
+  XMarkIcon, 
+  DocumentArrowDownIcon,
+  CalendarIcon,
+  UserGroupIcon,
+  CheckCircleIcon,
+  XCircleIcon
+} from '@heroicons/react/24/outline';
 
 const ControlAsistencia = () => {
   const [rotaciones, setRotaciones] = useState([]);
@@ -19,20 +27,28 @@ const ControlAsistencia = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError('');
       
-      // Obtener rotaciones activas con datos de alumno, servicio y tutor
+      // Obtener rotaciones activas para la fecha seleccionada
       const { data: rotacionesData, error: rotacionesError } = await supabase
         .from('rotaciones')
         .select(`
           *,
-          alumno:alumnos(id, rut, nombres, apellidos, carrera, centro_formador:centros_formadores(nombre)),
+          alumno:alumnos(
+            id, 
+            rut, 
+            nombres,
+            apellidos,
+            carrera,
+            centro_formador:centros_formadores(nombre)
+          ),
           servicio:servicios_clinicos(id, nombre),
           tutor:tutores(id, nombres, apellidos)
         `)
-        .eq('estado', 'en_curso')
+        .eq('estado', 'activa')
         .lte('fecha_inicio', fechaSeleccionada)
         .gte('fecha_termino', fechaSeleccionada);
-      
+
       if (rotacionesError) throw rotacionesError;
       setRotaciones(rotacionesData || []);
 
@@ -47,40 +63,37 @@ const ControlAsistencia = () => {
       // Convertir a objeto para fácil acceso
       const asistenciasMap = {};
       asistenciasData?.forEach(a => {
-        asistenciasMap[`${a.rotacion_id}-${a.tipo}`] = a;
+        asistenciasMap[a.rotacion_id] = a;
       });
       setAsistencias(asistenciasMap);
 
     } catch (err) {
-      setError('No se pudieron cargar los datos');
+      setError('No se pudieron cargar los datos: ' + err.message);
       console.error('Error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAsistenciaChange = (rotacionId, tipo, presente) => {
-    const key = `${rotacionId}-${tipo}`;
+  const handleAsistenciaChange = (rotacionId, presente) => {
     setAsistencias(prev => ({
       ...prev,
-      [key]: {
-        ...prev[key],
+      [rotacionId]: {
+        ...prev[rotacionId],
         rotacion_id: rotacionId,
-        tipo,
         fecha: fechaSeleccionada,
+        tipo: 'alumno',
         presente,
       }
     }));
   };
 
-  const handleObservacionChange = (rotacionId, tipo, observaciones) => {
-    const key = `${rotacionId}-${tipo}`;
+  const handleObservacionChange = (rotacionId, observaciones) => {
     setAsistencias(prev => ({
       ...prev,
-      [key]: {
-        ...prev[key],
+      [rotacionId]: {
+        ...prev[rotacionId],
         rotacion_id: rotacionId,
-        tipo,
         fecha: fechaSeleccionada,
         observaciones,
       }
@@ -91,7 +104,7 @@ const ControlAsistencia = () => {
     try {
       setGuardando(true);
       
-      const asistenciasArray = Object.values(asistencias).filter(a => a.rotacion_id);
+      const asistenciasArray = Object.values(asistencias).filter(a => a.rotacion_id && a.presente !== undefined);
       
       if (asistenciasArray.length === 0) {
         alert('No hay cambios para guardar');
@@ -108,7 +121,7 @@ const ControlAsistencia = () => {
       if (error) throw error;
 
       alert('Asistencias guardadas exitosamente');
-      fetchData(); // Recargar datos
+      await fetchData();
     } catch (err) {
       alert('Error al guardar asistencias: ' + err.message);
       console.error('Error:', err);
@@ -120,60 +133,82 @@ const ControlAsistencia = () => {
   const marcarTodosPresentes = () => {
     const nuevasAsistencias = { ...asistencias };
     rotaciones.forEach(rot => {
-      const keyAlumno = `${rot.id}-alumno`;
-      
-      nuevasAsistencias[keyAlumno] = {
-        ...nuevasAsistencias[keyAlumno],
+      nuevasAsistencias[rot.id] = {
+        ...nuevasAsistencias[rot.id],
         rotacion_id: rot.id,
-        tipo: 'alumno',
         fecha: fechaSeleccionada,
+        tipo: 'alumno',
         presente: true,
       };
     });
     setAsistencias(nuevasAsistencias);
   };
 
+  // Calcular estadísticas
+  const totalRotaciones = rotaciones.length;
+  const presentes = Object.values(asistencias).filter(a => a.presente === true).length;
+  const ausentes = Object.values(asistencias).filter(a => a.presente === false).length;
+  const sinRegistro = totalRotaciones - presentes - ausentes;
+  const porcentajeAsistencia = totalRotaciones > 0 ? Math.round((presentes / totalRotaciones) * 100) : 0;
+
   const columns = [
     { 
       header: 'Alumno', 
       render: (row) => (
         <div>
-          <p className="font-medium">{row.alumno?.nombres} {row.alumno?.apellidos}</p>
+          <p className="font-medium text-gray-900">
+            {row.alumno?.nombres} {row.alumno?.apellidos}
+          </p>
           <p className="text-xs text-gray-500">{row.alumno?.rut}</p>
         </div>
       )
     },
     { 
       header: 'Carrera', 
-      render: (row) => row.alumno?.carrera || '-'
+      render: (row) => (
+        <span className="text-sm text-gray-700">{row.alumno?.carrera || '-'}</span>
+      )
     },
     { 
       header: 'Servicio', 
-      render: (row) => row.servicio?.nombre || '-'
+      render: (row) => (
+        <span className="text-sm text-gray-700">{row.servicio?.nombre || row.servicio_clinico || '-'}</span>
+      )
     },
     { 
       header: 'Tutor', 
-      render: (row) => row.tutor ? `${row.tutor.nombres} ${row.tutor.apellidos}` : '-'
+      render: (row) => (
+        <span className="text-sm text-gray-700">
+          {row.tutor ? `${row.tutor.nombres} ${row.tutor.apellidos}` : row.tutor_responsable || '-'}
+        </span>
+      )
     },
     { 
       header: 'Asistencia', 
       render: (row) => {
-        const key = `${row.id}-alumno`;
-        const presente = asistencias[key]?.presente ?? false;
+        const asistencia = asistencias[row.id];
+        const presente = asistencia?.presente;
+        
         return (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => handleAsistenciaChange(row.id, 'alumno', true)}
-              className={`px-4 py-2 rounded ${presente ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}
-              title="Presente"
+              onClick={() => handleAsistenciaChange(row.id, true)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                presente === true
+                  ? 'bg-green-500 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
             >
               <CheckIcon className="w-4 h-4 inline mr-1" />
               Presente
             </button>
             <button
-              onClick={() => handleAsistenciaChange(row.id, 'alumno', false)}
-              className={`px-4 py-2 rounded ${!presente && asistencias[key] ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600'}`}
-              title="Ausente"
+              onClick={() => handleAsistenciaChange(row.id, false)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                presente === false
+                  ? 'bg-red-500 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
             >
               <XMarkIcon className="w-4 h-4 inline mr-1" />
               Ausente
@@ -185,28 +220,38 @@ const ControlAsistencia = () => {
     { 
       header: 'Observaciones', 
       render: (row) => {
-        const keyAlumno = `${row.id}-alumno`;
+        const asistencia = asistencias[row.id];
         return (
           <input 
             type="text" 
-            value={asistencias[keyAlumno]?.observaciones || ''}
-            onChange={(e) => handleObservacionChange(row.id, 'alumno', e.target.value)}
+            value={asistencia?.observaciones || ''}
+            onChange={(e) => handleObservacionChange(row.id, e.target.value)}
             placeholder="Agregar observación..."
-            className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
+            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         );
       }
     }
   ];
 
-  // Calcular estadísticas
-  const totalRotaciones = rotaciones.length;
-  const alumnosPresentes = Object.values(asistencias).filter(a => a.tipo === 'alumno' && a.presente).length;
-  const alumnosAusentes = Object.values(asistencias).filter(a => a.tipo === 'alumno' && a.presente === false).length;
-  const porcentajeAsistencia = totalRotaciones > 0 ? Math.round((alumnosPresentes / totalRotaciones) * 100) : 0;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando asistencias...</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (loading) return <p>Cargando asistencias...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-700">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -214,13 +259,14 @@ const ControlAsistencia = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Control de Asistencia</h2>
-          <p className="text-gray-600 mt-1">Registro y seguimiento de asistencia diaria</p>
+          <p className="text-gray-600 mt-1">Registro diario de asistencia de alumnos en rotación</p>
         </div>
         <div className="flex gap-2">
           <Button 
             variant="secondary" 
             onClick={marcarTodosPresentes}
             className="flex items-center gap-2"
+            disabled={rotaciones.length === 0}
           >
             <CheckIcon className="w-5 h-5" />
             Marcar Todos Presentes
@@ -228,7 +274,7 @@ const ControlAsistencia = () => {
           <Button 
             variant="primary" 
             onClick={guardarAsistencias}
-            disabled={guardando}
+            disabled={guardando || rotaciones.length === 0}
             className="flex items-center gap-2"
           >
             <DocumentArrowDownIcon className="w-5 h-5" />
@@ -239,53 +285,84 @@ const ControlAsistencia = () => {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Total Alumnos</p>
-          <p className="text-2xl font-bold text-gray-800">{totalRotaciones}</p>
+        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Alumnos</p>
+              <p className="text-2xl font-bold text-gray-800">{totalRotaciones}</p>
+            </div>
+            <UserGroupIcon className="w-10 h-10 text-blue-500 opacity-50" />
+          </div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Presentes</p>
-          <p className="text-2xl font-bold text-green-600">{alumnosPresentes}</p>
+        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Presentes</p>
+              <p className="text-2xl font-bold text-green-600">{presentes}</p>
+            </div>
+            <CheckCircleIcon className="w-10 h-10 text-green-500 opacity-50" />
+          </div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Ausentes</p>
-          <p className="text-2xl font-bold text-red-600">{alumnosAusentes}</p>
+        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-red-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Ausentes</p>
+              <p className="text-2xl font-bold text-red-600">{ausentes}</p>
+            </div>
+            <XCircleIcon className="w-10 h-10 text-red-500 opacity-50" />
+          </div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">% Asistencia</p>
-          <p className="text-2xl font-bold text-blue-600">{porcentajeAsistencia}%</p>
+        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-purple-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">% Asistencia</p>
+              <p className="text-2xl font-bold text-purple-600">{porcentajeAsistencia}%</p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Selector de Fecha */}
       <div className="bg-white rounded-lg p-4 shadow-sm">
-        <div className="flex gap-4 items-center">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mr-2">Fecha:</label>
-            <input
-              type="date"
-              value={fechaSeleccionada}
-              onChange={(e) => setFechaSeleccionada(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2"
-            />
-          </div>
-          <div className="text-sm text-gray-600">
-            {rotaciones.length === 0 ? (
-              <span className="text-orange-600">No hay rotaciones activas para esta fecha</span>
-            ) : (
-              <span>{rotaciones.length} rotaciones activas</span>
-            )}
+        <div className="flex gap-4 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <CalendarIcon className="w-6 h-6 text-gray-400" />
+            <div>
+              <label className="text-sm font-medium text-gray-700 mr-2">Fecha:</label>
+              <input
+                type="date"
+                value={fechaSeleccionada}
+                onChange={(e) => setFechaSeleccionada(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="text-sm">
+              {rotaciones.length === 0 ? (
+                <span className="text-orange-600 font-medium">
+                  ⚠️ No hay rotaciones activas para esta fecha
+                </span>
+              ) : (
+                <span className="text-gray-600">
+                  <span className="font-semibold text-blue-600">{rotaciones.length}</span> rotaciones activas
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Tabla de Asistencia */}
       {rotaciones.length > 0 ? (
-        <Table columns={columns} data={rotaciones} />
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <Table columns={columns} data={rotaciones} />
+        </div>
       ) : (
         <div className="bg-white rounded-lg p-12 text-center shadow-sm">
-          <p className="text-gray-500 text-lg">No hay rotaciones activas para la fecha seleccionada</p>
-          <p className="text-gray-400 text-sm mt-2">Selecciona otra fecha o verifica que haya rotaciones en curso</p>
+          <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 text-lg font-medium">No hay rotaciones activas para la fecha seleccionada</p>
+          <p className="text-gray-400 text-sm mt-2">
+            Selecciona otra fecha o asigna rotaciones desde <strong>Gestión de Alumnos</strong>
+          </p>
         </div>
       )}
     </div>

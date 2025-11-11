@@ -204,8 +204,7 @@ const LoginPage = () => {
 
           {/* Footer */}
           <div className="mt-8 text-center text-sm text-gray-600">
-            <span>Developed by: </span>
-            <span className="font-semibold text-teal-700">Gnza</span>
+            
           </div>
         </div>
       </div>

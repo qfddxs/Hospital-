@@ -14,12 +14,7 @@ import Retribuciones from '../pages/Retribuciones'
 import GestionDocumental from '../pages/GestionDocumental'
 import TestSupabase from '../pages/TestSupabase'
 import TestCRUD from '../pages/TestCRUD'
-import PortalCentroFormador from '../pages/portal/PortalCentroFormador'
-import PortalLogin from '../pages/portal/PortalLogin'
-import PortalRegistro from '../pages/portal/PortalRegistro'
-import PortalDashboard from '../pages/portal/PortalDashboard'
-import PortalSolicitar from '../pages/portal/PortalSolicitar'
-import PortalSolicitudes from '../pages/portal/PortalSolicitudes'
+
 import { UserRoleProvider } from '../context/UserRoleContext'
 
 // Wrapper para el SessionProvider
@@ -77,46 +72,7 @@ const router = createBrowserRouter([
       </Providers>
     ),
   },
-  {
-    path: '/portal-formadora/login',
-    element: (
-      <Providers>
-        <PortalLogin />
-      </Providers>
-    ),
-  },
-  {
-    path: '/portal-formadora/registro',
-    element: (
-      <Providers>
-        <PortalRegistro />
-      </Providers>
-    ),
-  },
-  {
-    path: '/portal-formadora/dashboard',
-    element: (
-      <Providers>
-        <PortalDashboard />
-      </Providers>
-    ),
-  },
-  {
-    path: '/portal-formadora/solicitar',
-    element: (
-      <Providers>
-        <PortalSolicitar />
-      </Providers>
-    ),
-  },
-  {
-    path: '/portal-formadora/solicitudes',
-    element: (
-      <Providers>
-        <PortalSolicitudes />
-      </Providers>
-    ),
-  },
+
   {
     path: '/',
     element: (
@@ -125,10 +81,7 @@ const router = createBrowserRouter([
       </ProvidersWithRole>
     ),
     children: [
-      {
-        path: 'portal-centro',
-        element: <PortalCentroFormador />,
-      },
+
       {
         path: 'dashboard',
         element: <MainLayout />,

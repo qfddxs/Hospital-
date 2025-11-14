@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
-import Button from '../../components/UI/Button';
+import { supabase } from '../supabaseClient';
+import Button from '../components/UI/Button';
 import {
   BuildingOffice2Icon,
   ArrowLeftIcon,
@@ -15,7 +15,7 @@ import {
   PlusIcon,
   FunnelIcon
 } from '@heroicons/react/24/outline';
-import { useNivelFormacion } from '../../context/NivelFormacionContext';
+import { useNivelFormacion } from '../context/NivelFormacionContext';
 
 const PortalSolicitudes = () => {
   const navigate = useNavigate();
@@ -27,16 +27,12 @@ const PortalSolicitudes = () => {
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
   const [modalDetalle, setModalDetalle] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        navigate('/portal-formadora/login');
+        navigate('/login');
         return;
       }
 
@@ -62,7 +58,34 @@ const PortalSolicitudes = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+
+    // Suscribirse a cambios en tiempo real
+    const channel = supabase
+      .channel('mis_solicitudes_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE', // Solo escuchar actualizaciones
+          schema: 'public',
+          table: 'solicitudes_cupos'
+        },
+        (payload) => {
+          console.log('🔄 Solicitud actualizada:', payload);
+          // Recargar solicitudes cuando hay cambios
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Cleanup: desuscribirse al desmontar
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData]);
 
   const getEstadoColor = (estado) => {
     switch (estado) {
@@ -134,7 +157,7 @@ const PortalSolicitudes = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/portal-formadora/dashboard')}
+                onClick={() => navigate('/dashboard')}
                 className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <ArrowLeftIcon className="w-5 h-5" />
@@ -153,7 +176,7 @@ const PortalSolicitudes = () => {
             </div>
             <Button
               variant="primary"
-              onClick={() => navigate('/portal-formadora/solicitar')}
+              onClick={() => navigate('/solicitar')}
               className="flex items-center gap-2"
             >
               <PlusIcon className="w-5 h-5" />
@@ -257,7 +280,7 @@ const PortalSolicitudes = () => {
               {filtroEstado === 'todas' && (
                 <Button
                   variant="primary"
-                  onClick={() => navigate('/portal-formadora/solicitar')}
+                  onClick={() => navigate('/solicitar')}
                 >
                   Crear Primera Solicitud
                 </Button>

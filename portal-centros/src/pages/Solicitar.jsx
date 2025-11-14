@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
-import Button from '../../components/UI/Button';
+import { supabase } from '../supabaseClient';
+import Button from '../components/UI/Button';
 import {
   BuildingOffice2Icon,
   ArrowLeftIcon,
@@ -10,7 +10,7 @@ import {
   UserGroupIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
-import { useNivelFormacion } from '../../context/NivelFormacionContext';
+import { useNivelFormacion } from '../context/NivelFormacionContext';
 
 const PortalSolicitar = () => {
   const navigate = useNavigate();
@@ -74,7 +74,7 @@ const PortalSolicitar = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        navigate('/portal-formadora/login');
+        navigate('/login');
         return;
       }
 
@@ -147,7 +147,7 @@ const PortalSolicitar = () => {
       
       // Redirigir después de 2 segundos
       setTimeout(() => {
-        navigate('/portal-formadora/solicitudes');
+        navigate('/solicitudes');
       }, 2000);
 
     } catch (err) {
@@ -194,7 +194,7 @@ const PortalSolicitar = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/portal-formadora/dashboard')}
+              onClick={() => navigate('/dashboard')}
               className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ArrowLeftIcon className="w-5 h-5" />
@@ -362,7 +362,7 @@ const PortalSolicitar = () => {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => navigate('/portal-formadora/dashboard')}
+                onClick={() => navigate('/dashboard')}
                 disabled={submitting}
               >
                 Cancelar

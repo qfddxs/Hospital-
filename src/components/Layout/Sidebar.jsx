@@ -96,12 +96,14 @@ const Sidebar = () => {
         isCollapsed ? 'w-20' : 'w-64'
       }`}>
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 flex-shrink-0">
-          <div className={`flex items-center gap-3 overflow-hidden transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
+        <div className={`flex items-center h-16 px-4 border-b border-gray-200 flex-shrink-0 relative ${
+          isCollapsed ? 'justify-center' : 'justify-between'
+        }`}>
+          <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                 HR
             </div>
-            <div>
+            <div className={`transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
               <p className="text-sm font-bold text-gray-800 whitespace-nowrap">Hospital Regional</p>
               <p className="text-xs text-gray-500 whitespace-nowrap">Dr. Franco Ravera Zunino</p>
             </div>

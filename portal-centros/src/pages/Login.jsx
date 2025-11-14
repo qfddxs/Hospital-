@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../supabaseClient';
 import { BuildingOffice2Icon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 
-const PortalLogin = () => {
+const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -44,7 +44,7 @@ const PortalLogin = () => {
         throw new Error('No tienes permisos para acceder al portal de centros formadores');
       }
 
-      navigate('/portal-formadora/dashboard');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -127,22 +127,15 @@ const PortalLogin = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               ¿No tienes cuenta?{' '}
-              <Link to="/portal-formadora/registro" className="text-teal-600 hover:text-teal-700 font-semibold">
+              <Link to="/registro" className="text-teal-600 hover:text-teal-700 font-semibold">
                 Registrar Centro Formador
               </Link>
             </p>
           </div>
-        </div>
-
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <p>¿Eres personal del hospital?</p>
-          <Link to="/login" className="text-teal-600 hover:text-teal-700 font-semibold">
-            Ir al sistema principal
-          </Link>
         </div>
       </div>
     </div>
   );
 };
 
-export default PortalLogin;
+export default Login;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import {
   BuildingOffice2Icon,
@@ -17,12 +17,9 @@ const SolicitudCupos = () => {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState('todas');
+  const [nuevaSolicitud, setNuevaSolicitud] = useState(false);
 
-  useEffect(() => {
-    fetchSolicitudes();
-  }, [nivelFormacion]);
-
-  const fetchSolicitudes = async () => {
+  const fetchSolicitudes = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -54,7 +51,41 @@ const SolicitudCupos = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [nivelFormacion]);
+
+  useEffect(() => {
+    fetchSolicitudes();
+
+    // Suscribirse a cambios en tiempo real
+    const channel = supabase
+      .channel('solicitudes_cupos_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Escuchar INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'solicitudes_cupos'
+        },
+        (payload) => {
+          console.log('🔄 Cambio detectado en solicitudes:', payload);
+          
+          // Mostrar notificación si es una nueva solicitud
+          if (payload.eventType === 'INSERT') {
+            setNuevaSolicitud(true);
+            setTimeout(() => setNuevaSolicitud(false), 5000);
+          }
+          
+          // Recargar solicitudes cuando hay cambios
+          fetchSolicitudes();
+        }
+      )
+      .subscribe();
+
+    // Cleanup: desuscribirse al desmontar
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchSolicitudes]);
 
   const getEstadoColor = (estado) => {
     switch (estado) {
@@ -95,8 +126,7 @@ const SolicitudCupos = () => {
       const { error } = await supabase
         .from('solicitudes_cupos')
         .update({ 
-          estado: 'aprobada',
-          fecha_revision: new Date().toISOString()
+          estado: 'aprobada'
         })
         .eq('id', id);
 
@@ -119,8 +149,7 @@ const SolicitudCupos = () => {
         .from('solicitudes_cupos')
         .update({ 
           estado: 'rechazada',
-          motivo_rechazo: motivo,
-          fecha_revision: new Date().toISOString()
+          motivo_rechazo: motivo
         })
         .eq('id', id);
 
@@ -159,12 +188,31 @@ const SolicitudCupos = () => {
 
   return (
     <div className="space-y-6">
+      {/* Notificación de nueva solicitud */}
+      {nuevaSolicitud && (
+        <div className="fixed top-4 right-4 z-50 animate-bounce">
+          <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
+            <CheckCircleIcon className="w-6 h-6" />
+            <div>
+              <p className="font-semibold">¡Nueva solicitud recibida!</p>
+              <p className="text-sm">Se ha actualizado la lista automáticamente</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-800">
           Solicitud de Cupos - {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
         </h2>
-        <p className="text-gray-600 mt-1">Gestiona las solicitudes de cupos clínicos de los centros formadores</p>
+        <p className="text-gray-600 mt-1">
+          Gestiona las solicitudes de cupos clínicos de los centros formadores
+          <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-600">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            Actualización en tiempo real
+          </span>
+        </p>
       </div>
 
       {/* Estadísticas */}

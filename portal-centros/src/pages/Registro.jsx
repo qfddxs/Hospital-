@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../supabaseClient';
 import { BuildingOffice2Icon, EnvelopeIcon, LockClosedIcon, UserIcon, PhoneIcon, MapPinIcon } from '@heroicons/react/24/outline';
-import { useNivelFormacion } from '../../context/NivelFormacionContext';
+import { useNivelFormacion } from '../context/NivelFormacionContext';
 
 const PortalRegistro = () => {
   const navigate = useNavigate();
@@ -159,7 +159,7 @@ const PortalRegistro = () => {
       if (vinculoError) throw vinculoError;
 
       // Redirigir al login con mensaje de éxito
-      navigate('/portal-formadora/login?registro=exitoso');
+      navigate('/login?registro=exitoso');
     } catch (err) {
       setError(err.message || 'Error al registrar. Intenta nuevamente.');
       console.error('Error en registro:', err);
@@ -463,7 +463,7 @@ const PortalRegistro = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               ¿Ya tienes cuenta?{' '}
-              <Link to="/portal-formadora/login" className="text-teal-600 hover:text-teal-700 font-semibold">
+              <Link to="/login" className="text-teal-600 hover:text-teal-700 font-semibold">
                 Iniciar Sesión
               </Link>
             </p>

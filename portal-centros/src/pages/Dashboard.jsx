@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
-import Button from '../../components/UI/Button';
+import { supabase } from '../supabaseClient';
+import Button from '../components/UI/Button';
 import {
   BuildingOffice2Icon,
   DocumentTextIcon,
@@ -30,7 +30,7 @@ const PortalDashboard = () => {
 
       if (userError || !user) {
         console.error('Error obteniendo usuario:', userError);
-        navigate('/portal-formadora/login');
+        navigate('/login');
         return;
       }
 
@@ -51,7 +51,7 @@ const PortalDashboard = () => {
       if (!centroData) {
         console.error('No se encontró vínculo con centro formador');
         alert('No se encontró tu centro formador. Por favor contacta al administrador.');
-        navigate('/portal-formadora/login');
+        navigate('/login');
         return;
       }
 
@@ -79,7 +79,7 @@ const PortalDashboard = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/portal-formadora/login');
+    navigate('/login');
   };
 
   if (loading) {
@@ -192,7 +192,7 @@ const PortalDashboard = () => {
             </p>
             <Button
               variant="secondary"
-              onClick={() => navigate('/portal-formadora/solicitar')}
+              onClick={() => navigate('/solicitar')}
               className="bg-white text-teal-600 hover:bg-teal-50"
             >
               Nueva Solicitud
@@ -206,7 +206,7 @@ const PortalDashboard = () => {
             </p>
             <Button
               variant="secondary"
-              onClick={() => navigate('/portal-formadora/solicitudes')}
+              onClick={() => navigate('/solicitudes')}
               className="bg-white text-purple-600 hover:bg-purple-50"
             >
               Ver Todas

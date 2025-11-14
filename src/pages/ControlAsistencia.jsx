@@ -156,29 +156,29 @@ const ControlAsistencia = () => {
       header: 'Alumno', 
       render: (row) => (
         <div>
-          <p className="font-medium text-gray-900">
+          <p className="font-medium text-gray-900 dark:text-gray-100">
             {row.alumno?.nombres} {row.alumno?.apellidos}
           </p>
-          <p className="text-xs text-gray-500">{row.alumno?.rut}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{row.alumno?.rut}</p>
         </div>
       )
     },
     { 
       header: 'Carrera', 
       render: (row) => (
-        <span className="text-sm text-gray-700">{row.alumno?.carrera || '-'}</span>
+        <span className="text-sm text-gray-700 dark:text-gray-300">{row.alumno?.carrera || '-'}</span>
       )
     },
     { 
       header: 'Servicio', 
       render: (row) => (
-        <span className="text-sm text-gray-700">{row.servicio?.nombre || row.servicio_clinico || '-'}</span>
+        <span className="text-sm text-gray-700 dark:text-gray-300">{row.servicio?.nombre || row.servicio_clinico || '-'}</span>
       )
     },
     { 
       header: 'Tutor', 
       render: (row) => (
-        <span className="text-sm text-gray-700">
+        <span className="text-sm text-gray-700 dark:text-gray-300">
           {row.tutor ? `${row.tutor.nombres} ${row.tutor.apellidos}` : row.tutor_responsable || '-'}
         </span>
       )
@@ -195,8 +195,8 @@ const ControlAsistencia = () => {
               onClick={() => handleAsistenciaChange(row.id, true)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 presente === true
-                  ? 'bg-green-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-green-500 dark:bg-green-600 text-white shadow-md'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               <CheckIcon className="w-4 h-4 inline mr-1" />
@@ -206,8 +206,8 @@ const ControlAsistencia = () => {
               onClick={() => handleAsistenciaChange(row.id, false)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 presente === false
-                  ? 'bg-red-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-red-500 dark:bg-red-600 text-white shadow-md'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               <XMarkIcon className="w-4 h-4 inline mr-1" />
@@ -227,7 +227,7 @@ const ControlAsistencia = () => {
             value={asistencia?.observaciones || ''}
             onChange={(e) => handleObservacionChange(row.id, e.target.value)}
             placeholder="Agregar observación..."
-            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-1.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           />
         );
       }
@@ -238,8 +238,8 @@ const ControlAsistencia = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando asistencias...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando asistencias...</p>
         </div>
       </div>
     );
@@ -247,8 +247,8 @@ const ControlAsistencia = () => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-700">{error}</p>
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <p className="text-red-700 dark:text-red-300">{error}</p>
       </div>
     );
   }
@@ -258,8 +258,8 @@ const ControlAsistencia = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Control de Asistencia</h2>
-          <p className="text-gray-600 mt-1">Registro diario de asistencia de alumnos en rotación</p>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Control de Asistencia</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Registro diario de asistencia de alumnos en rotación</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -285,65 +285,65 @@ const ControlAsistencia = () => {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-blue-500">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-blue-500 dark:border-blue-400 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Alumnos</p>
-              <p className="text-2xl font-bold text-gray-800">{totalRotaciones}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Alumnos</p>
+              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{totalRotaciones}</p>
             </div>
-            <UserGroupIcon className="w-10 h-10 text-blue-500 opacity-50" />
+            <UserGroupIcon className="w-10 h-10 text-blue-500 dark:text-blue-400 opacity-50" />
           </div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-green-500">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-green-500 dark:border-green-400 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Presentes</p>
-              <p className="text-2xl font-bold text-green-600">{presentes}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Presentes</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{presentes}</p>
             </div>
-            <CheckCircleIcon className="w-10 h-10 text-green-500 opacity-50" />
+            <CheckCircleIcon className="w-10 h-10 text-green-500 dark:text-green-400 opacity-50" />
           </div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-red-500">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-red-500 dark:border-red-400 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Ausentes</p>
-              <p className="text-2xl font-bold text-red-600">{ausentes}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Ausentes</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{ausentes}</p>
             </div>
-            <XCircleIcon className="w-10 h-10 text-red-500 opacity-50" />
+            <XCircleIcon className="w-10 h-10 text-red-500 dark:text-red-400 opacity-50" />
           </div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-purple-500">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-purple-500 dark:border-purple-400 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">% Asistencia</p>
-              <p className="text-2xl font-bold text-purple-600">{porcentajeAsistencia}%</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">% Asistencia</p>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{porcentajeAsistencia}%</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Selector de Fecha */}
-      <div className="bg-white rounded-lg p-4 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
         <div className="flex gap-4 items-center justify-between">
           <div className="flex items-center gap-4">
-            <CalendarIcon className="w-6 h-6 text-gray-400" />
+            <CalendarIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
             <div>
-              <label className="text-sm font-medium text-gray-700 mr-2">Fecha:</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Fecha:</label>
               <input
                 type="date"
                 value={fechaSeleccionada}
                 onChange={(e) => setFechaSeleccionada(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               />
             </div>
             <div className="text-sm">
               {rotaciones.length === 0 ? (
-                <span className="text-orange-600 font-medium">
+                <span className="text-orange-600 dark:text-orange-400 font-medium">
                   ⚠️ No hay rotaciones activas para esta fecha
                 </span>
               ) : (
-                <span className="text-gray-600">
-                  <span className="font-semibold text-blue-600">{rotaciones.length}</span> rotaciones activas
+                <span className="text-gray-600 dark:text-gray-400">
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">{rotaciones.length}</span> rotaciones activas
                 </span>
               )}
             </div>
@@ -353,14 +353,14 @@ const ControlAsistencia = () => {
 
       {/* Tabla de Asistencia */}
       {rotaciones.length > 0 ? (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden transition-colors">
           <Table columns={columns} data={rotaciones} />
         </div>
       ) : (
-        <div className="bg-white rounded-lg p-12 text-center shadow-sm">
-          <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg font-medium">No hay rotaciones activas para la fecha seleccionada</p>
-          <p className="text-gray-400 text-sm mt-2">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center shadow-sm transition-colors">
+          <CalendarIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">No hay rotaciones activas para la fecha seleccionada</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
             Selecciona otra fecha o asigna rotaciones desde <strong>Gestión de Alumnos</strong>
           </p>
         </div>

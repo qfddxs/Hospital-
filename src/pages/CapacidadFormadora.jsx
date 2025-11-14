@@ -70,7 +70,7 @@ const CapacidadFormadora = () => {
       width: '110px',
       wrap: false,
       render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-teal-50 text-teal-700 text-xs font-mono font-semibold">
+        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 text-xs font-mono font-semibold">
           {row.codigo || 'N/A'}
         </span>
       )
@@ -85,12 +85,12 @@ const CapacidadFormadora = () => {
       width: '280px',
       render: (row) => (
         <div 
-          className="flex flex-col cursor-pointer hover:text-teal-600 transition-colors"
+          className="flex flex-col cursor-pointer hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
           onClick={(e) => { e.stopPropagation(); handleViewClick(row); }}
         >
-          <span className="font-semibold text-gray-900 text-sm">{row.nombre}</span>
+          <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{row.nombre}</span>
           {row.direccion && (
-            <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5 truncate" title={row.direccion}>
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate" title={row.direccion}>
               <MapPinIcon className="w-3 h-3 flex-shrink-0" />
               <span className="truncate">{row.direccion}</span>
             </div>
@@ -110,17 +110,17 @@ const CapacidadFormadora = () => {
         <div className="flex flex-col space-y-1">
           {row.contacto_nombre ? (
             <>
-              <span className="text-sm font-medium text-gray-900 truncate" title={row.contacto_nombre}>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={row.contacto_nombre}>
                 {row.contacto_nombre}
               </span>
               {row.contacto_cargo && (
-                <span className="text-xs text-gray-500 truncate" title={row.contacto_cargo}>
+                <span className="text-xs text-gray-500 dark:text-gray-400 truncate" title={row.contacto_cargo}>
                   {row.contacto_cargo}
                 </span>
               )}
             </>
           ) : (
-            <span className="text-sm text-gray-400 italic">Sin contacto</span>
+            <span className="text-sm text-gray-400 dark:text-gray-500 italic">Sin contacto</span>
           )}
         </div>
       ),
@@ -138,7 +138,7 @@ const CapacidadFormadora = () => {
           {row.email ? (
             <a 
               href={`mailto:${row.email}`} 
-              className="text-xs text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center gap-1"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline truncate flex items-center gap-1"
               title={row.email}
               onClick={(e) => e.stopPropagation()}
             >
@@ -146,12 +146,12 @@ const CapacidadFormadora = () => {
               <span className="truncate">{row.email}</span>
             </a>
           ) : (
-            <span className="text-xs text-gray-400">Sin email</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">Sin email</span>
           )}
           {row.telefono && (
             <a 
               href={`tel:${row.telefono}`}
-              className="text-xs text-teal-600 hover:text-teal-800 hover:underline flex items-center gap-1"
+              className="text-xs text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 hover:underline flex items-center gap-1"
               onClick={(e) => e.stopPropagation()}
             >
               <PhoneIcon className="w-3 h-3 flex-shrink-0" />
@@ -172,14 +172,14 @@ const CapacidadFormadora = () => {
       render: (row) => {
         const especialidades = row.especialidades || [];
         if (especialidades.length === 0) {
-          return <span className="text-xs text-gray-400 italic">Sin especialidades</span>;
+          return <span className="text-xs text-gray-400 dark:text-gray-500 italic">Sin especialidades</span>;
         }
         return (
           <div className="flex flex-wrap gap-1">
             {especialidades.slice(0, 3).map((esp, idx) => (
               <span 
                 key={idx}
-                className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 text-xs font-medium"
+                className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium"
                 title={esp}
               >
                 {esp.length > 20 ? esp.substring(0, 20) + '...' : esp}
@@ -187,7 +187,7 @@ const CapacidadFormadora = () => {
             ))}
             {especialidades.length > 3 && (
               <span 
-                className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-xs font-medium"
+                className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium"
                 title={especialidades.slice(3).join(', ')}
               >
                 +{especialidades.length - 3} más
@@ -209,14 +209,14 @@ const CapacidadFormadora = () => {
       render: (row) => (
         <div className="flex flex-col items-center space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-gray-900">{row.capacidadTotal}</span>
-            <span className="text-xs text-gray-500">total</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{row.capacidadTotal}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">total</span>
           </div>
           <div className={`
             inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold gap-1
             ${row.capacidadDisponible > 0 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' 
+              : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
             }
           `}>
             {row.capacidadDisponible > 0 ? (
@@ -238,11 +238,11 @@ const CapacidadFormadora = () => {
           <span className={`
             inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold
             ${row.estado === 'activo' 
-              ? 'bg-green-100 text-green-800 ring-1 ring-green-600/20' 
-              : 'bg-gray-100 text-gray-800 ring-1 ring-gray-600/20'
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 ring-1 ring-green-600/20 dark:ring-green-400/20' 
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 ring-1 ring-gray-600/20 dark:ring-gray-400/20'
             }
           `}>
-            <span className={`w-2 h-2 rounded-full mr-1.5 ${row.estado === 'activo' ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+            <span className={`w-2 h-2 rounded-full mr-1.5 ${row.estado === 'activo' ? 'bg-green-500 dark:bg-green-400' : 'bg-gray-500 dark:bg-gray-400'}`}></span>
             {row.estado === 'activo' ? 'Activo' : 'Inactivo'}
           </span>
         </div>
@@ -259,7 +259,7 @@ const CapacidadFormadora = () => {
               e.stopPropagation(); 
               setOpenDropdown(openDropdown === row.id ? null : row.id);
             }} 
-            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             title="Más opciones"
           >
             <EllipsisVerticalIcon className="w-5 h-5" />
@@ -271,16 +271,16 @@ const CapacidadFormadora = () => {
                 className="fixed inset-0 z-10" 
                 onClick={() => setOpenDropdown(null)}
               />
-              <div className="absolute right-0 top-10 z-20 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+              <div className="absolute right-0 top-10 z-20 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleViewClick(row);
                     setOpenDropdown(null);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3"
                 >
-                  <EyeIcon className="w-4 h-4 text-blue-600" />
+                  <EyeIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   Ver detalles
                 </button>
                 <button
@@ -289,19 +289,19 @@ const CapacidadFormadora = () => {
                     handleEditClick(row);
                     setOpenDropdown(null);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3"
                 >
-                  <PencilIcon className="w-4 h-4 text-amber-600" />
+                  <PencilIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   Editar
                 </button>
-                <div className="border-t border-gray-100 my-1" />
+                <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDeleteClick(row);
                     setOpenDropdown(null);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3"
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3"
                 >
                   <TrashIcon className="w-4 h-4" />
                   Eliminar
@@ -689,16 +689,16 @@ const CapacidadFormadora = () => {
     return cumpleFiltroEstado;
   });
 
-  if (loading) return <p>Cargando centros formadores...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (loading) return <p className="text-gray-600 dark:text-gray-400">Cargando centros formadores...</p>;
+  if (error) return <p className="text-red-500 dark:text-red-400">{error}</p>;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Capacidad Formadora</h1>
-          <p className="mt-2 text-lg text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Capacidad Formadora</h1>
+          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
             Gestiona los centros formadores y su capacidad de cupos.
           </p>
         </div>
@@ -715,40 +715,40 @@ const CapacidadFormadora = () => {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
-          <div className="bg-blue-100 p-3 rounded-xl">
-            <BuildingOffice2Icon className="w-7 h-7 text-blue-600" />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
+          <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-xl">
+            <BuildingOffice2Icon className="w-7 h-7 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <p className="text-sm text-gray-600">Centros Activos</p>
-            <p className="text-3xl font-bold text-gray-900">{centrosData.filter(c => c.estado === 'activo').length}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Centros Activos</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{centrosData.filter(c => c.estado === 'activo').length}</p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
-          <div className="bg-indigo-100 p-3 rounded-xl">
-            <ChartBarIcon className="w-7 h-7 text-indigo-600" />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
+          <div className="bg-indigo-100 dark:bg-indigo-900/30 p-3 rounded-xl">
+            <ChartBarIcon className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <p className="text-sm text-gray-600">Capacidad Total</p>
-            <p className="text-3xl font-bold text-gray-900">{centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Capacidad Total</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)}</p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
-          <div className="bg-green-100 p-3 rounded-xl">
-            <CheckCircleIcon className="w-7 h-7 text-green-600" />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
+          <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-xl">
+            <CheckCircleIcon className="w-7 h-7 text-green-600 dark:text-green-400" />
           </div>
           <div>
-            <p className="text-sm text-gray-600">Cupos Disponibles</p>
-            <p className="text-3xl font-bold text-green-600">{centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0)}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Cupos Disponibles</p>
+            <p className="text-3xl font-bold text-green-600 dark:text-green-400">{centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0)}</p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
-          <div className="bg-amber-100 p-3 rounded-xl">
-            <UserGroupIcon className="w-7 h-7 text-amber-600" />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
+          <div className="bg-amber-100 dark:bg-amber-900/30 p-3 rounded-xl">
+            <UserGroupIcon className="w-7 h-7 text-amber-600 dark:text-amber-400" />
           </div>
           <div>
-            <p className="text-sm text-gray-600">Tasa Ocupación</p>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Tasa Ocupación</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
               {centrosData.length > 0 && centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0) > 0
                 ? `${Math.round((1 - centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0) / centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)) * 100)}%`
                 : '0%'
@@ -759,18 +759,18 @@ const CapacidadFormadora = () => {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
         <div className="flex items-center gap-2">
-          <FunnelIcon className="w-5 h-5 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Filtrar por estado:</span>
+          <FunnelIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por estado:</span>
           {['todos', 'activo', 'completo'].map(estado => (
             <button
               key={estado}
               onClick={() => setFiltroEstado(estado)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 filtroEstado === estado
-                  ? 'bg-teal-100 text-teal-800'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               {estado.charAt(0).toUpperCase() + estado.slice(1)}

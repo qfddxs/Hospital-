@@ -30,16 +30,16 @@ const DocumentosAlerta = () => {
   }
 
   return (
-    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-lg">
+    <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 mb-6 rounded-r-lg transition-colors">
       <div className="flex">
         <div className="flex-shrink-0">
-          <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+          <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 dark:text-yellow-500" />
         </div>
         <div className="ml-3 flex-1">
-          <h3 className="text-sm font-medium text-yellow-800">
+          <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
             Documentos próximos a vencer
           </h3>
-          <div className="mt-2 text-sm text-yellow-700">
+          <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
             <p className="mb-2">
               Hay {documentosVencer.length} documento(s) que vencerán en los próximos 30 días:
             </p>
@@ -51,7 +51,7 @@ const DocumentosAlerta = () => {
                 </li>
               ))}
               {documentosVencer.length > 5 && (
-                <li className="text-yellow-600">
+                <li className="text-yellow-600 dark:text-yellow-500">
                   ... y {documentosVencer.length - 5} más
                 </li>
               )}
@@ -61,7 +61,7 @@ const DocumentosAlerta = () => {
         <div className="ml-auto pl-3">
           <button
             onClick={() => setMostrar(false)}
-            className="inline-flex text-yellow-400 hover:text-yellow-600"
+            className="inline-flex text-yellow-400 dark:text-yellow-500 hover:text-yellow-600 dark:hover:text-yellow-400 transition-colors"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>

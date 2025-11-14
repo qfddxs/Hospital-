@@ -141,12 +141,12 @@ const GestionAlumnos = () => {
     {
       header: 'Email',
       accessor: 'email',
-      render: (row) => <span className="text-xs">{row.email || '-'}</span>
+      render: (row) => <span className="text-xs text-gray-700 dark:text-gray-300">{row.email || '-'}</span>
     },
     {
       header: 'Estado',
       render: (row) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${row.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${row.activo ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
           }`}>
           {row.activo ? 'Activo' : 'Inactivo'}
         </span>
@@ -161,12 +161,12 @@ const GestionAlumnos = () => {
           <div className="flex items-center gap-2">
             {rotacionActiva ? (
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
                   {rotacionActiva.servicio?.nombre || 'Servicio no especificado'}
                 </span>
                 <button 
                   onClick={() => handleRotacionClick(row)} 
-                  className="text-xs text-blue-600 hover:text-blue-800 underline"
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
                   title="Cambiar rotación"
                 >
                   Cambiar
@@ -175,7 +175,7 @@ const GestionAlumnos = () => {
             ) : (
               <button
                 onClick={() => handleRotacionClick(row)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 dark:bg-purple-700 text-white text-xs font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors shadow-sm"
               >
                 <CalendarDaysIcon className="w-4 h-4" />
                 Asignar Rotación
@@ -189,13 +189,13 @@ const GestionAlumnos = () => {
       header: 'Acciones',
       render: (row) => (
         <div className="flex items-center gap-1">
-          <button onClick={() => handleViewClick(row)} className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors" title="Ver Detalles">
+          <button onClick={() => handleViewClick(row)} className="p-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" title="Ver Detalles">
             <EyeIcon className="w-4 h-4" />
           </button>
-          <button onClick={() => handleEditClick(row)} className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded transition-colors" title="Editar">
+          <button onClick={() => handleEditClick(row)} className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors" title="Editar">
             <PencilIcon className="w-4 h-4" />
           </button>
-          <button onClick={() => handleDeleteClick(row)} className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors" title="Eliminar">
+          <button onClick={() => handleDeleteClick(row)} className="p-1.5 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" title="Eliminar">
             <TrashIcon className="w-4 h-4" />
           </button>
         </div>
@@ -381,16 +381,16 @@ const GestionAlumnos = () => {
     return rotaciones.filter(r => r.alumno_id === alumnoId);
   };
 
-  if (loading) return <p>Cargando alumnos...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (loading) return <p className="text-gray-600 dark:text-gray-400">Cargando alumnos...</p>;
+  if (error) return <p className="text-red-500 dark:text-red-400">{error}</p>;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Gestión de Alumnos</h2>
-          <p className="text-gray-600 mt-1">Administración de estudiantes en rotación</p>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Gestión de Alumnos</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Administración de estudiantes en rotación</p>
         </div>
         <div className="flex gap-3">
           <Button 
@@ -410,28 +410,28 @@ const GestionAlumnos = () => {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Total Alumnos</p>
-          <p className="text-2xl font-bold text-gray-800">{alumnos.length}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Total Alumnos</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{alumnos.length}</p>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Alumnos Activos</p>
-          <p className="text-2xl font-bold text-green-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Alumnos Activos</p>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
             {alumnos.filter(a => a.activo).length}
           </p>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">En Rotación</p>
-          <p className="text-2xl font-bold text-purple-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+          <p className="text-sm text-gray-600 dark:text-gray-400">En Rotación</p>
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
             {alumnos.filter(a => {
               const rotacionesAlumno = getRotacionesAlumno(a.id);
               return rotacionesAlumno.find(r => r.estado === 'activa');
             }).length}
           </p>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Sin Rotación</p>
-          <p className="text-2xl font-bold text-orange-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Sin Rotación</p>
+          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
             {alumnos.filter(a => {
               const rotacionesAlumno = getRotacionesAlumno(a.id);
               return !rotacionesAlumno.find(r => r.estado === 'activa') && a.activo;
@@ -441,7 +441,7 @@ const GestionAlumnos = () => {
       </div>
 
       {/* Búsqueda y Filtros */}
-      <div className="bg-white rounded-lg p-4 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
         <div className="flex gap-4 items-center">
           <div className="flex-1">
             <input
@@ -449,15 +449,15 @@ const GestionAlumnos = () => {
               placeholder="Buscar por nombre o RUT..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-4 py-2"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 mr-2">Carrera:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Carrera:</label>
             <select
               value={filtroCarrera}
               onChange={(e) => setFiltroCarrera(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
             >
               <option value="todos">Todas</option>
               <option value="Medicina">Medicina</option>

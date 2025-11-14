@@ -458,8 +458,8 @@ const GestionDocumental = () => {
     return cumpleTipo && cumpleCategoria && cumpleEstado && cumpleBusqueda;
   });
 
-  if (loading) return <p>Cargando documentos...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (loading) return <p className="text-gray-600 dark:text-gray-400">Cargando documentos...</p>;
+  if (error) return <p className="text-red-500 dark:text-red-400">{error}</p>;
 
   return (
     <div className="space-y-6">
@@ -469,22 +469,22 @@ const GestionDocumental = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Gestión Documental</h2>
-          <p className="text-gray-600 mt-1">Administración de documentos y archivos del sistema</p>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Gestión Documental</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Administración de documentos y archivos del sistema</p>
         </div>
         <div className="flex gap-2">
           {/* Toggle Vista */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => setVistaActual('tabla')}
-              className={`p-2 rounded ${vistaActual === 'tabla' ? 'bg-white shadow-sm' : 'text-gray-600'}`}
+              className={`p-2 rounded ${vistaActual === 'tabla' ? 'bg-white dark:bg-gray-800 shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}
               title="Vista de tabla"
             >
               <TableCellsIcon className="w-5 h-5" />
             </button>
             <button
               onClick={() => setVistaActual('tarjetas')}
-              className={`p-2 rounded ${vistaActual === 'tarjetas' ? 'bg-white shadow-sm' : 'text-gray-600'}`}
+              className={`p-2 rounded ${vistaActual === 'tarjetas' ? 'bg-white dark:bg-gray-800 shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}
               title="Vista de tarjetas"
             >
               <Squares2X2Icon className="w-5 h-5" />
@@ -499,50 +499,50 @@ const GestionDocumental = () => {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Total Documentos</p>
-          <p className="text-2xl font-bold text-gray-800">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Total Documentos</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             {estadisticas?.total_documentos || documentos.length}
           </p>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Vigentes</p>
-          <p className="text-2xl font-bold text-green-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Vigentes</p>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
             {estadisticas?.documentos_vigentes || documentos.filter(d => d.estado === 'vigente').length}
           </p>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Por Vencer</p>
-          <p className="text-2xl font-bold text-yellow-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Por Vencer</p>
+          <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
             {estadisticas?.documentos_por_vencer || 0}
           </p>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Vencidos</p>
-          <p className="text-2xl font-bold text-red-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Vencidos</p>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">
             {estadisticas?.documentos_vencidos || documentos.filter(d => d.estado === 'vencido').length}
           </p>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Tamaño Total</p>
-          <p className="text-2xl font-bold text-indigo-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Tamaño Total</p>
+          <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
             {estadisticas?.tamaño_total_mb ? `${estadisticas.tamaño_total_mb} MB` : '-'}
           </p>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-lg p-4 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
         <div className="space-y-4">
           <div className="flex gap-4 items-center">
             <div className="flex-1 relative">
-              <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Buscar por título, descripción o tags..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg pl-10 pr-4 py-2"
               />
             </div>
             <Button 
@@ -556,13 +556,13 @@ const GestionDocumental = () => {
           </div>
 
           {mostrarFiltrosAvanzados && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-gray-200 dark:border-gray-700">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Tipo:</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Tipo:</label>
                 <select
                   value={filtroTipo}
                   onChange={(e) => setFiltroTipo(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="todos">Todos los tipos</option>
                   <option value="normativa">Normativa</option>
@@ -572,11 +572,11 @@ const GestionDocumental = () => {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Categoría:</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Categoría:</label>
                 <select
                   value={filtroCategoria}
                   onChange={(e) => setFiltroCategoria(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="todos">Todas las categorías</option>
                   {categorias.map(cat => (
@@ -585,11 +585,11 @@ const GestionDocumental = () => {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Estado:</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Estado:</label>
                 <select
                   value={filtroEstado}
                   onChange={(e) => setFiltroEstado(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="todos">Todos los estados</option>
                   <option value="vigente">Vigente</option>
@@ -619,7 +619,7 @@ const GestionDocumental = () => {
               />
             ))
           ) : (
-            <div className="col-span-full text-center py-12 text-gray-500">
+            <div className="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
               No se encontraron documentos
             </div>
           )}

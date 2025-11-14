@@ -179,8 +179,8 @@ const SolicitudCupos = () => {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando solicitudes...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 dark:border-teal-400 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando solicitudes...</p>
         </div>
       </div>
     );
@@ -191,7 +191,7 @@ const SolicitudCupos = () => {
       {/* Notificación de nueva solicitud */}
       {nuevaSolicitud && (
         <div className="fixed top-4 right-4 z-50 animate-bounce">
-          <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
+          <div className="bg-green-500 dark:bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
             <CheckCircleIcon className="w-6 h-6" />
             <div>
               <p className="font-semibold">¡Nueva solicitud recibida!</p>
@@ -203,13 +203,13 @@ const SolicitudCupos = () => {
 
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-800">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
           Solicitud de Cupos - {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
         </h2>
-        <p className="text-gray-600 mt-1">
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
           Gestiona las solicitudes de cupos clínicos de los centros formadores
-          <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-600">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+            <span className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></span>
             Actualización en tiempo real
           </span>
         </p>
@@ -217,53 +217,53 @@ const SolicitudCupos = () => {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Total Solicitudes</p>
-              <p className="text-3xl font-bold text-gray-900">{estadisticas.total}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Solicitudes</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.total}</p>
             </div>
-            <BuildingOffice2Icon className="w-12 h-12 text-gray-400" />
+            <BuildingOffice2Icon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Pendientes</p>
-              <p className="text-3xl font-bold text-yellow-600">{estadisticas.pendientes}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Pendientes</p>
+              <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{estadisticas.pendientes}</p>
             </div>
-            <ClockIcon className="w-12 h-12 text-yellow-400" />
+            <ClockIcon className="w-12 h-12 text-yellow-400 dark:text-yellow-500" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Aprobadas</p>
-              <p className="text-3xl font-bold text-green-600">{estadisticas.aprobadas}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Aprobadas</p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">{estadisticas.aprobadas}</p>
             </div>
-            <CheckCircleIcon className="w-12 h-12 text-green-400" />
+            <CheckCircleIcon className="w-12 h-12 text-green-400 dark:text-green-500" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Rechazadas</p>
-              <p className="text-3xl font-bold text-red-600">{estadisticas.rechazadas}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Rechazadas</p>
+              <p className="text-3xl font-bold text-red-600 dark:text-red-400">{estadisticas.rechazadas}</p>
             </div>
-            <XCircleIcon className="w-12 h-12 text-red-400" />
+            <XCircleIcon className="w-12 h-12 text-red-400 dark:text-red-500" />
           </div>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <FunnelIcon className="w-5 h-5 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700">Filtrar por estado:</span>
+            <FunnelIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por estado:</span>
           </div>
           <div className="flex gap-2">
             {[
@@ -277,8 +277,8 @@ const SolicitudCupos = () => {
                 onClick={() => setFiltroEstado(filtro.key)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filtroEstado === filtro.key
-                    ? 'bg-teal-100 text-teal-800 border border-teal-200'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-700'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 {filtro.label} ({filtro.count})
@@ -289,14 +289,14 @@ const SolicitudCupos = () => {
       </div>
 
       {/* Lista de Solicitudes */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
         {solicitudesFiltradas.length === 0 ? (
           <div className="p-12 text-center">
-            <BuildingOffice2Icon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <BuildingOffice2Icon className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
               No hay solicitudes {filtroEstado !== 'todas' ? filtroEstado + 's' : ''}
             </h3>
-            <p className="text-gray-500">
+            <p className="text-gray-500 dark:text-gray-400">
               {filtroEstado === 'todas' 
                 ? 'Aún no hay solicitudes de cupos de centros formadores'
                 : 'Cambia el filtro para ver otras solicitudes'
@@ -304,21 +304,21 @@ const SolicitudCupos = () => {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {solicitudesFiltradas.map((solicitud) => (
-              <div key={solicitud.id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div key={solicitud.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-                        <BuildingOffice2Icon className="w-6 h-6 text-teal-600" />
+                      <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
+                        <BuildingOffice2Icon className="w-6 h-6 text-teal-600 dark:text-teal-400" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                           {solicitud.centro_formador?.nombre}
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {solicitud.centro_formador?.codigo} • {solicitud.centro_formador?.contacto_nombre}
                         </p>
                       </div>
@@ -332,15 +332,15 @@ const SolicitudCupos = () => {
 
                     {/* Detalles */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                         <AcademicCapIcon className="w-4 h-4" />
                         <span><strong>Especialidad:</strong> {solicitud.especialidad}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                         <UserGroupIcon className="w-4 h-4" />
                         <span><strong>Cupos:</strong> {solicitud.numero_cupos}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                         <CalendarDaysIcon className="w-4 h-4" />
                         <span><strong>Período:</strong> {formatearFecha(solicitud.fecha_inicio)} - {formatearFecha(solicitud.fecha_termino)}</span>
                       </div>
@@ -348,8 +348,8 @@ const SolicitudCupos = () => {
 
                     {/* Comentarios */}
                     {solicitud.comentarios && (
-                      <div className="mb-3 p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-gray-700">
+                      <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
                           <strong>Comentarios:</strong> {solicitud.comentarios}
                         </p>
                       </div>
@@ -357,15 +357,15 @@ const SolicitudCupos = () => {
 
                     {/* Motivo de rechazo */}
                     {solicitud.motivo_rechazo && (
-                      <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-800">
+                      <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <p className="text-sm text-red-800 dark:text-red-300">
                           <strong>Motivo de rechazo:</strong> {solicitud.motivo_rechazo}
                         </p>
                       </div>
                     )}
 
                     {/* Información adicional */}
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                       <span>Solicitado el {formatearFecha(solicitud.fecha_solicitud)}</span>
                       {solicitud.solicitante && <span>Por: {solicitud.solicitante}</span>}
                     </div>
@@ -376,13 +376,13 @@ const SolicitudCupos = () => {
                     <div className="ml-6 flex flex-col gap-2">
                       <button
                         onClick={() => handleAprobar(solicitud.id)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                        className="px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors text-sm font-medium"
                       >
                         Aprobar
                       </button>
                       <button
                         onClick={() => handleRechazar(solicitud.id)}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                        className="px-4 py-2 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors text-sm font-medium"
                       >
                         Rechazar
                       </button>

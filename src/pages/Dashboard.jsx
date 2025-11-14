@@ -126,8 +126,8 @@ const Dashboard = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">{checking ? 'Verificando acceso...' : 'Cargando datos...'}</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 dark:border-teal-400 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">{checking ? 'Verificando acceso...' : 'Cargando datos...'}</p>
         </div>
       </div>
     );
@@ -142,10 +142,10 @@ const Dashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
           Dashboard de {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
         </h1>
-        <p className="mt-2 text-lg text-gray-600">
+        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
           Bienvenido. Aquí tienes un resumen de la actividad reciente del sistema.
         </p>
       </div>
@@ -156,60 +156,60 @@ const Dashboard = () => {
         <div className="lg:col-span-2 space-y-8">
           {/* Tarjetas de estadísticas principales */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
-              <div className="bg-blue-100 p-4 rounded-xl">
-                <BuildingOffice2Icon className="w-8 h-8 text-blue-600" />
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
+              <div className="bg-blue-100 dark:bg-blue-900/30 p-4 rounded-xl">
+                <BuildingOffice2Icon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Centros Formadores</p>
-                <p className="text-3xl font-bold text-gray-900">{estadisticas.centrosFormadores}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Centros Formadores</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.centrosFormadores}</p>
               </div>
             </div>
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
-              <div className="bg-green-100 p-4 rounded-xl">
-                <UserGroupIcon className="w-8 h-8 text-green-600" />
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
+              <div className="bg-green-100 dark:bg-green-900/30 p-4 rounded-xl">
+                <UserGroupIcon className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total Cupos Aprobados</p>
-                <p className="text-3xl font-bold text-gray-900">{estadisticas.totalCupos}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Cupos Aprobados</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.totalCupos}</p>
               </div>
             </div>
           </div>
 
           {/* Actividad Reciente */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Actividad Reciente</h3>
-              <Link to="/dashboard/solicitud-cupos" className="text-sm font-medium text-teal-600 hover:text-teal-800 flex items-center gap-1">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Actividad Reciente</h3>
+              <Link to="/dashboard/solicitud-cupos" className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 flex items-center gap-1">
                 Ver todo <ArrowRightIcon className="w-4 h-4" />
               </Link>
             </div>
             {actividadReciente.length === 0 ? (
               <div className="text-center py-12">
-                <DocumentTextIcon className="w-12 h-12 mx-auto text-gray-300" />
-                <p className="mt-4 text-gray-500">No hay actividad reciente para mostrar.</p>
+                <DocumentTextIcon className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600" />
+                <p className="mt-4 text-gray-500 dark:text-gray-400">No hay actividad reciente para mostrar.</p>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-200">
+              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                 {actividadReciente.map(actividad => {
                   const icons = {
-                    solicitud: <DocumentTextIcon className="w-5 h-5 text-yellow-600" />,
-                    aprobacion: <CheckCircleIcon className="w-5 h-5 text-green-600" />,
-                    rechazo: <XCircleIcon className="w-5 h-5 text-red-600" />
+                    solicitud: <DocumentTextIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />,
+                    aprobacion: <CheckCircleIcon className="w-5 h-5 text-green-600 dark:text-green-400" />,
+                    rechazo: <XCircleIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
                   };
                   return (
                     <li key={actividad.id} className="py-4 flex items-center gap-4">
                       <div className={`p-2 rounded-full ${
-                        actividad.tipo === 'solicitud' ? 'bg-yellow-100' :
-                        actividad.tipo === 'aprobacion' ? 'bg-green-100' : 'bg-red-100'
+                        actividad.tipo === 'solicitud' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
+                        actividad.tipo === 'aprobacion' ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
                       }`}>
                         {icons[actividad.tipo]}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-800">{actividad.titulo}</p>
-                        <p className="text-sm text-gray-500">{actividad.descripcion}</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{actividad.titulo}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{actividad.descripcion}</p>
                       </div>
-                      <span className="text-xs text-gray-400">hace poco</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">hace poco</span>
                     </li>
                   );
                 })}
@@ -221,29 +221,29 @@ const Dashboard = () => {
         {/* Columna lateral (1/3) */}
         <div className="space-y-8">
           {/* Resumen de Solicitudes */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Resumen de Solicitudes</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Resumen de Solicitudes</h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <ClockIcon className="w-6 h-6 text-yellow-600" />
-                  <span className="font-medium text-yellow-800">Pendientes</span>
+                  <ClockIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                  <span className="font-medium text-yellow-800 dark:text-yellow-300">Pendientes</span>
                 </div>
-                <span className="font-bold text-lg text-yellow-800">{estadisticas.solicitudesPendientes}</span>
+                <span className="font-bold text-lg text-yellow-800 dark:text-yellow-300">{estadisticas.solicitudesPendientes}</span>
               </div>
-              <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-green-600" />
-                  <span className="font-medium text-green-800">Aprobadas</span>
+                  <CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  <span className="font-medium text-green-800 dark:text-green-300">Aprobadas</span>
                 </div>
-                <span className="font-bold text-lg text-green-800">{estadisticas.solicitudesAprobadas}</span>
+                <span className="font-bold text-lg text-green-800 dark:text-green-300">{estadisticas.solicitudesAprobadas}</span>
               </div>
-              <div className="flex items-center justify-between p-4 bg-red-50 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <XCircleIcon className="w-6 h-6 text-red-600" />
-                  <span className="font-medium text-red-800">Rechazadas</span>
+                  <XCircleIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  <span className="font-medium text-red-800 dark:text-red-300">Rechazadas</span>
                 </div>
-                <span className="font-bold text-lg text-red-800">{estadisticas.solicitudesRechazadas}</span>
+                <span className="font-bold text-lg text-red-800 dark:text-red-300">{estadisticas.solicitudesRechazadas}</span>
               </div>
             </div>
           </div>

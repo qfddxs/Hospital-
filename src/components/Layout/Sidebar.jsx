@@ -92,30 +92,30 @@ const Sidebar = () => {
         />
       )}
       
-      <aside className={`fixed lg:sticky top-0 h-screen inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out ${
+      <aside className={`fixed lg:sticky top-0 h-screen inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 ease-in-out ${
         isCollapsed ? 'w-20' : 'w-64'
       }`}>
         {/* Header */}
-        <div className={`flex items-center h-16 px-4 border-b border-gray-200 flex-shrink-0 relative ${
+        <div className={`flex items-center h-16 px-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 relative ${
           isCollapsed ? 'justify-center' : 'justify-between'
         }`}>
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+            <div className="w-8 h-8 bg-teal-500 dark:bg-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                 HR
             </div>
             <div className={`transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-              <p className="text-sm font-bold text-gray-800 whitespace-nowrap">Hospital Regional</p>
-              <p className="text-xs text-gray-500 whitespace-nowrap">Dr. Franco Ravera Zunino</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap">Hospital Regional</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Dr. Franco Ravera Zunino</p>
             </div>
           </div>
           <button
             onClick={toggleSidebar}
-            className="absolute top-4 right-0 translate-x-1/2 bg-white border border-gray-300 rounded-full p-1.5 text-gray-600 hover:bg-gray-100 hover:text-teal-600 transition-all z-10 hidden lg:block"
+            className="absolute top-4 right-0 translate-x-1/2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-teal-600 dark:hover:text-teal-400 transition-all z-10 hidden lg:block"
             title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
           >
             <ChevronDoubleLeftIcon className={`w-4 h-4 transition-transform duration-300 ${isCollapsed && 'rotate-180'}`} />
           </button>
-          <button onClick={toggleSidebar} className="lg:hidden p-1 text-gray-600">
+          <button onClick={toggleSidebar} className="lg:hidden p-1 text-gray-600 dark:text-gray-300">
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
@@ -135,8 +135,8 @@ const Sidebar = () => {
                       isCollapsed ? 'justify-center' : 'px-3 gap-3'
                     } ${
                       isActive
-                        ? 'bg-teal-50 text-teal-600 font-semibold'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 '
+                        ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-semibold'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                     }`}
                     onMouseEnter={() => setHoveredItem(item.path)}
                     onMouseLeave={() => setHoveredItem(null)}
@@ -158,11 +158,11 @@ const Sidebar = () => {
                   
                   {/* Tooltip para estado colapsado */}
                   {isCollapsed && hoveredItem === item.path && (
-                    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg shadow-lg z-50 whitespace-nowrap pointer-events-none">
+                    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded-lg shadow-lg z-50 whitespace-nowrap pointer-events-none">
                       <p className="font-semibold">{item.label}</p>
-                      <p className="text-xs text-gray-300">{item.description}</p>
+                      <p className="text-xs text-gray-300 dark:text-gray-400">{item.description}</p>
                       {/* Flecha del tooltip */}
-                      <div className="absolute right-full top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                      <div className="absolute right-full top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-800 dark:bg-gray-700 rotate-45"></div>
                     </div>
                   )}
                 </li>

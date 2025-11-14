@@ -11,6 +11,7 @@ import {
   ArrowUpTrayIcon,
   EllipsisVerticalIcon,
   BuildingOffice2Icon,
+  UserGroupIcon,
   UserIcon,
   EnvelopeIcon,
   PhoneIcon,
@@ -19,7 +20,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   HashtagIcon,
-  MapPinIcon
+  MapPinIcon,
+  FunnelIcon
 } from '@heroicons/react/24/outline';
 import { useNivelFormacion } from '../context/NivelFormacionContext';
 
@@ -693,60 +695,87 @@ const CapacidadFormadora = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Capacidad Formadora</h2>
-          <p className="text-gray-600 mt-1">Gestión de centros formadores y sus capacidades</p>
+          <h1 className="text-3xl font-bold text-gray-900">Capacidad Formadora</h1>
+          <p className="mt-2 text-lg text-gray-600">
+            Gestiona los centros formadores y su capacidad de cupos.
+          </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-shrink-0">
           <Button variant="secondary" onClick={handleImportClick}>
-            <ArrowUpTrayIcon className="w-5 h-5 inline mr-2" />
-            Importar Centros Formadores con Plantilla
+            <ArrowUpTrayIcon className="w-5 h-5" />
+            <span>Importar</span>
           </Button>
           <Button variant="primary" onClick={handleAddClick}>
-            + Agregar Centro Formador
+            <span>+ Agregar Centro</span>
           </Button>
         </div>
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Centros Activos</p>
-          <p className="text-2xl font-bold text-gray-800">{centrosData.filter(c => c.estado === 'activo').length}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
+          <div className="bg-blue-100 p-3 rounded-xl">
+            <BuildingOffice2Icon className="w-7 h-7 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Centros Activos</p>
+            <p className="text-3xl font-bold text-gray-900">{centrosData.filter(c => c.estado === 'activo').length}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Capacidad Total</p>
-          <p className="text-2xl font-bold text-gray-800">{centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)}</p>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
+          <div className="bg-indigo-100 p-3 rounded-xl">
+            <ChartBarIcon className="w-7 h-7 text-indigo-600" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Capacidad Total</p>
+            <p className="text-3xl font-bold text-gray-900">{centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Cupos Disponibles</p>
-          <p className="text-2xl font-bold text-green-600">{centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0)}</p>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
+          <div className="bg-green-100 p-3 rounded-xl">
+            <CheckCircleIcon className="w-7 h-7 text-green-600" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Cupos Disponibles</p>
+            <p className="text-3xl font-bold text-green-600">{centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0)}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Tasa de Ocupación</p>
-          <p className="text-2xl font-bold text-gray-800">
-            {centrosData.length > 0 ? Math.round((1 - centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0) /
-              centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)) * 100) : 0}%
-          </p>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
+          <div className="bg-amber-100 p-3 rounded-xl">
+            <UserGroupIcon className="w-7 h-7 text-amber-600" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Tasa Ocupación</p>
+            <p className="text-3xl font-bold text-gray-900">
+              {centrosData.length > 0 && centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0) > 0
+                ? `${Math.round((1 - centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0) / centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)) * 100)}%`
+                : '0%'
+              }
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-lg p-4 shadow-sm">
-        <div className="flex gap-4 items-center">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mr-2">Estado:</label>
-            <select
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+        <div className="flex items-center gap-2">
+          <FunnelIcon className="w-5 h-5 text-gray-500" />
+          <span className="text-sm font-medium text-gray-700">Filtrar por estado:</span>
+          {['todos', 'activo', 'completo'].map(estado => (
+            <button
+              key={estado}
+              onClick={() => setFiltroEstado(estado)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filtroEstado === estado
+                  ? 'bg-teal-100 text-teal-800'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
             >
-              <option value="todos">Todos</option>
-              <option value="activo">Activo</option>
-              <option value="completo">Completo</option>
-            </select>
-          </div>
+              {estado.charAt(0).toUpperCase() + estado.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 

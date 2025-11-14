@@ -1,17 +1,14 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import StatCard from '../components/UI/StatCard';
-import ActivityItem from '../components/UI/ActivityItem';
 import {
   UserGroupIcon,
-  AcademicCapIcon,
-  CalendarDaysIcon,
-  ClipboardDocumentListIcon,
   BuildingOffice2Icon,
   CheckCircleIcon,
   ClockIcon,
-  XCircleIcon
+  XCircleIcon,
+  ArrowRightIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import { useNivelFormacion } from '../context/NivelFormacionContext';
 
@@ -145,107 +142,116 @@ const Dashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-800">
-          Dashboard - {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
-        </h2>
-        <p className="text-gray-600 mt-1">Resumen general del sistema de gestión de campos clínicos</p>
-        <p className="text-sm text-gray-500 mt-2">
-          Última actualización: {new Date().toLocaleString('es-ES', { 
-            day: '2-digit', 
-            month: '2-digit', 
-            year: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
+        <h1 className="text-3xl font-bold text-gray-900">
+          Dashboard de {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
+        </h1>
+        <p className="mt-2 text-lg text-gray-600">
+          Bienvenido. Aquí tienes un resumen de la actividad reciente del sistema.
         </p>
       </div>
 
-      {/* Estadísticas Principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Centros Formadores"
-          value={estadisticas.centrosFormadores}
-          change="+0%"
-          icon={<BuildingOffice2Icon className="w-7 h-7 text-blue-600" />}
-          iconBg="bg-blue-100"
-        />
-        <StatCard
-          title="Cupos Aprobados"
-          value={estadisticas.totalCupos}
-          change="+0%"
-          icon={<UserGroupIcon className="w-7 h-7 text-green-600" />}
-          iconBg="bg-green-100"
-        />
-        <StatCard
-          title="Solicitudes Aprobadas"
-          value={estadisticas.solicitudesAprobadas}
-          change="+0%"
-          icon={<CheckCircleIcon className="w-7 h-7 text-green-600" />}
-          iconBg="bg-green-100"
-        />
-        <StatCard
-          title="Solicitudes Pendientes"
-          value={estadisticas.solicitudesPendientes}
-          change="+0%"
-          icon={<ClockIcon className="w-7 h-7 text-yellow-600" />}
-          iconBg="bg-yellow-100"
-        />
-      </div>
-
-      {/* Resumen de Solicitudes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-yellow-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Pendientes</p>
-              <p className="text-3xl font-bold text-yellow-600">{estadisticas.solicitudesPendientes}</p>
+      {/* Contenido principal del Dashboard */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Columna principal (2/3) */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Tarjetas de estadísticas principales */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
+              <div className="bg-blue-100 p-4 rounded-xl">
+                <BuildingOffice2Icon className="w-8 h-8 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Centros Formadores</p>
+                <p className="text-3xl font-bold text-gray-900">{estadisticas.centrosFormadores}</p>
+              </div>
             </div>
-            <ClockIcon className="w-12 h-12 text-yellow-400" />
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex items-center gap-6">
+              <div className="bg-green-100 p-4 rounded-xl">
+                <UserGroupIcon className="w-8 h-8 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Cupos Aprobados</p>
+                <p className="text-3xl font-bold text-gray-900">{estadisticas.totalCupos}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Actividad Reciente */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Actividad Reciente</h3>
+              <Link to="/dashboard/solicitud-cupos" className="text-sm font-medium text-teal-600 hover:text-teal-800 flex items-center gap-1">
+                Ver todo <ArrowRightIcon className="w-4 h-4" />
+              </Link>
+            </div>
+            {actividadReciente.length === 0 ? (
+              <div className="text-center py-12">
+                <DocumentTextIcon className="w-12 h-12 mx-auto text-gray-300" />
+                <p className="mt-4 text-gray-500">No hay actividad reciente para mostrar.</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-gray-200">
+                {actividadReciente.map(actividad => {
+                  const icons = {
+                    solicitud: <DocumentTextIcon className="w-5 h-5 text-yellow-600" />,
+                    aprobacion: <CheckCircleIcon className="w-5 h-5 text-green-600" />,
+                    rechazo: <XCircleIcon className="w-5 h-5 text-red-600" />
+                  };
+                  return (
+                    <li key={actividad.id} className="py-4 flex items-center gap-4">
+                      <div className={`p-2 rounded-full ${
+                        actividad.tipo === 'solicitud' ? 'bg-yellow-100' :
+                        actividad.tipo === 'aprobacion' ? 'bg-green-100' : 'bg-red-100'
+                      }`}>
+                        {icons[actividad.tipo]}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">{actividad.titulo}</p>
+                        <p className="text-sm text-gray-500">{actividad.descripcion}</p>
+                      </div>
+                      <span className="text-xs text-gray-400">hace poco</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Aprobadas</p>
-              <p className="text-3xl font-bold text-green-600">{estadisticas.solicitudesAprobadas}</p>
+        {/* Columna lateral (1/3) */}
+        <div className="space-y-8">
+          {/* Resumen de Solicitudes */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Resumen de Solicitudes</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <ClockIcon className="w-6 h-6 text-yellow-600" />
+                  <span className="font-medium text-yellow-800">Pendientes</span>
+                </div>
+                <span className="font-bold text-lg text-yellow-800">{estadisticas.solicitudesPendientes}</span>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <CheckCircleIcon className="w-6 h-6 text-green-600" />
+                  <span className="font-medium text-green-800">Aprobadas</span>
+                </div>
+                <span className="font-bold text-lg text-green-800">{estadisticas.solicitudesAprobadas}</span>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-red-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <XCircleIcon className="w-6 h-6 text-red-600" />
+                  <span className="font-medium text-red-800">Rechazadas</span>
+                </div>
+                <span className="font-bold text-lg text-red-800">{estadisticas.solicitudesRechazadas}</span>
+              </div>
             </div>
-            <CheckCircleIcon className="w-12 h-12 text-green-400" />
           </div>
         </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Rechazadas</p>
-              <p className="text-3xl font-bold text-red-600">{estadisticas.solicitudesRechazadas}</p>
-            </div>
-            <XCircleIcon className="w-12 h-12 text-red-400" />
-          </div>
-        </div>
-      </div>
-
-      {/* Actividad Reciente */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Actividad Reciente</h3>
-        {actividadReciente.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No hay actividad reciente</p>
-        ) : (
-          <div className="space-y-2">
-            {actividadReciente.map(actividad => (
-              <ActivityItem
-                key={actividad.id}
-                titulo={actividad.titulo}
-                descripcion={actividad.descripcion}
-                tipo={actividad.tipo}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
+
 };
 
 export default Dashboard;
-

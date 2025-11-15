@@ -25,26 +25,26 @@ const Dashboard = () => {
   const [filtro, setFiltro] = useState('todas') // todas, pendiente, aprobada, rechazada
   const [busqueda, setBusqueda] = useState('')
 
+  // Helper para formatear fechas correctamente
+  const formatearFecha = (fecha) => {
+    if (!fecha) return '-'
+    const fechaLocal = fecha.includes('T') ? new Date(fecha) : new Date(fecha + 'T00:00:00')
+    return fechaLocal.toLocaleDateString('es-CL')
+  }
+
   useEffect(() => {
     fetchSolicitudes()
   }, [])
 
   const fetchSolicitudes = async () => {
     try {
-      console.log('🔍 Intentando cargar solicitudes...')
-      
       // Primero intentar consulta simple
       const { data: simpleData, error: simpleError } = await supabase
         .from('solicitudes_rotacion')
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (simpleError) {
-        console.error('❌ Error en consulta simple:', simpleError)
-        throw simpleError
-      }
-
-      console.log('✅ Solicitudes cargadas (simple):', simpleData?.length || 0)
+      if (simpleError) throw simpleError
 
       // Si funciona, intentar con relaciones
       if (simpleData && simpleData.length > 0) {
@@ -61,19 +61,15 @@ const Dashboard = () => {
           .order('created_at', { ascending: false })
 
         if (fullError) {
-          console.warn('⚠️ Error en consulta completa, usando datos simples:', fullError)
           setSolicitudes(simpleData)
         } else {
-          console.log('✅ Solicitudes con relaciones cargadas:', fullData?.length || 0)
           setSolicitudes(fullData || [])
         }
       } else {
         setSolicitudes(simpleData || [])
       }
     } catch (error) {
-      console.error('❌ Error al cargar solicitudes:', error)
-      console.error('Detalles:', error.message, error.details, error.hint)
-      alert('Error al cargar solicitudes. Por favor ejecuta EJECUTA-ESTO-AHORA.sql en Supabase.')
+      alert('Error al cargar solicitudes. Verifica tu conexión y permisos.')
     } finally {
       setLoading(false)
     }
@@ -288,13 +284,13 @@ const Dashboard = () => {
                   <div>
                     <p className="text-gray-500 dark:text-gray-500">Fecha Inicio</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {new Date(solicitud.fecha_inicio).toLocaleDateString('es-CL')}
+                      {formatearFecha(solicitud.fecha_inicio)}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-500 dark:text-gray-500">Fecha Término</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {new Date(solicitud.fecha_termino).toLocaleDateString('es-CL')}
+                      {formatearFecha(solicitud.fecha_termino)}
                     </p>
                   </div>
                   <div>

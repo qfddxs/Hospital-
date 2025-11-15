@@ -2,51 +2,52 @@
 
 Sistema de gestión de solicitudes de rotación para el Hospital Regional.
 
-## 🚀 Configuración Inicial
+## 🚀 Inicio Rápido
 
 ### 1. Instalar dependencias
 ```bash
 npm install
 ```
 
-### 2. Configurar Base de Datos en Supabase
-
-Ejecuta el archivo `database-schema.sql` en el SQL Editor de Supabase para crear las tablas necesarias:
-
-- `usuarios_portal_rotaciones` - Usuarios administradores del portal
-- `solicitudes_rotacion` - Solicitudes de rotación (ya existe)
-- `estudiantes_rotacion` - Estudiantes en solicitudes (ya existe)
-- `alumnos_hospital` - Alumnos aprobados que aparecen en el hospital
-
-### 3. Crear Usuario Administrador
-
-Después de ejecutar el SQL, crea un usuario administrador en Supabase:
-
-1. Ve a Authentication > Users en Supabase
-2. Crea un nuevo usuario con email y contraseña
-3. Copia el UUID del usuario
-4. Ejecuta este SQL reemplazando `USER_UUID_AQUI`:
-
-```sql
-INSERT INTO usuarios_portal_rotaciones (user_id, nombre, apellido, email, cargo, activo)
-VALUES (
-  'USER_UUID_AQUI',
-  'Admin',
-  'Rotaciones',
-  'admin@hospital.cl',
-  'Administrador de Rotaciones',
-  true
-);
+### 2. Configurar variables de entorno
+Crea un archivo `.env` con tus credenciales de Supabase:
+```env
+VITE_SUPABASE_URL=tu_url_de_supabase
+VITE_SUPABASE_ANON_KEY=tu_anon_key
 ```
 
-### 4. Iniciar el servidor
+### 3. Configurar base de datos
+Ejecuta los scripts SQL en orden:
+1. `docs/database/setup-minimo.sql` - Crea tablas y políticas RLS
+2. `docs/database/crear-usuario-rotacion.sql` - Crea tu primer usuario
+
+Ver guía completa en [docs/setup/INSTALACION.md](docs/setup/INSTALACION.md)
+
+### 4. Iniciar servidor
 ```bash
 npm run dev
 ```
 
-El portal estará disponible en: http://localhost:5175
+Portal disponible en: **http://localhost:5175**
 
-## 📋 Funcionalidades
+## 📁 Estructura del Proyecto
+
+```
+portal-rotaciones/
+├── src/
+│   ├── pages/              # Páginas (Login, Dashboard, SolicitudDetalle)
+│   ├── context/            # Contextos (Session, Theme)
+│   ├── routes/             # Configuración de rutas
+│   └── assets/             # Recursos estáticos
+├── docs/
+│   ├── setup/              # Guías de instalación
+│   ├── database/           # Scripts SQL
+│   ├── guides/             # Guías de uso
+│   └── troubleshooting/    # Solución de problemas
+└── public/                 # Archivos públicos
+```
+
+## 🔑 Funcionalidades Principales
 
 ### Dashboard
 - Ver todas las solicitudes de rotación
@@ -54,49 +55,73 @@ El portal estará disponible en: http://localhost:5175
 - Buscar por especialidad o centro formador
 - Estadísticas en tiempo real
 
-### Detalle de Solicitud
-- Ver información completa de la solicitud
-- Ver lista de estudiantes
-- **Editar estudiantes** (solo en solicitudes pendientes)
-- **Eliminar estudiantes** (solo en solicitudes pendientes)
-- Descargar Excel original
-- **Aprobar solicitud**: Los estudiantes se crean automáticamente en `alumnos_hospital`
-- **Rechazar solicitud**: Con motivo de rechazo
+### Gestión de Solicitudes
+- Ver detalle completo de cada solicitud
+- Editar estudiantes (solo en pendientes)
+- Eliminar estudiantes (solo en pendientes)
+- Aprobar solicitud → Crea alumnos automáticamente
+- Rechazar solicitud → Guarda motivo de rechazo
 
 ## 🔄 Flujo de Trabajo
 
 1. **Centro Formador** crea solicitud con Excel de estudiantes
-2. **Portal Rotaciones** recibe la solicitud (estado: pendiente)
-3. **Administrador** revisa y puede editar/eliminar estudiantes
+2. **Portal Rotaciones** recibe solicitud (estado: pendiente)
+3. **Administrador** revisa y puede editar estudiantes
 4. **Administrador** aprueba o rechaza:
-   - ✅ **Aprobada**: Estudiantes se crean en `alumnos` con estado "en_rotacion"
-   - ❌ **Rechazada**: Se guarda motivo de rechazo
-5. **Hospital** ve los alumnos aprobados en "Gestión de Alumnos"
+   - ✅ **Aprobada**: Estudiantes → tabla `alumnos` (estado: "en_rotacion")
+   - ❌ **Rechazada**: Se guarda motivo
+5. **Hospital** ve alumnos aprobados en "Gestión de Alumnos"
 
-## 🗄️ Estructura de Datos
+## 🛠️ Tecnologías
 
-### alumnos
-Cuando se aprueba una solicitud, cada estudiante se crea con:
-- `solicitud_rotacion_id` - Referencia a la solicitud
-- `centro_formador_id` - De qué centro viene
-- `rut`, `nombre`, `apellido`, `email`, `telefono`
-- `especialidad` - De la solicitud
-- `nivel_formacion` - Del estudiante
-- `fecha_inicio_rotacion` y `fecha_termino_rotacion`
-- `estado` - "en_rotacion" (puede cambiar a "activo", "finalizado", "inactivo")
+- **Frontend**: React 18 + Vite
+- **Estilos**: Tailwind CSS
+- **Base de Datos**: Supabase (PostgreSQL)
+- **Autenticación**: Supabase Auth
+- **Routing**: React Router v6
+- **Iconos**: Heroicons
 
-## 🔐 Seguridad
+## 📝 Scripts Disponibles
 
-- Sesión independiente con clave `rotaciones-auth`
-- Row Level Security (RLS) habilitado
-- Solo usuarios autenticados en `usuarios_portal_rotaciones` pueden acceder
-- Misma base de datos que Hospital y Centros Formadores
+```bash
+npm run dev          # Servidor de desarrollo (puerto 5175)
+npm run build        # Build de producción
+npm run preview      # Preview del build
+npm run lint         # Linter ESLint
+```
+
+## 🔒 Seguridad
+
+- Row Level Security (RLS) en todas las tablas
+- Autenticación JWT con Supabase
+- Validación de usuarios en `usuarios_portal_rotaciones`
+- Sesión independiente (clave: `rotaciones-auth`)
+- Políticas de acceso granulares
+
+## 📚 Documentación
+
+- [Instalación Completa](docs/setup/INSTALACION.md)
+- [Crear Usuarios](docs/setup/USUARIO.md)
+- [Flujo del Sistema](docs/guides/FLUJO-SISTEMA.md)
+- [Control de Acceso](docs/guides/CONTROL-ACCESO.md)
+- [Scripts de Base de Datos](docs/database/)
 
 ## 🎨 Características
 
-- ✅ Modo oscuro
+- ✅ Modo oscuro/claro
 - ✅ Diseño responsive
 - ✅ Edición inline de estudiantes
 - ✅ Validaciones en tiempo real
+- ✅ Actualizaciones en tiempo real (Supabase Realtime)
 - ✅ Feedback visual de acciones
-- ✅ Búsqueda y filtros
+- ✅ Búsqueda y filtros avanzados
+
+## 🐛 Solución de Problemas
+
+Si encuentras problemas, consulta:
+- [Troubleshooting](docs/troubleshooting/)
+- [Errores Comunes](docs/troubleshooting/ERRORES-CORREGIDOS.md)
+
+## 📄 Licencia
+
+Este proyecto es privado y confidencial.

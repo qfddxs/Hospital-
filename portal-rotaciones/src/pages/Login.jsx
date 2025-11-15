@@ -5,31 +5,51 @@ import { LockClosedIcon, UserCircleIcon } from '@heroicons/react/24/outline'
 
 const Login = () => {
   const navigate = useNavigate()
-  const { session, signIn } = useSession()
+  const { session, user, loading: sessionLoading, signIn, signOut } = useSession()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (session) {
+    // Esperar a que termine de cargar la sesión inicial
+    if (sessionLoading) return
+    
+    // Solo redirigir si hay sesión Y usuario (ambos deben estar presentes)
+    if (session && user) {
       navigate('/dashboard')
     }
-  }, [session, navigate])
+  }, [session, user, sessionLoading, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
+    setSubmitting(true)
 
     try {
-      const { error } = await signIn(email, password)
+      const { data, error } = await signIn(email, password)
+      
       if (error) throw error
-      navigate('/dashboard')
+      
+      // Si el login fue exitoso, el useEffect se encargará de navegar
+      // cuando session y user estén listos
+      if (!data) {
+        setSubmitting(false)
+      }
     } catch (err) {
-      setError(err.message || 'Error al iniciar sesión')
-    } finally {
-      setLoading(false)
+      // Traducir mensajes de error comunes
+      let errorMessage = err.message || 'Error al iniciar sesión'
+      
+      if (errorMessage.includes('Invalid login credentials')) {
+        errorMessage = 'Correo o contraseña incorrectos'
+      } else if (errorMessage.includes('Email not confirmed')) {
+        errorMessage = 'Debes confirmar tu correo electrónico'
+      } else if (errorMessage.includes('User not found')) {
+        errorMessage = 'Usuario no encontrado'
+      }
+      
+      setError(errorMessage)
+      setSubmitting(false)
     }
   }
 
@@ -93,10 +113,10 @@ const Login = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {submitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </button>
           </form>
         </div>

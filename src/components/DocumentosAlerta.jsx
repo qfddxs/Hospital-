@@ -47,7 +47,7 @@ const DocumentosAlerta = () => {
               {documentosVencer.slice(0, 5).map((doc) => (
                 <li key={doc.id}>
                   <strong>{doc.titulo}</strong> - Vence el{' '}
-                  {new Date(doc.fecha_vencimiento).toLocaleDateString('es-CL')}
+                  {doc.fecha_vencimiento ? new Date(doc.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CL') : '-'}
                 </li>
               ))}
               {documentosVencer.length > 5 && (

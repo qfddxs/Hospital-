@@ -49,6 +49,65 @@ const GestionAlumnos = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Configurar realtime para estudiantes_rotacion
+    const estudiantesChannel = supabase
+      .channel('estudiantes_rotacion_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'estudiantes_rotacion'
+        },
+        (payload) => {
+          console.log('Cambio en estudiantes_rotacion:', payload);
+          fetchData(); // Recargar datos cuando hay cambios
+        }
+      )
+      .subscribe();
+
+    // Configurar realtime para rotaciones
+    const rotacionesChannel = supabase
+      .channel('rotaciones_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rotaciones'
+        },
+        (payload) => {
+          console.log('Cambio en rotaciones:', payload);
+          fetchData(); // Recargar datos cuando hay cambios
+        }
+      )
+      .subscribe();
+
+    // Configurar realtime para solicitudes_rotacion
+    const solicitudesChannel = supabase
+      .channel('solicitudes_rotacion_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'solicitudes_rotacion',
+          filter: 'estado=eq.aprobada'
+        },
+        (payload) => {
+          console.log('Solicitud aprobada:', payload);
+          fetchData(); // Recargar datos cuando se aprueba una solicitud
+        }
+      )
+      .subscribe();
+
+    // Cleanup: desuscribirse al desmontar
+    return () => {
+      supabase.removeChannel(estudiantesChannel);
+      supabase.removeChannel(rotacionesChannel);
+      supabase.removeChannel(solicitudesChannel);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -65,17 +124,57 @@ const GestionAlumnos = () => {
       if (centrosError) throw centrosError;
       setCentrosFormadores(centros || []);
 
-      // Obtener alumnos con centro formador
+      // Obtener estudiantes en rotación con sus rotaciones asignadas
       const { data: alumnosData, error: alumnosError } = await supabase
-        .from('alumnos')
+        .from('estudiantes_rotacion')
         .select(`
           *,
-          centro_formador:centros_formadores(id, nombre)
+          solicitud:solicitudes_rotacion!inner(
+            id,
+            estado,
+            especialidad,
+            fecha_inicio,
+            fecha_termino,
+            centro_formador_id,
+            centro_formador:centros_formadores(id, nombre)
+          ),
+          rotacion:rotaciones(
+            id,
+            fecha_inicio,
+            fecha_termino,
+            horario_desde,
+            horario_hasta,
+            estado,
+            observaciones,
+            servicio:servicios_clinicos(id, nombre),
+            tutor:tutores(id, nombres, apellidos)
+          )
         `)
-        .order('apellidos');
+        .eq('solicitud.estado', 'aprobada')
+        .order('primer_apellido');
 
       if (alumnosError) throw alumnosError;
-      setAlumnos(alumnosData || []);
+      
+      // Mapear los datos para que coincidan con la estructura esperada
+      const alumnosMapeados = (alumnosData || []).map(est => ({
+        ...est,
+        centro_formador: est.solicitud?.centro_formador,
+        centro_formador_id: est.solicitud?.centro_formador_id,
+        carrera: est.carrera,
+        estado: est.rotacion?.[0]?.estado || 'en_rotacion',
+        // Datos de la rotación
+        servicio_clinico: est.rotacion?.[0]?.servicio?.nombre || est.campo_clinico_solicitado || '-',
+        servicio_clinico_id: est.rotacion?.[0]?.servicio?.id,
+        fecha_inicio_rotacion: est.rotacion?.[0]?.fecha_inicio || est.fecha_inicio || est.solicitud?.fecha_inicio,
+        fecha_termino_rotacion: est.rotacion?.[0]?.fecha_termino || est.fecha_termino || est.solicitud?.fecha_termino,
+        horario_desde: est.rotacion?.[0]?.horario_desde || est.horario_desde,
+        horario_hasta: est.rotacion?.[0]?.horario_hasta || est.horario_hasta,
+        tutor_asignado: est.rotacion?.[0]?.tutor ? 
+          `${est.rotacion[0].tutor.nombres} ${est.rotacion[0].tutor.apellidos}` : null,
+        rotacion_id: est.rotacion?.[0]?.id
+      }));
+      
+      setAlumnos(alumnosMapeados);
 
       // Obtener rotaciones con servicios y tutores
       const { data: rotacionesData, error: rotacionesError } = await supabase
@@ -130,9 +229,36 @@ const GestionAlumnos = () => {
     { header: 'RUT', accessor: 'rut' },
     {
       header: 'Nombre Completo',
-      render: (row) => `${row.nombres} ${row.apellidos}`
+      render: (row) => `${row.nombre || ''} ${row.primer_apellido || ''} ${row.segundo_apellido || ''}`.trim()
     },
     { header: 'Carrera', accessor: 'carrera' },
+    { 
+      header: 'Servicio Clínico',
+      render: (row) => (
+        <span className="text-sm font-medium text-teal-600 dark:text-teal-400">
+          {row.servicio_clinico}
+        </span>
+      )
+    },
+    {
+      header: 'Fechas Rotación',
+      render: (row) => (
+        <div className="text-xs">
+          <div>{row.fecha_inicio_rotacion ? new Date(row.fecha_inicio_rotacion).toLocaleDateString('es-CL') : '-'}</div>
+          <div className="text-gray-500">al {row.fecha_termino_rotacion ? new Date(row.fecha_termino_rotacion).toLocaleDateString('es-CL') : '-'}</div>
+        </div>
+      )
+    },
+    {
+      header: 'Horario',
+      render: (row) => (
+        <span className="text-xs">
+          {row.horario_desde && row.horario_hasta ? 
+            `${row.horario_desde.substring(0,5)} - ${row.horario_hasta.substring(0,5)}` : 
+            '-'}
+        </span>
+      )
+    },
     { header: 'Nivel', accessor: 'nivel' },
     {
       header: 'Centro Formador',
@@ -140,46 +266,36 @@ const GestionAlumnos = () => {
     },
     {
       header: 'Email',
-      accessor: 'email',
-      render: (row) => <span className="text-xs text-gray-700 dark:text-gray-300">{row.email || '-'}</span>
+      accessor: 'correo_electronico',
+      render: (row) => <span className="text-xs text-gray-700 dark:text-gray-300">{row.correo_electronico || '-'}</span>
     },
     {
-      header: 'Estado',
-      render: (row) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${row.activo ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-          }`}>
-          {row.activo ? 'Activo' : 'Inactivo'}
-        </span>
-      )
-    },
-    {
-      header: 'Rotación Actual',
+      header: 'Estado Rotación',
       render: (row) => {
-        const rotacionesAlumno = getRotacionesAlumno(row.id);
-        const rotacionActiva = rotacionesAlumno.find(r => r.estado === 'activa');
+        const estadoRotacion = row.estado || 'activa';
+        const colores = {
+          'activa': 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
+          'en_rotacion': 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
+          'finalizada': 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+          'cancelada': 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+        };
+        
         return (
-          <div className="flex items-center gap-2">
-            {rotacionActiva ? (
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
-                  {rotacionActiva.servicio?.nombre || 'Servicio no especificado'}
-                </span>
-                <button 
-                  onClick={() => handleRotacionClick(row)} 
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
-                  title="Cambiar rotación"
-                >
-                  Cambiar
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => handleRotacionClick(row)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 dark:bg-purple-700 text-white text-xs font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors shadow-sm"
-              >
-                <CalendarDaysIcon className="w-4 h-4" />
-                Asignar Rotación
-              </button>
+          <div className="flex flex-col gap-2">
+            <select
+              value={estadoRotacion}
+              onChange={(e) => handleCambiarEstadoRotacion(row, e.target.value)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium border-0 cursor-pointer ${colores[estadoRotacion] || colores.activa}`}
+            >
+              <option value="activa">Activa</option>
+              <option value="en_rotacion">En Rotación</option>
+              <option value="finalizada">Finalizada</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+            {row.tutor_asignado && (
+              <span className="text-xs text-gray-600 dark:text-gray-400">
+                Tutor: {row.tutor_asignado}
+              </span>
             )}
           </div>
         );
@@ -323,6 +439,30 @@ const GestionAlumnos = () => {
     setModalState({ type: 'delete', data: alumno });
   };
 
+  const handleCambiarEstadoRotacion = async (alumno, nuevoEstado) => {
+    try {
+      // Si tiene rotacion_id, actualizar la rotación
+      if (alumno.rotacion_id) {
+        const { error } = await supabase
+          .from('rotaciones')
+          .update({ estado: nuevoEstado })
+          .eq('id', alumno.rotacion_id);
+
+        if (error) throw error;
+      }
+
+      // Actualizar el estado local
+      setAlumnos(prev => prev.map(a => 
+        a.id === alumno.id ? { ...a, estado: nuevoEstado } : a
+      ));
+
+      console.log(`Estado de rotación actualizado a: ${nuevoEstado}`);
+    } catch (error) {
+      console.error('Error al cambiar estado:', error);
+      alert('Error al cambiar el estado de la rotación');
+    }
+  };
+
   const handleRotacionClick = (alumno = null) => {
     setRotacionFormData({
       alumno_id: alumno?.id || '',
@@ -415,27 +555,21 @@ const GestionAlumnos = () => {
           <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{alumnos.length}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Alumnos Activos</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Rotación Activa</p>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {alumnos.filter(a => a.activo).length}
+            {alumnos.filter(a => a.estado === 'activa' || a.estado === 'en_rotacion').length}
           </p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
-          <p className="text-sm text-gray-600 dark:text-gray-400">En Rotación</p>
-          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-            {alumnos.filter(a => {
-              const rotacionesAlumno = getRotacionesAlumno(a.id);
-              return rotacionesAlumno.find(r => r.estado === 'activa');
-            }).length}
+          <p className="text-sm text-gray-600 dark:text-gray-400">Finalizadas</p>
+          <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+            {alumnos.filter(a => a.estado === 'finalizada').length}
           </p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Sin Rotación</p>
-          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-            {alumnos.filter(a => {
-              const rotacionesAlumno = getRotacionesAlumno(a.id);
-              return !rotacionesAlumno.find(r => r.estado === 'activa') && a.activo;
-            }).length}
+          <p className="text-sm text-gray-600 dark:text-gray-400">Canceladas</p>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+            {alumnos.filter(a => a.estado === 'cancelada').length}
           </p>
         </div>
       </div>

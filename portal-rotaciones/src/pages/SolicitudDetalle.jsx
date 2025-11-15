@@ -52,7 +52,6 @@ const SolicitudDetalle = () => {
       setSolicitud(solicitudData)
       setEstudiantes(estudiantesData || [])
     } catch (error) {
-      console.error('Error:', error)
       alert('Error al cargar la solicitud')
       navigate('/dashboard')
     } finally {
@@ -164,7 +163,6 @@ const SolicitudDetalle = () => {
       alert('✅ Solicitud aprobada exitosamente')
       navigate('/dashboard')
     } catch (error) {
-      console.error('Error al aprobar:', error)
       alert('Error al aprobar la solicitud: ' + error.message)
     } finally {
       setProcesando(false)
@@ -207,7 +205,6 @@ const SolicitudDetalle = () => {
       alert(`Solicitud rechazada. Se eliminaron ${estudiantes.length} estudiantes.`)
       navigate('/dashboard')
     } catch (error) {
-      console.error('Error:', error)
       alert('Error al rechazar la solicitud: ' + error.message)
     } finally {
       setProcesando(false)
@@ -227,7 +224,6 @@ const SolicitudDetalle = () => {
         prev.map(est => est.id === estudianteId ? { ...est, [campo]: valor } : est)
       )
     } catch (error) {
-      console.error('Error al editar:', error)
       alert('Error al actualizar estudiante')
     }
   }
@@ -245,7 +241,6 @@ const SolicitudDetalle = () => {
 
       setEstudiantes(prev => prev.filter(est => est.id !== estudianteId))
     } catch (error) {
-      console.error('Error:', error)
       alert('Error al eliminar estudiante')
     }
   }

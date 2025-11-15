@@ -47,12 +47,24 @@ export const SessionProvider = ({ children }) => {
         .from('usuarios_portal_rotaciones')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
 
-      if (error) throw error
+      // Si hay error o no existe el usuario, simplemente no establecer datos
+      if (error || !data) {
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
+      // Si el usuario está inactivo, no establecer datos
+      if (!data.activo) {
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
       setUser(data)
     } catch (error) {
-      console.error('Error al cargar datos del usuario:', error)
       setUser(null)
     } finally {
       setLoading(false)
@@ -60,11 +72,48 @@ export const SessionProvider = ({ children }) => {
   }
 
   const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
-    return { data, error }
+    try {
+      // 1. Autenticar con Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+
+      if (error) return { data, error }
+
+      // 2. Verificar que el usuario esté en usuarios_portal_rotaciones
+      const { data: userData } = await supabase
+        .from('usuarios_portal_rotaciones')
+        .select('*')
+        .eq('user_id', data.user.id)
+        .maybeSingle()
+
+      // Si no está en la tabla, cerrar sesión y retornar error
+      if (!userData) {
+        await supabase.auth.signOut()
+        return {
+          data: null,
+          error: {
+            message: 'Credenciales incorrectas o usuario no autorizado'
+          }
+        }
+      }
+
+      // Si está inactivo, cerrar sesión y retornar error
+      if (!userData.activo) {
+        await supabase.auth.signOut()
+        return {
+          data: null,
+          error: {
+            message: 'Credenciales incorrectas o usuario no autorizado'
+          }
+        }
+      }
+
+      return { data, error: null }
+    } catch (err) {
+      return { data: null, error: err }
+    }
   }
 
   const signOut = async () => {

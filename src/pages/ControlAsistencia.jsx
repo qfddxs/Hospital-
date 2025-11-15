@@ -22,6 +22,49 @@ const ControlAsistencia = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Suscribirse a cambios en tiempo real en rotaciones
+    const rotacionesChannel = supabase
+      .channel('rotaciones_asistencia_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rotaciones'
+        },
+        (payload) => {
+          console.log('🔔 Cambio detectado en rotaciones:', payload);
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Suscribirse a cambios en asistencias
+    const asistenciasChannel = supabase
+      .channel('asistencias_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'asistencias'
+        },
+        (payload) => {
+          console.log('🔔 Cambio detectado en asistencias:', payload);
+          if (payload.new?.fecha === fechaSeleccionada || payload.old?.fecha === fechaSeleccionada) {
+            fetchData();
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup
+    return () => {
+      console.log('🧹 Limpiando realtime de Control de Asistencia');
+      supabase.removeChannel(rotacionesChannel);
+      supabase.removeChannel(asistenciasChannel);
+    };
   }, [fechaSeleccionada]);
 
   const fetchData = async () => {
@@ -29,28 +72,73 @@ const ControlAsistencia = () => {
       setLoading(true);
       setError('');
       
-      // Obtener rotaciones activas para la fecha seleccionada
-      const { data: rotacionesData, error: rotacionesError } = await supabase
-        .from('rotaciones')
+      // Obtener estudiantes en rotación con sus datos
+      const { data: estudiantesData, error: estudiantesError } = await supabase
+        .from('estudiantes_rotacion')
         .select(`
           *,
-          alumno:alumnos(
-            id, 
-            rut, 
-            nombres,
-            apellidos,
-            carrera,
+          solicitud:solicitudes_rotacion(
+            id,
+            especialidad,
+            fecha_inicio,
+            fecha_termino,
+            estado,
             centro_formador:centros_formadores(nombre)
           ),
-          servicio:servicios_clinicos(id, nombre),
-          tutor:tutores(id, nombres, apellidos)
+          rotacion:rotaciones(
+            id,
+            fecha_inicio,
+            fecha_termino,
+            estado,
+            servicio:servicios_clinicos(id, nombre),
+            tutor:tutores(id, nombres, apellidos)
+          )
         `)
-        .eq('estado', 'activa')
-        .lte('fecha_inicio', fechaSeleccionada)
-        .gte('fecha_termino', fechaSeleccionada);
+        .eq('solicitud.estado', 'aprobada');
 
-      if (rotacionesError) throw rotacionesError;
-      setRotaciones(rotacionesData || []);
+      if (estudiantesError) {
+        console.error('Error en estudiantes:', estudiantesError);
+        throw estudiantesError;
+      }
+
+      // Filtrar y mapear estudiantes que tienen rotaciones activas en la fecha seleccionada
+      const rotacionesMapeadas = (estudiantesData || [])
+        .filter(est => {
+          // Verificar si tiene rotación activa
+          if (!est.rotacion || est.rotacion.length === 0) return false;
+          
+          const rotacion = est.rotacion[0];
+          const fechaInicio = new Date(rotacion.fecha_inicio);
+          const fechaTermino = new Date(rotacion.fecha_termino);
+          const fechaActual = new Date(fechaSeleccionada);
+          
+          return rotacion.estado === 'activa' && 
+                 fechaActual >= fechaInicio && 
+                 fechaActual <= fechaTermino;
+        })
+        .map(est => {
+          const rotacion = est.rotacion[0];
+          return {
+            id: rotacion.id,
+            estudiante_id: est.id,
+            fecha_inicio: rotacion.fecha_inicio,
+            fecha_termino: rotacion.fecha_termino,
+            estado: rotacion.estado,
+            alumno: {
+              id: est.id,
+              rut: est.rut,
+              nombres: `${est.primer_nombre || ''} ${est.segundo_nombre || ''}`.trim(),
+              apellidos: `${est.primer_apellido || ''} ${est.segundo_apellido || ''}`.trim(),
+              carrera: est.carrera,
+              centro_formador: est.solicitud?.centro_formador
+            },
+            servicio: rotacion.servicio,
+            tutor: rotacion.tutor
+          };
+        });
+
+      console.log('✅ Rotaciones activas encontradas:', rotacionesMapeadas.length);
+      setRotaciones(rotacionesMapeadas);
 
       // Obtener asistencias del día seleccionado
       const { data: asistenciasData, error: asistenciasError } = await supabase
@@ -69,7 +157,7 @@ const ControlAsistencia = () => {
 
     } catch (err) {
       setError('No se pudieron cargar los datos: ' + err.message);
-      console.error('Error:', err);
+      console.error('Error completo:', err);
     } finally {
       setLoading(false);
     }
@@ -259,7 +347,13 @@ const ControlAsistencia = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Control de Asistencia</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Registro diario de asistencia de alumnos en rotación</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Registro diario de asistencia de alumnos en rotación
+            <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+              <span className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></span>
+              Actualización en tiempo real
+            </span>
+          </p>
         </div>
         <div className="flex gap-2">
           <Button 

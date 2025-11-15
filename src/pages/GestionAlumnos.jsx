@@ -10,6 +10,7 @@ const GestionAlumnos = () => {
   const [centrosFormadores, setCentrosFormadores] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [filtroCarrera, setFiltroCarrera] = useState('todos');
+  const [filtroCentro, setFiltroCentro] = useState('todos');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -327,11 +328,12 @@ const GestionAlumnos = () => {
   ];
 
   const datosFiltrados = alumnos.filter(alumno => {
-    const nombreCompleto = `${alumno.nombres} ${alumno.apellidos}`.toLowerCase();
+    const nombreCompleto = `${alumno.nombres} ${alumno.primer_apellido} ${alumno.segundo_apellido || ''}`.toLowerCase();
     const cumpleBusqueda = nombreCompleto.includes(busqueda.toLowerCase()) ||
-      alumno.rut.includes(busqueda);
+      alumno.rut.toLowerCase().includes(busqueda.toLowerCase());
     const cumpleCarrera = filtroCarrera === 'todos' || alumno.carrera === filtroCarrera;
-    return cumpleBusqueda && cumpleCarrera;
+    const cumpleCentro = filtroCentro === 'todos' || alumno.centro_formador_id === filtroCentro;
+    return cumpleBusqueda && cumpleCarrera && cumpleCentro;
   });
 
   const handleInputChange = (e) => {
@@ -583,31 +585,62 @@ const GestionAlumnos = () => {
 
       {/* Búsqueda y Filtros */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
-        <div className="flex gap-4 items-center">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Buscar por RUT o Nombre:</label>
             <input
               type="text"
-              placeholder="Buscar por nombre o RUT..."
+              placeholder="Ej: 12345678-9 o Juan Pérez"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-4 py-2"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Carrera:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Centro Formador:</label>
+            <select
+              value={filtroCentro}
+              onChange={(e) => setFiltroCentro(e.target.value)}
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+            >
+              <option value="todos">Todos los Centros</option>
+              {centrosFormadores.map(centro => (
+                <option key={centro.id} value={centro.id}>{centro.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Carrera:</label>
             <select
               value={filtroCarrera}
               onChange={(e) => setFiltroCarrera(e.target.value)}
-              className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
             >
-              <option value="todos">Todas</option>
+              <option value="todos">Todas las Carreras</option>
               <option value="Medicina">Medicina</option>
               <option value="Enfermería">Enfermería</option>
               <option value="Kinesiología">Kinesiología</option>
               <option value="Obstetricia">Obstetricia</option>
+              <option value="Nutrición">Nutrición</option>
+              <option value="Tecnología Médica">Tecnología Médica</option>
             </select>
           </div>
         </div>
+        {(busqueda || filtroCentro !== 'todos' || filtroCarrera !== 'todos') && (
+          <div className="mt-3 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <span>Mostrando {datosFiltrados.length} de {alumnos.length} alumnos</span>
+            <button
+              onClick={() => {
+                setBusqueda('');
+                setFiltroCentro('todos');
+                setFiltroCarrera('todos');
+              }}
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Limpiar filtros
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabla */}

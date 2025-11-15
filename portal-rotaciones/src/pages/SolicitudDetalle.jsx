@@ -24,6 +24,13 @@ const SolicitudDetalle = () => {
   const [mostrarRechazo, setMostrarRechazo] = useState(false)
   const [motivoRechazo, setMotivoRechazo] = useState('')
 
+  // Helper para formatear fechas correctamente
+  const formatearFecha = (fecha) => {
+    if (!fecha) return '-'
+    const fechaLocal = fecha.includes('T') ? new Date(fecha) : new Date(fecha + 'T00:00:00')
+    return fechaLocal.toLocaleDateString('es-CL')
+  }
+
   useEffect(() => {
     fetchSolicitud()
   }, [id])
@@ -326,14 +333,14 @@ const SolicitudDetalle = () => {
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-500">Fecha de Inicio</p>
               <p className="font-medium text-gray-900 dark:text-white">
-                {new Date(solicitud?.fecha_inicio).toLocaleDateString('es-CL')}
+                {formatearFecha(solicitud?.fecha_inicio)}
               </p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-500">Fecha de Término</p>
               <p className="font-medium text-gray-900 dark:text-white">
-                {new Date(solicitud?.fecha_termino).toLocaleDateString('es-CL')}
+                {formatearFecha(solicitud?.fecha_termino)}
               </p>
             </div>
 

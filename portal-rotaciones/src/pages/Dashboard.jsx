@@ -25,6 +25,13 @@ const Dashboard = () => {
   const [filtro, setFiltro] = useState('todas') // todas, pendiente, aprobada, rechazada
   const [busqueda, setBusqueda] = useState('')
 
+  // Helper para formatear fechas correctamente
+  const formatearFecha = (fecha) => {
+    if (!fecha) return '-'
+    const fechaLocal = fecha.includes('T') ? new Date(fecha) : new Date(fecha + 'T00:00:00')
+    return fechaLocal.toLocaleDateString('es-CL')
+  }
+
   useEffect(() => {
     fetchSolicitudes()
   }, [])
@@ -277,13 +284,13 @@ const Dashboard = () => {
                   <div>
                     <p className="text-gray-500 dark:text-gray-500">Fecha Inicio</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {new Date(solicitud.fecha_inicio).toLocaleDateString('es-CL')}
+                      {formatearFecha(solicitud.fecha_inicio)}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-500 dark:text-gray-500">Fecha Término</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {new Date(solicitud.fecha_termino).toLocaleDateString('es-CL')}
+                      {formatearFecha(solicitud.fecha_termino)}
                     </p>
                   </div>
                   <div>

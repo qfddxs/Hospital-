@@ -88,7 +88,7 @@ const DocumentoCard = ({ documento, onView, onDownload, onDuplicate, onDelete })
         {documento.fecha_vigencia && (
           <div className="flex items-center gap-2">
             <CalendarIcon className="w-4 h-4" />
-            <span>Vigencia: {new Date(documento.fecha_vigencia).toLocaleDateString('es-CL')}</span>
+            <span>Vigencia: {documento.fecha_vigencia ? new Date(documento.fecha_vigencia + 'T00:00:00').toLocaleDateString('es-CL') : '-'}</span>
           </div>
         )}
         {documento.tamaño_bytes && (

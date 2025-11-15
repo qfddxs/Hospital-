@@ -28,6 +28,13 @@ const GestionDocumental = () => {
   const [categorias, setCategorias] = useState([]);
   const [estadisticas, setEstadisticas] = useState(null);
   const [historial, setHistorial] = useState([]);
+
+  // Helper para formatear fechas correctamente
+  const formatearFecha = (fecha) => {
+    if (!fecha) return '-';
+    const fechaLocal = fecha.includes('T') ? new Date(fecha) : new Date(fecha + 'T00:00:00');
+    return fechaLocal.toLocaleDateString('es-CL');
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('todos');
@@ -393,7 +400,7 @@ const GestionDocumental = () => {
     },
     { 
       header: 'Fecha Subida', 
-      render: (row) => new Date(row.created_at).toLocaleDateString('es-CL')
+      render: (row) => formatearFecha(row.created_at)
     },
     { 
       header: 'Tags', 
@@ -672,11 +679,11 @@ const GestionDocumental = () => {
                 </div>
                 <div>
                   <p className="text-gray-600 font-medium mb-1">Fecha Vigencia</p>
-                  <p>{modalState.data.fecha_vigencia ? new Date(modalState.data.fecha_vigencia).toLocaleDateString('es-CL') : '-'}</p>
+                  <p>{formatearFecha(modalState.data.fecha_vigencia)}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 font-medium mb-1">Fecha Vencimiento</p>
-                  <p>{modalState.data.fecha_vencimiento ? new Date(modalState.data.fecha_vencimiento).toLocaleDateString('es-CL') : '-'}</p>
+                  <p>{formatearFecha(modalState.data.fecha_vencimiento)}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 font-medium mb-1">Archivo</p>
@@ -700,7 +707,7 @@ const GestionDocumental = () => {
                 </div>
                 <div>
                   <p className="text-gray-600 font-medium mb-1">Fecha Subida</p>
-                  <p>{new Date(modalState.data.created_at).toLocaleDateString('es-CL')}</p>
+                  <p>{formatearFecha(modalState.data.created_at)}</p>
                 </div>
               </div>
 

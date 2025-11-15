@@ -114,7 +114,10 @@ const SolicitudCupos = () => {
   };
 
   const formatearFecha = (fecha) => {
-    return new Date(fecha).toLocaleDateString('es-CL', {
+    if (!fecha) return '-';
+    // Agregar 'T00:00:00' para forzar interpretación local
+    const fechaLocal = fecha.includes('T') ? new Date(fecha) : new Date(fecha + 'T00:00:00');
+    return fechaLocal.toLocaleDateString('es-CL', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'

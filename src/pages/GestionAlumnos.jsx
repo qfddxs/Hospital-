@@ -13,6 +13,13 @@ const GestionAlumnos = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Helper para formatear fechas correctamente
+  const formatearFecha = (fecha) => {
+    if (!fecha) return '-';
+    const fechaLocal = fecha.includes('T') ? new Date(fecha) : new Date(fecha + 'T00:00:00');
+    return fechaLocal.toLocaleDateString('es-CL');
+  };
+
   const [modalState, setModalState] = useState({ type: null, data: null });
   const [formData, setFormData] = useState({
     rut: '',
@@ -244,8 +251,8 @@ const GestionAlumnos = () => {
       header: 'Fechas Rotación',
       render: (row) => (
         <div className="text-xs">
-          <div>{row.fecha_inicio_rotacion ? new Date(row.fecha_inicio_rotacion).toLocaleDateString('es-CL') : '-'}</div>
-          <div className="text-gray-500">al {row.fecha_termino_rotacion ? new Date(row.fecha_termino_rotacion).toLocaleDateString('es-CL') : '-'}</div>
+          <div>{formatearFecha(row.fecha_inicio_rotacion)}</div>
+          <div className="text-gray-500">al {formatearFecha(row.fecha_termino_rotacion)}</div>
         </div>
       )
     },
@@ -692,7 +699,7 @@ const GestionAlumnos = () => {
                         </span>
                         {rot.tutor && ` - ${rot.tutor.nombres} ${rot.tutor.apellidos}`}
                         {' - '}
-                        {new Date(rot.fecha_inicio).toLocaleDateString()} a {new Date(rot.fecha_termino).toLocaleDateString()}
+                        {formatearFecha(rot.fecha_inicio)} a {formatearFecha(rot.fecha_termino)}
                         {' '}
                         <span className={`px-2 py-1 rounded text-xs ${rot.estado === 'activa' ? 'bg-green-100 text-green-800' :
                             rot.estado === 'completada' ? 'bg-blue-100 text-blue-800' :

@@ -28,26 +28,37 @@ npm run dev
 
 Portal disponible en: **http://localhost:5173**
 
-## 📁 Estructura del Proyecto
+## 📁 Estructura del Proyecto (Monorepo)
 
 ```
 Hospital-/
-├── src/
-│   ├── components/         # Componentes reutilizables
-│   │   ├── Layout/        # Header, Sidebar, MainLayout
-│   │   └── UI/            # Componentes de interfaz
-│   ├── pages/             # Páginas principales
-│   │   ├── auth/          # Login, registro
-│   │   └── portal/        # Portal de centros formadores
-│   ├── data/              # Datos mock (desarrollo)
-│   └── supabaseClient.js  # Cliente de Supabase
-├── docs/
-│   ├── setup/             # Guías de instalación
-│   ├── database/          # Scripts SQL
-│   ├── guides/            # Guías de uso
-│   └── troubleshooting/   # Solución de problemas
-├── supabase/              # Configuración Supabase
-└── public/                # Archivos públicos
+├── src/                        # 🏥 Hospital (puerto 5173)
+│   ├── components/            # Componentes reutilizables
+│   ├── pages/                 # Páginas principales
+│   ├── utils/                 # Utilidades (dateUtils, etc.)
+│   └── supabaseClient.js      # Cliente de Supabase
+├── Centros-formadores-/        # 🎓 Centros Formadores (puerto 5174)
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── utils/
+│   ├── package.json
+│   └── vite.config.js
+├── portal-rotaciones/          # 📋 Portal Rotaciones (puerto 5175)
+│   ├── src/
+│   │   ├── pages/
+│   │   ├── context/
+│   │   └── utils/
+│   ├── docs/                  # Documentación específica
+│   ├── package.json
+│   └── vite.config.js
+├── docs/                       # 📚 Documentación general
+│   ├── setup/
+│   ├── database/
+│   ├── guides/
+│   └── troubleshooting/
+├── supabase/                   # ⚙️ Configuración Supabase
+└── public/                     # 📦 Archivos públicos
 ```
 
 ## 🔑 Funcionalidades Principales
@@ -130,13 +141,44 @@ Ver schema completo en `docs/database/schema-completo.sql`
 - [Scripts de Base de Datos](docs/database/)
 - [Solución de Problemas](docs/troubleshooting/)
 
-## 🎯 Proyectos Relacionados
+## 🎯 Ecosistema de 3 Portales (Monorepo)
 
-Este sistema forma parte de un ecosistema de 3 portales:
+Este repositorio contiene 3 aplicaciones independientes que comparten la misma base de datos:
 
-- **Hospital** (puerto 5173) - Sistema principal
-- **Centros Formadores** (puerto 5174) - Portal para universidades
-- **Portal Rotaciones** (puerto 5175) - Gestión de solicitudes
+### 🏥 Hospital (puerto 5173)
+Sistema principal para el hospital
+```bash
+npm install
+npm run dev
+```
+
+### 🎓 Centros Formadores (puerto 5174)
+Portal para universidades e instituciones
+```bash
+cd Centros-formadores-
+npm install
+npm run dev
+```
+
+### 📋 Portal Rotaciones (puerto 5175)
+Gestión de solicitudes de rotación
+```bash
+cd portal-rotaciones
+npm install
+npm run dev
+```
+
+### 🚀 Iniciar todos los portales
+```bash
+# Terminal 1 - Hospital
+npm run dev
+
+# Terminal 2 - Centros Formadores
+cd Centros-formadores- && npm run dev
+
+# Terminal 3 - Portal Rotaciones
+cd portal-rotaciones && npm run dev
+```
 
 ## 🚧 Estado del Proyecto
 

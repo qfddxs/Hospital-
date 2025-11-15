@@ -358,7 +358,71 @@ const CapacidadFormadora = () => {
         setLoading(false);
       }
     };
+
+    // Función para actualizar sin mostrar loading
+    const fetchCentrosSilent = async () => {
+      try {
+        let query = supabase
+          .from('centros_formadores')
+          .select('*');
+
+        if (nivelFormacion) {
+          query = query.or(`nivel_formacion.eq.${nivelFormacion},nivel_formacion.eq.ambos`);
+        }
+
+        const { data, error } = await query.order('nombre');
+
+        if (error) throw error;
+
+        const transformedData = data.map(centro => ({
+          id: centro.id,
+          nombre: centro.nombre,
+          codigo: centro.codigo || '',
+          direccion: centro.direccion || '',
+          telefono: centro.telefono || '',
+          email: centro.email || '',
+          contacto_nombre: centro.contacto_nombre || '',
+          contacto_cargo: centro.contacto_cargo || '',
+          especialidades: centro.especialidades || [],
+          capacidadTotal: centro.capacidad_total || 0,
+          capacidadDisponible: centro.capacidad_disponible || 0,
+          estado: centro.activo ? 'activo' : 'completo',
+          ubicacion: centro.direccion || '',
+          nivel_formacion: centro.nivel_formacion || 'pregrado'
+        }));
+
+        setCentrosData(transformedData);
+        console.log('✅ Capacidad formadora actualizada');
+      } catch (err) {
+        console.error('Error al actualizar centros:', err);
+      }
+    };
+    
     fetchCentros();
+
+    // Suscribirse a cambios en tiempo real (solo cuando hay cambios en la BD)
+    const channel = supabase
+      .channel('centros_formadores_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Escuchar INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'centros_formadores'
+        },
+        (payload) => {
+          console.log('🔔 Cambio detectado en centros formadores:', payload);
+          // Recargar centros cuando hay cambios
+          fetchCentrosSilent();
+        }
+      )
+      .subscribe();
+
+    // Cleanup: desuscribirse al desmontar
+    return () => {
+      console.log('🧹 Limpiando realtime de Capacidad Formadora');
+      supabase.removeChannel(channel);
+    };
   }, [nivelFormacion]);
 
   const handleInputChange = (e) => {
@@ -700,6 +764,10 @@ const CapacidadFormadora = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Capacidad Formadora</h1>
           <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
             Gestiona los centros formadores y su capacidad de cupos.
+            <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+              <span className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></span>
+              Actualización en tiempo real
+            </span>
           </p>
         </div>
         <div className="flex gap-3 flex-shrink-0">

@@ -123,20 +123,56 @@ const SolicitudCupos = () => {
 
   const handleAprobar = async (id) => {
     try {
-      const { error } = await supabase
+      // Obtener la solicitud para saber cuántos cupos y de qué centro
+      const solicitud = solicitudes.find(s => s.id === id);
+      if (!solicitud) {
+        alert('No se encontró la solicitud');
+        return;
+      }
+
+      // Obtener el centro formador actual
+      const { data: centroData, error: centroError } = await supabase
+        .from('centros_formadores')
+        .select('capacidad_total, capacidad_disponible')
+        .eq('id', solicitud.centro_formador_id)
+        .single();
+
+      if (centroError) throw centroError;
+
+      // Verificar que hay cupos disponibles
+      if (centroData.capacidad_disponible < solicitud.numero_cupos) {
+        alert(`No hay suficientes cupos disponibles. Disponibles: ${centroData.capacidad_disponible}, Solicitados: ${solicitud.numero_cupos}`);
+        return;
+      }
+
+      // Actualizar la solicitud a aprobada
+      const { error: updateError } = await supabase
         .from('solicitudes_cupos')
         .update({ 
           estado: 'aprobada'
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Actualizar la capacidad disponible del centro
+      const nuevaCapacidadDisponible = centroData.capacidad_disponible - solicitud.numero_cupos;
+      const { error: capacidadError } = await supabase
+        .from('centros_formadores')
+        .update({ 
+          capacidad_disponible: nuevaCapacidadDisponible
+        })
+        .eq('id', solicitud.centro_formador_id);
+
+      if (capacidadError) throw capacidadError;
+
+      console.log(`✅ Cupos actualizados: ${centroData.capacidad_disponible} → ${nuevaCapacidadDisponible}`);
       
       fetchSolicitudes();
-      alert('Solicitud aprobada exitosamente');
+      alert(`Solicitud aprobada exitosamente. Cupos disponibles actualizados: ${nuevaCapacidadDisponible}`);
     } catch (err) {
       console.error('Error:', err);
-      alert('Error al aprobar solicitud');
+      alert('Error al aprobar solicitud: ' + err.message);
     }
   };
 
@@ -159,7 +195,7 @@ const SolicitudCupos = () => {
       alert('Solicitud rechazada');
     } catch (err) {
       console.error('Error:', err);
-      alert('Error al rechazar solicitud');
+      alert('Error al rechazar solicitud: ' + err.message);
     }
   };
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSession } from '../context/SessionContext'
 import { supabase } from '../supabaseClient'
-import { FiMail, FiLock, FiLogIn } from 'react-icons/fi'
+import { EnvelopeIcon, LockClosedIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -86,7 +86,7 @@ const Login = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiMail className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                  <EnvelopeIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                 </div>
                 <input
                   id="email"
@@ -108,7 +108,7 @@ const Login = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiLock className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                  <LockClosedIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                 </div>
                 <input
                   id="password"
@@ -140,7 +140,7 @@ const Login = () => {
                 <span>Iniciando sesión...</span>
               ) : (
                 <>
-                  <FiLogIn className="w-5 h-5" />
+                  <ArrowRightOnRectangleIcon className="w-5 h-5" />
                   <span>Iniciar Sesión</span>
                 </>
               )}

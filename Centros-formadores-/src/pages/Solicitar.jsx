@@ -104,7 +104,6 @@ const PortalSolicitar = () => {
           table: 'centros_formadores'
         },
         (payload) => {
-          console.log('🔔 Cambio detectado en cupos:', payload);
           fetchCentroInfoSilent();
         }
       )
@@ -112,7 +111,6 @@ const PortalSolicitar = () => {
 
     // Cleanup
     return () => {
-      console.log('🧹 Limpiando realtime de Solicitar Cupos');
       supabase.removeChannel(channel);
     };
   }, []);
@@ -140,9 +138,10 @@ const PortalSolicitar = () => {
         setCuposTotales(centroData.centro_formador.capacidad_total || 0);
       }
       
+      // Usar contacto_nombre del centro formador como solicitante
       setFormData(prev => ({
         ...prev,
-        solicitante: user.user_metadata?.nombre_completo || ''
+        solicitante: centroData?.centro_formador?.contacto_nombre || user.user_metadata?.nombre_completo || user.email || ''
       }));
     } catch (err) {
       console.error('Error:', err);
@@ -166,10 +165,8 @@ const PortalSolicitar = () => {
       if (centroData) {
         setCuposDisponibles(centroData.capacidad_disponible || 0);
         setCuposTotales(centroData.capacidad_total || 0);
-        console.log(`✅ Cupos actualizados: ${centroData.capacidad_disponible} disponibles`);
       }
     } catch (err) {
-      console.error('Error actualizando cupos:', err);
     }
   };
 

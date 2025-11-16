@@ -77,7 +77,6 @@ const SolicitudesRotacion = () => {
           table: 'solicitudes_rotacion'
         },
         (payload) => {
-          console.log('🔄 Solicitud de rotación actualizada:', payload);
           fetchData();
         }
       )

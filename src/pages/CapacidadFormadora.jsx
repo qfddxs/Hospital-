@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import Modal from '../components/UI/Modal';
+import Loader from '../components/Loader';
 import { supabase } from '../supabaseClient';
 import { 
   EyeIcon, 
@@ -392,9 +393,7 @@ const CapacidadFormadora = () => {
         }));
 
         setCentrosData(transformedData);
-        console.log('✅ Capacidad formadora actualizada');
       } catch (err) {
-        console.error('Error al actualizar centros:', err);
       }
     };
     
@@ -753,7 +752,7 @@ const CapacidadFormadora = () => {
     return cumpleFiltroEstado;
   });
 
-  if (loading) return <p className="text-gray-600 dark:text-gray-400">Cargando centros formadores...</p>;
+  if (loading) return <Loader message="Cargando centros formadores..." />;
   if (error) return <p className="text-red-500 dark:text-red-400">{error}</p>;
 
   return (

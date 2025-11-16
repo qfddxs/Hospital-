@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
+import Loader from '../components/Loader';
 import {
   BuildingOffice2Icon,
   CalendarDaysIcon,
@@ -17,7 +18,6 @@ const SolicitudCupos = () => {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState('todas');
-  const [nuevaSolicitud, setNuevaSolicitud] = useState(false);
 
   const fetchSolicitudes = useCallback(async () => {
     try {
@@ -67,14 +67,6 @@ const SolicitudCupos = () => {
           table: 'solicitudes_cupos'
         },
         (payload) => {
-          console.log('🔄 Cambio detectado en solicitudes:', payload);
-          
-          // Mostrar notificación si es una nueva solicitud
-          if (payload.eventType === 'INSERT') {
-            setNuevaSolicitud(true);
-            setTimeout(() => setNuevaSolicitud(false), 5000);
-          }
-          
           // Recargar solicitudes cuando hay cambios
           fetchSolicitudes();
         }
@@ -169,8 +161,6 @@ const SolicitudCupos = () => {
 
       if (capacidadError) throw capacidadError;
 
-      console.log(`✅ Cupos actualizados: ${centroData.capacidad_disponible} → ${nuevaCapacidadDisponible}`);
-      
       fetchSolicitudes();
       alert(`Solicitud aprobada exitosamente. Cupos disponibles actualizados: ${nuevaCapacidadDisponible}`);
     } catch (err) {
@@ -215,31 +205,11 @@ const SolicitudCupos = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 dark:border-teal-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando solicitudes...</p>
-        </div>
-      </div>
-    );
+    return <Loader message="Cargando solicitudes..." />;
   }
 
   return (
     <div className="space-y-6">
-      {/* Notificación de nueva solicitud */}
-      {nuevaSolicitud && (
-        <div className="fixed top-4 right-4 z-50 animate-bounce">
-          <div className="bg-green-500 dark:bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
-            <CheckCircleIcon className="w-6 h-6" />
-            <div>
-              <p className="font-semibold">¡Nueva solicitud recibida!</p>
-              <p className="text-sm">Se ha actualizado la lista automáticamente</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
@@ -405,8 +375,8 @@ const SolicitudCupos = () => {
 
                     {/* Información adicional */}
                     <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                      <span>Solicitado el {formatearFecha(solicitud.fecha_solicitud)}</span>
-                      {solicitud.solicitante && <span>Por: {solicitud.solicitante}</span>}
+                      <span>Solicitado el {formatearFecha(solicitud.created_at)}</span>
+                      {solicitud.centro_formador?.contacto_nombre && <span>Por: {solicitud.centro_formador.contacto_nombre}</span>}
                     </div>
                   </div>
 

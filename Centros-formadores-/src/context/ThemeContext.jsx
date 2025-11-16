@@ -14,18 +14,13 @@ export const ThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Verificar si hay preferencia guardada
     const saved = localStorage.getItem('darkMode');
-    console.log('Initial theme from localStorage:', saved);
     
     if (saved !== null) {
-      const isDark = JSON.parse(saved);
-      console.log('Using saved preference:', isDark ? 'dark' : 'light');
-      return isDark;
+      return JSON.parse(saved);
     }
     
     // Si no, usar preferencia del sistema
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    console.log('Using system preference:', systemPrefersDark ? 'dark' : 'light');
-    return systemPrefersDark;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
   useEffect(() => {

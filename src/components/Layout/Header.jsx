@@ -3,6 +3,7 @@ import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { useSession } from '../../context/SessionContext';
 import { useNivelFormacion } from '../../context/NivelFormacionContext';
 import ThemeToggle from '../UI/ThemeToggle';
+import NotificacionesSolicitudes from '../NotificacionesSolicitudes';
 
 const Header = () => {
   const { nivelFormacion, setNivelFormacion } = useNivelFormacion();
@@ -47,6 +48,9 @@ const Header = () => {
               Postgrado
             </button>
           </div>
+
+          {/* Notificaciones */}
+          <NotificacionesSolicitudes />
 
           {/* Toggle Dark Mode */}
           <ThemeToggle />

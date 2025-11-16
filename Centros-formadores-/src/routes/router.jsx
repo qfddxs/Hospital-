@@ -3,7 +3,6 @@ import { SessionProvider } from '../context/SessionContext'
 import { NivelFormacionProvider } from '../context/NivelFormacionContext'
 import { ThemeProvider } from '../context/ThemeContext'
 import Login from '../pages/Login'
-import Registro from '../pages/Registro'
 import Dashboard from '../pages/Dashboard'
 import Solicitar from '../pages/Solicitar'
 import Solicitudes from '../pages/Solicitudes'
@@ -34,14 +33,6 @@ const router = createBrowserRouter([
     element: (
       <Providers>
         <Login />
-      </Providers>
-    )
-  },
-  {
-    path: '/registro',
-    element: (
-      <Providers>
-        <Registro />
       </Providers>
     )
   },

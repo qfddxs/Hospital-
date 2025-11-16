@@ -14,8 +14,6 @@ import {
 } from '@heroicons/react/24/outline';
 
 const PortalDashboard = () => {
-  console.log('🚀 PortalDashboard component loaded');
-
   const navigate = useNavigate();
   const [centroInfo, setCentroInfo] = useState(null);
   const [solicitudes, setSolicitudes] = useState([]);
@@ -24,7 +22,6 @@ const PortalDashboard = () => {
   const [ultimaActualizacion, setUltimaActualizacion] = useState(new Date());
 
   useEffect(() => {
-    console.log('🔄 useEffect ejecutándose');
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -32,8 +29,6 @@ const PortalDashboard = () => {
   // Efecto separado para realtime (solo cuando hay cambios en la BD)
   useEffect(() => {
     if (!centroInfo?.centro_formador_id) return;
-
-    console.log('🔄 Configurando realtime...');
 
     // Suscripción a cambios en tiempo real para solicitudes de cupos
     const channelCupos = supabase
@@ -46,7 +41,6 @@ const PortalDashboard = () => {
           table: 'solicitudes_cupos'
         },
         (payload) => {
-          console.log('🔔 Cambio detectado en solicitudes de cupos:', payload);
           fetchDataSilent();
         }
       )
@@ -63,7 +57,6 @@ const PortalDashboard = () => {
           table: 'solicitudes_rotacion'
         },
         (payload) => {
-          console.log('🔔 Cambio detectado en solicitudes de rotación:', payload);
           fetchDataSilent();
         }
       )
@@ -71,7 +64,6 @@ const PortalDashboard = () => {
 
     // Cleanup: desuscribirse al desmontar
     return () => {
-      console.log('🧹 Limpiando realtime...');
       supabase.removeChannel(channelCupos);
       supabase.removeChannel(channelRotacion);
     };
@@ -82,12 +74,9 @@ const PortalDashboard = () => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        console.error('Error obteniendo usuario:', userError);
         navigate('/login');
         return;
       }
-
-      console.log('✅ Usuario autenticado:', user.id);
 
       // Obtener información del centro
       const { data: centroData, error: centroError } = await supabase
@@ -97,18 +86,14 @@ const PortalDashboard = () => {
         .maybeSingle();
 
       if (centroError) {
-        console.error('❌ Error obteniendo centro:', centroError);
         throw centroError;
       }
 
       if (!centroData) {
-        console.error('❌ No se encontró vínculo con centro formador');
         alert('No se encontró tu centro formador. Por favor contacta al administrador.');
         navigate('/login');
         return;
       }
-
-      console.log('✅ Centro encontrado:', centroData);
       setCentroInfo(centroData);
 
       // Obtener solicitudes de cupos del centro
@@ -119,9 +104,7 @@ const PortalDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (solicitudesError) {
-        console.error('❌ Error obteniendo solicitudes de cupos:', solicitudesError);
-      } else {
-        console.log('✅ Solicitudes de cupos obtenidas:', solicitudesData?.length || 0);
+        // Error silencioso
       }
 
       // Obtener solicitudes de rotación del centro
@@ -132,15 +115,13 @@ const PortalDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (solicitudesRotacionError) {
-        console.error('❌ Error obteniendo solicitudes de rotación:', solicitudesRotacionError);
-      } else {
-        console.log('✅ Solicitudes de rotación obtenidas:', solicitudesRotacionData?.length || 0);
+        // Error silencioso
       }
 
       setSolicitudes(solicitudesData || []);
       setSolicitudesRotacion(solicitudesRotacionData || []);
     } catch (err) {
-      console.error('❌ Error general:', err);
+      // Error silencioso
     } finally {
       setLoading(false);
     }
@@ -169,7 +150,7 @@ const PortalDashboard = () => {
       setSolicitudesRotacion(solicitudesRotacionData || []);
       setUltimaActualizacion(new Date());
     } catch (err) {
-      console.error('❌ Error en actualización silenciosa:', err);
+      // Error silencioso
     }
   };
 

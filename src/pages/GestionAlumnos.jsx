@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import Modal from '../components/UI/Modal';
+import Loader from '../components/Loader';
 import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, ExclamationTriangleIcon, CalendarDaysIcon } from '@heroicons/react/24/solid';
 
 const GestionAlumnos = () => {
@@ -37,11 +38,9 @@ const GestionAlumnos = () => {
   // Estados para rotaciones
   const [rotaciones, setRotaciones] = useState([]);
   const [serviciosClinicos, setServiciosClinicos] = useState([]);
-  const [tutores, setTutores] = useState([]);
   const [rotacionFormData, setRotacionFormData] = useState({
     alumno_id: '',
     servicio_id: '',
-    tutor_id: '',
     fecha_inicio: '',
     fecha_termino: '',
     horas_semanales: 40,
@@ -58,18 +57,17 @@ const GestionAlumnos = () => {
   useEffect(() => {
     fetchData();
 
-    // Configurar realtime para estudiantes_rotacion
-    const estudiantesChannel = supabase
-      .channel('estudiantes_rotacion_changes')
+    // Configurar realtime para alumnos
+    const alumnosChannel = supabase
+      .channel('alumnos_changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'estudiantes_rotacion'
+          table: 'alumnos'
         },
         (payload) => {
-          console.log('Cambio en estudiantes_rotacion:', payload);
           fetchData(); // Recargar datos cuando hay cambios
         }
       )
@@ -86,7 +84,6 @@ const GestionAlumnos = () => {
           table: 'rotaciones'
         },
         (payload) => {
-          console.log('Cambio en rotaciones:', payload);
           fetchData(); // Recargar datos cuando hay cambios
         }
       )
@@ -104,7 +101,6 @@ const GestionAlumnos = () => {
           filter: 'estado=eq.aprobada'
         },
         (payload) => {
-          console.log('Solicitud aprobada:', payload);
           fetchData(); // Recargar datos cuando se aprueba una solicitud
         }
       )
@@ -112,7 +108,7 @@ const GestionAlumnos = () => {
 
     // Cleanup: desuscribirse al desmontar
     return () => {
-      supabase.removeChannel(estudiantesChannel);
+      supabase.removeChannel(alumnosChannel);
       supabase.removeChannel(rotacionesChannel);
       supabase.removeChannel(solicitudesChannel);
     };
@@ -132,20 +128,12 @@ const GestionAlumnos = () => {
       if (centrosError) throw centrosError;
       setCentrosFormadores(centros || []);
 
-      // Obtener estudiantes en rotación con sus rotaciones asignadas
+      // Obtener alumnos en rotación con sus rotaciones asignadas
       const { data: alumnosData, error: alumnosError } = await supabase
-        .from('estudiantes_rotacion')
+        .from('alumnos')
         .select(`
           *,
-          solicitud:solicitudes_rotacion!inner(
-            id,
-            estado,
-            especialidad,
-            fecha_inicio,
-            fecha_termino,
-            centro_formador_id,
-            centro_formador:centros_formadores(id, nombre)
-          ),
+          centro_formador:centros_formadores(id, nombre),
           rotacion:rotaciones(
             id,
             fecha_inicio,
@@ -154,32 +142,28 @@ const GestionAlumnos = () => {
             horario_hasta,
             estado,
             observaciones,
-            servicio:servicios_clinicos(id, nombre),
-            tutor:tutores(id, nombres, apellidos)
+            servicio:servicios_clinicos(id, nombre)
           )
         `)
-        .eq('solicitud.estado', 'aprobada')
+        .eq('estado', 'en_rotacion')
         .order('primer_apellido');
 
       if (alumnosError) throw alumnosError;
       
-      // Mapear los datos para que coincidan con la estructura esperada
-      const alumnosMapeados = (alumnosData || []).map(est => ({
-        ...est,
-        centro_formador: est.solicitud?.centro_formador,
-        centro_formador_id: est.solicitud?.centro_formador_id,
-        carrera: est.carrera,
-        estado: est.rotacion?.[0]?.estado || 'en_rotacion',
+      // Los datos ya vienen en la estructura correcta
+      const alumnosMapeados = (alumnosData || []).map(alumno => ({
+        ...alumno,
+        carrera: alumno.carrera,
+        estado: alumno.rotacion?.[0]?.estado || 'en_rotacion',
         // Datos de la rotación
-        servicio_clinico: est.rotacion?.[0]?.servicio?.nombre || est.campo_clinico_solicitado || '-',
-        servicio_clinico_id: est.rotacion?.[0]?.servicio?.id,
-        fecha_inicio_rotacion: est.rotacion?.[0]?.fecha_inicio || est.fecha_inicio || est.solicitud?.fecha_inicio,
-        fecha_termino_rotacion: est.rotacion?.[0]?.fecha_termino || est.fecha_termino || est.solicitud?.fecha_termino,
-        horario_desde: est.rotacion?.[0]?.horario_desde || est.horario_desde,
-        horario_hasta: est.rotacion?.[0]?.horario_hasta || est.horario_hasta,
-        tutor_asignado: est.rotacion?.[0]?.tutor ? 
-          `${est.rotacion[0].tutor.nombres} ${est.rotacion[0].tutor.apellidos}` : null,
-        rotacion_id: est.rotacion?.[0]?.id
+        servicio_clinico: alumno.rotacion?.[0]?.servicio?.nombre || alumno.campo_clinico_solicitado || '-',
+        servicio_clinico_id: alumno.rotacion?.[0]?.servicio?.id,
+        fecha_inicio_rotacion: alumno.rotacion?.[0]?.fecha_inicio || alumno.fecha_inicio,
+        fecha_termino_rotacion: alumno.rotacion?.[0]?.fecha_termino || alumno.fecha_termino,
+        horario_desde: alumno.rotacion?.[0]?.horario_desde || alumno.horario_desde,
+        horario_hasta: alumno.rotacion?.[0]?.horario_hasta || alumno.horario_hasta,
+        tutor_asignado: alumno.contacto_nombre || null,
+        rotacion_id: alumno.rotacion?.[0]?.id
       }));
       
       setAlumnos(alumnosMapeados);
@@ -190,7 +174,7 @@ const GestionAlumnos = () => {
         .select(`
           *,
           servicio:servicios_clinicos(id, nombre),
-          tutor:tutores(id, nombres, apellidos)
+          alumno:alumnos(contacto_nombre, contacto_email)
         `)
         .order('fecha_inicio', { ascending: false });
 
@@ -212,19 +196,7 @@ const GestionAlumnos = () => {
         setServiciosClinicos(serviciosData || []);
       }
 
-      // Obtener tutores
-      const { data: tutoresData, error: tutoresError } = await supabase
-        .from('tutores')
-        .select('*')
-        .eq('activo', true)
-        .order('apellidos');
-
-      if (tutoresError) {
-        console.error('Error cargando tutores:', tutoresError);
-      } else {
-        console.log('Tutores cargados:', tutoresData);
-        setTutores(tutoresData || []);
-      }
+      // Ya no se necesita cargar tutores - se usa contacto_nombre del alumno
     } catch (err) {
       setError('No se pudieron cargar los alumnos.');
       console.error('Error:', err);
@@ -267,7 +239,14 @@ const GestionAlumnos = () => {
         </span>
       )
     },
-    { header: 'Nivel', accessor: 'nivel' },
+    { 
+      header: 'Nivel', 
+      render: (row) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {row.nivel_que_cursa || '-'}
+        </span>
+      )
+    },
     {
       header: 'Centro Formador',
       render: (row) => row.centro_formador?.nombre || '-'
@@ -490,7 +469,6 @@ const GestionAlumnos = () => {
     setRotacionFormData({
       alumno_id: '',
       servicio_id: '',
-      tutor_id: '',
       fecha_inicio: '',
       fecha_termino: '',
       horas_semanales: 40,
@@ -530,7 +508,7 @@ const GestionAlumnos = () => {
     return rotaciones.filter(r => r.alumno_id === alumnoId);
   };
 
-  if (loading) return <p className="text-gray-600 dark:text-gray-400">Cargando alumnos...</p>;
+  if (loading) return <Loader message="Cargando alumnos..." />;
   if (error) return <p className="text-red-500 dark:text-red-400">{error}</p>;
 
   return (
@@ -651,6 +629,7 @@ const GestionAlumnos = () => {
         <Modal
           isOpen={isModalOpen}
           onClose={closeModal}
+          size={modalState.type === 'view' ? 'xlarge' : 'default'}
           title={
             modalState.type === 'add' ? 'Agregar Nuevo Alumno' :
               modalState.type === 'edit' ? 'Editar Alumno' :
@@ -660,17 +639,100 @@ const GestionAlumnos = () => {
           }
         >
           {modalState.type === 'view' ? (
-            <div className="space-y-3 text-sm">
-              <p><strong>RUT:</strong> {modalState.data.rut}</p>
-              <p><strong>Nombres:</strong> {modalState.data.nombres}</p>
-              <p><strong>Apellidos:</strong> {modalState.data.apellidos}</p>
-              <p><strong>Email:</strong> {modalState.data.email || '-'}</p>
-              <p><strong>Teléfono:</strong> {modalState.data.telefono || '-'}</p>
-              <p><strong>Centro Formador:</strong> {modalState.data.centro_formador?.nombre || '-'}</p>
-              <p><strong>Carrera:</strong> {modalState.data.carrera}</p>
-              <p><strong>Nivel:</strong> {modalState.data.nivel || '-'}</p>
-              <p><strong>Estado:</strong> {modalState.data.activo ? 'Activo' : 'Inactivo'}</p>
-              <div className="flex justify-end pt-4">
+            <div className="text-sm">
+              {/* Grid de 3 columnas para mejor distribución */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
+                {/* Columna 1: Información Personal */}
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm pb-2 border-b border-gray-200 dark:border-gray-600">
+                    Información Personal
+                  </h3>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">RUT:</span><strong className="text-gray-900 dark:text-white">{modalState.data.rut}</strong></div>
+                    <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Número:</span><strong className="text-gray-900 dark:text-white">{modalState.data.numero || '-'}</strong></div>
+                    <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Nombre:</span><strong className="text-gray-900 dark:text-white">{modalState.data.nombre}</strong></div>
+                    <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Apellidos:</span><strong className="text-gray-900 dark:text-white text-right">{modalState.data.primer_apellido} {modalState.data.segundo_apellido || ''}</strong></div>
+                    <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Teléfono:</span><strong className="text-gray-900 dark:text-white">{modalState.data.telefono || '-'}</strong></div>
+                    <div className="flex flex-col gap-0.5"><span className="text-gray-600 dark:text-gray-400">Email:</span><strong className="text-gray-900 dark:text-white break-all">{modalState.data.correo_electronico || '-'}</strong></div>
+                    <div className="flex flex-col gap-0.5"><span className="text-gray-600 dark:text-gray-400">Residencia:</span><strong className="text-gray-900 dark:text-white">{modalState.data.lugar_residencia || '-'}</strong></div>
+                  </div>
+                </div>
+
+                {/* Columna 2: Académica + Emergencia */}
+                <div className="space-y-3">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm pb-2 border-b border-gray-200 dark:border-gray-600">
+                      Información Académica
+                    </h3>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Centro:</span><strong className="text-gray-900 dark:text-white text-right text-xs">{modalState.data.centro_formador?.nombre || '-'}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Carrera:</span><strong className="text-gray-900 dark:text-white">{modalState.data.carrera}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Nivel:</span><strong className="text-gray-900 dark:text-white">{modalState.data.nivel_que_cursa || '-'}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Tipo:</span><strong className="text-gray-900 dark:text-white">{modalState.data.tipo_practica || '-'}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Registro:</span><strong className="text-gray-900 dark:text-white">{modalState.data.numero_registro_estudiante || '-'}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Inmunización:</span><strong className={`${modalState.data.inmunizacion_al_dia ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>{modalState.data.inmunizacion_al_dia ? '✓ Al día' : '⚠ Pendiente'}</strong></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm pb-2 border-b border-gray-200 dark:border-gray-600">
+                      Contacto Emergencia
+                    </h3>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Nombre:</span><strong className="text-gray-900 dark:text-white text-right">{modalState.data.nombre_contacto_emergencia || '-'}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Teléfono:</span><strong className="text-gray-900 dark:text-white">{modalState.data.telefono_contacto_emergencia || '-'}</strong></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Columna 3: Rotación + Tutor + Supervisión */}
+                <div className="space-y-3">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm pb-2 border-b border-gray-200 dark:border-gray-600">
+                      Rotación Actual
+                    </h3>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Campo:</span><strong className="text-gray-900 dark:text-white text-right text-xs">{modalState.data.campo_clinico_solicitado || '-'}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Servicio:</span><strong className="text-gray-900 dark:text-white text-right text-xs">{modalState.data.servicio_clinico || '-'}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Inicio:</span><strong className="text-gray-900 dark:text-white">{formatearFecha(modalState.data.fecha_inicio_rotacion)}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Término:</span><strong className="text-gray-900 dark:text-white">{formatearFecha(modalState.data.fecha_termino_rotacion)}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Semanas:</span><strong className="text-gray-900 dark:text-white">{modalState.data.numero_semanas_practica || '-'}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Horario:</span><strong className="text-gray-900 dark:text-white text-xs">{modalState.data.horario_desde && modalState.data.horario_hasta ? `${modalState.data.horario_desde.substring(0,5)} - ${modalState.data.horario_hasta.substring(0,5)}` : '-'}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">4to Turno:</span><strong className="text-gray-900 dark:text-white">{modalState.data.cuarto_turno ? 'Sí' : 'No'}</strong></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm pb-2 border-b border-gray-200 dark:border-gray-600">
+                      Tutor Centro Formador
+                    </h3>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Nombre:</span><strong className="text-gray-900 dark:text-white text-right text-xs">{modalState.data.contacto_nombre || '-'}</strong></div>
+                      <div className="flex flex-col gap-0.5"><span className="text-gray-600 dark:text-gray-400">Email:</span><strong className="text-gray-900 dark:text-white break-all">{modalState.data.contacto_email || '-'}</strong></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm pb-2 border-b border-gray-200 dark:border-gray-600">
+                      Supervisión
+                    </h3>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Visitas:</span><strong className="text-gray-900 dark:text-white">{modalState.data.numero_visitas || '0'}</strong></div>
+                      <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Última:</span><strong className="text-gray-900 dark:text-white">{formatearFecha(modalState.data.fecha_supervision)}</strong></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Observaciones en fila completa si existen */}
+              {modalState.data.observaciones && (
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600 mb-3">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm">Observaciones</h3>
+                  <p className="text-gray-900 dark:text-white text-xs bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-600">{modalState.data.observaciones}</p>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-600">
                 <Button variant="secondary" onClick={closeModal}>Cerrar</Button>
               </div>
             </div>
@@ -730,7 +792,7 @@ const GestionAlumnos = () => {
                         <span className={`font-medium ${rot.estado === 'activa' ? 'text-green-600' : 'text-gray-600'}`}>
                           {rot.servicio?.nombre || 'Servicio no especificado'}
                         </span>
-                        {rot.tutor && ` - ${rot.tutor.nombres} ${rot.tutor.apellidos}`}
+                        {rot.alumno?.contacto_nombre && ` - Tutor: ${rot.alumno.contacto_nombre}`}
                         {' - '}
                         {formatearFecha(rot.fecha_inicio)} a {formatearFecha(rot.fecha_termino)}
                         {' '}
@@ -805,28 +867,7 @@ const GestionAlumnos = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="tutor_id" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tutor Responsable
-                  </label>
-                  <select
-                    id="tutor_id"
-                    name="tutor_id"
-                    value={rotacionFormData.tutor_id}
-                    onChange={handleRotacionInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500"
-                  >
-                    <option value="">Seleccione un tutor...</option>
-                    {tutores.map(tutor => (
-                      <option key={tutor.id} value={tutor.id}>
-                        {tutor.nombres} {tutor.apellidos}
-                      </option>
-                    ))}
-                  </select>
-                  {tutores.length === 0 && (
-                    <p className="text-xs text-gray-500 mt-1">No hay tutores disponibles. Ejecuta el script crear-servicios-tutores.sql</p>
-                  )}
-                </div>
+                {/* El tutor es contacto_nombre del alumno, no se selecciona aquí */}
 
                 <div>
                   <label htmlFor="horas_semanales" className="block text-sm font-medium text-gray-700 mb-1">

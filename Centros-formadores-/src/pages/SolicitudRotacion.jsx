@@ -96,7 +96,6 @@ const SolicitudRotacion = () => {
       // Parsear el archivo Excel
       const resultado = await parseExcelEstudiantes(file);
       setEstudiantesParsed(resultado);
-      console.log('Estudiantes parseados:', resultado);
     } catch (err) {
       setError(err.message);
       setExcelFile(null);
@@ -131,11 +130,9 @@ const SolicitudRotacion = () => {
       }
 
       // 1. Subir archivo Excel a Storage
-      console.log('Subiendo archivo Excel...');
       const archivoData = await subirArchivoExcel(excelFile, centroInfo.centro_formador_id);
 
       // 2. Crear solicitud de rotación
-      console.log('Creando solicitud de rotación...');
       const { data: solicitud, error: solicitudError } = await supabase
         .from('solicitudes_rotacion')
         .insert([{
@@ -155,7 +152,6 @@ const SolicitudRotacion = () => {
       if (solicitudError) throw solicitudError;
 
       // 3. Insertar estudiantes parseados
-      console.log('Guardando estudiantes...');
       const estudiantesData = estudiantesParsed.estudiantes.map(est => ({
         solicitud_rotacion_id: solicitud.id,
         ...est
@@ -167,7 +163,6 @@ const SolicitudRotacion = () => {
 
       if (estudiantesError) throw estudiantesError;
 
-      console.log('✅ Solicitud creada exitosamente');
       setSuccess(true);
       
       setTimeout(() => {

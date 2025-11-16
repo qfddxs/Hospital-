@@ -1,21 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSession } from '../context/SessionContext'
-import { LockClosedIcon, UserCircleIcon } from '@heroicons/react/24/outline'
+import { supabase } from '../supabaseClient'
+import { FiMail, FiLock, FiLogIn } from 'react-icons/fi'
 
 const Login = () => {
   const navigate = useNavigate()
-  const { session, user, loading: sessionLoading, signIn, signOut } = useSession()
+  const { session, user, loading: sessionLoading } = useSession()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    // Esperar a que termine de cargar la sesión inicial
     if (sessionLoading) return
-    
-    // Solo redirigir si hay sesión Y usuario (ambos deben estar presentes)
     if (session && user) {
       navigate('/dashboard')
     }
@@ -27,17 +25,17 @@ const Login = () => {
     setSubmitting(true)
 
     try {
-      const { data, error } = await signIn(email, password)
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
       
       if (error) throw error
       
-      // Si el login fue exitoso, el useEffect se encargará de navegar
-      // cuando session y user estén listos
-      if (!data) {
-        setSubmitting(false)
+      if (data.session) {
+        navigate('/dashboard')
       }
     } catch (err) {
-      // Traducir mensajes de error comunes
       let errorMessage = err.message || 'Error al iniciar sesión'
       
       if (errorMessage.includes('Invalid login credentials')) {
@@ -54,76 +52,99 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 dark:bg-indigo-500 rounded-2xl mb-4">
-            <UserCircleIcon className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Portal de Rotaciones
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Gestión de Solicitudes de Rotación
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
-              {error}
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 transition-colors">
+      <div className="w-full max-w-md">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700 transition-colors">
+          {/* Logo y título */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 mx-auto mb-4">
+              <svg viewBox="0 0 100 100" className="w-full h-full">
+                <circle cx="50" cy="50" r="48" fill="#14b8a6" className="dark:fill-teal-600"/>
+                <path d="M50 20 L50 80 M20 50 L80 50" stroke="white" strokeWidth="8" strokeLinecap="round"/>
+                <circle cx="50" cy="50" r="12" fill="white"/>
+              </svg>
             </div>
-          )}
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+              Portal de Rotaciones
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Hospital Regional Rancagua
+            </p>
+            <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">
+              Servicio de Gestión
+            </p>
+          </div>
 
+          {/* Formulario */}
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Correo Electrónico
               </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
-                placeholder="tu@email.com"
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiMail className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={submitting}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent transition-colors disabled:opacity-50"
+                  placeholder="tu@email.com"
+                />
+              </div>
             </div>
 
+            {/* Contraseña */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Contraseña
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <LockClosedIcon className="h-5 w-5 text-gray-400" />
+                  <FiLock className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                 </div>
                 <input
                   id="password"
                   type="password"
-                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
+                  required
+                  disabled={submitting}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent transition-colors disabled:opacity-50"
                   placeholder="••••••••"
                 />
               </div>
             </div>
 
+            {/* Error */}
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Botón */}
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-teal-500 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-700 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {submitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {submitting ? (
+                <span>Iniciando sesión...</span>
+              ) : (
+                <>
+                  <FiLogIn className="w-5 h-5" />
+                  <span>Iniciar Sesión</span>
+                </>
+              )}
             </button>
           </form>
         </div>
-
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-          Sistema de Gestión Hospitalaria
-        </p>
       </div>
     </div>
   )

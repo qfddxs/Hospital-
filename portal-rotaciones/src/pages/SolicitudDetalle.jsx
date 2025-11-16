@@ -83,48 +83,7 @@ const SolicitudDetalle = () => {
 
       if (updateError) throw updateError
 
-      // 2. Crear rotaciones automáticamente para cada estudiante
-      const rotacionesPromises = estudiantes.map(async (est) => {
-        // Buscar o crear el servicio clínico
-        let servicioId = null;
-        if (est.campo_clinico_solicitado) {
-          const { data: servicio } = await supabase
-            .from('servicios_clinicos')
-            .select('id')
-            .ilike('nombre', est.campo_clinico_solicitado)
-            .single();
-          
-          if (servicio) {
-            servicioId = servicio.id;
-          } else {
-            // Crear el servicio si no existe
-            const { data: nuevoServicio } = await supabase
-              .from('servicios_clinicos')
-              .insert({ nombre: est.campo_clinico_solicitado, activo: true })
-              .select('id')
-              .single();
-            servicioId = nuevoServicio?.id;
-          }
-        }
-
-        // Crear la rotación
-        return supabase
-          .from('rotaciones')
-          .insert({
-            estudiante_rotacion_id: est.id,
-            servicio_clinico_id: servicioId,
-            fecha_inicio: est.fecha_inicio || solicitud.fecha_inicio,
-            fecha_termino: est.fecha_termino || solicitud.fecha_termino,
-            horario_desde: est.horario_desde,
-            horario_hasta: est.horario_hasta,
-            estado: 'activa',
-            observaciones: est.observaciones
-          });
-      });
-
-      await Promise.all(rotacionesPromises);
-
-      // 3. Crear alumnos en el hospital (con todas las columnas de estudiantes_rotacion)
+      // 2. Crear alumnos en el hospital PRIMERO (con todas las columnas de estudiantes_rotacion)
       const alumnosData = estudiantes.map(est => ({
         solicitud_rotacion_id: id,
         centro_formador_id: solicitud.centro_formador_id,
@@ -148,8 +107,9 @@ const SolicitudDetalle = () => {
         horario_desde: est.horario_desde,
         horario_hasta: est.horario_hasta,
         cuarto_turno: est.cuarto_turno,
-        nombre_docente_cargo: est.nombre_docente_cargo,
-        telefono_docente_cargo: est.telefono_docente_cargo,
+        // Contacto del centro formador
+        contacto_nombre: solicitud.centro_formador?.contacto_nombre || est.nombre_docente_cargo,
+        contacto_email: solicitud.centro_formador?.email || est.telefono_docente_cargo,
         numero_registro_estudiante: est.numero_registro_estudiante,
         inmunizacion_al_dia: est.inmunizacion_al_dia,
         numero_visitas: est.numero_visitas,
@@ -161,13 +121,73 @@ const SolicitudDetalle = () => {
         activo: true
       }))
 
-      const { error: alumnosError } = await supabase
+      const { data: alumnosCreados, error: alumnosError } = await supabase
         .from('alumnos')
         .insert(alumnosData)
+        .select('id, rut')
 
       if (alumnosError) throw alumnosError
 
-      alert('✅ Solicitud aprobada exitosamente')
+      // 3. Crear rotaciones vinculadas a los alumnos (no a estudiantes_rotacion)
+      const rotacionesPromises = estudiantes.map(async (est) => {
+        // Encontrar el alumno creado que corresponde a este estudiante
+        const alumno = alumnosCreados.find(a => a.rut === est.rut)
+        if (!alumno) return null
+
+        // Buscar o crear el servicio clínico
+        let servicioId = null;
+        if (est.campo_clinico_solicitado) {
+          const { data: servicio } = await supabase
+            .from('servicios_clinicos')
+            .select('id')
+            .ilike('nombre', est.campo_clinico_solicitado)
+            .single();
+          
+          if (servicio) {
+            servicioId = servicio.id;
+          } else {
+            // Crear el servicio si no existe
+            const { data: nuevoServicio } = await supabase
+              .from('servicios_clinicos')
+              .insert({ nombre: est.campo_clinico_solicitado, activo: true })
+              .select('id')
+              .single();
+            servicioId = nuevoServicio?.id;
+          }
+        }
+
+        // Crear la rotación vinculada al alumno
+        return supabase
+          .from('rotaciones')
+          .insert({
+            alumno_id: alumno.id,  // Usar alumno_id en lugar de estudiante_rotacion_id
+            servicio_clinico_id: servicioId,
+            fecha_inicio: est.fecha_inicio || solicitud.fecha_inicio,
+            fecha_termino: est.fecha_termino || solicitud.fecha_termino,
+            horario_desde: est.horario_desde,
+            horario_hasta: est.horario_hasta,
+            estado: 'activa',
+            observaciones: est.observaciones
+          });
+      });
+
+      await Promise.all(rotacionesPromises.filter(p => p !== null));
+
+      // 4. Eliminar estudiantes de estudiantes_rotacion (ya están en alumnos)
+      const { data: deletedData, error: deleteEstudiantesError } = await supabase
+        .from('estudiantes_rotacion')
+        .delete()
+        .eq('solicitud_rotacion_id', id)
+        .select()
+
+      if (deleteEstudiantesError) {
+        console.error('❌ Error al eliminar estudiantes temporales:', deleteEstudiantesError)
+        alert(`⚠️ Advertencia: Los alumnos se crearon correctamente, pero hubo un error al limpiar estudiantes_rotacion: ${deleteEstudiantesError.message}`)
+      } else {
+        console.log(`✅ Eliminados ${deletedData?.length || 0} estudiantes de estudiantes_rotacion`)
+      }
+
+      alert(`✅ Solicitud aprobada exitosamente. ${estudiantes.length} estudiantes creados en alumnos.`)
       navigate('/dashboard')
     } catch (error) {
       alert('Error al aprobar la solicitud: ' + error.message)

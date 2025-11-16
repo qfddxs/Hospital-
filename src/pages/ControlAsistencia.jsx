@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
+import Loader from '../components/Loader';
 import { 
   CheckIcon, 
   XMarkIcon, 
@@ -34,7 +35,6 @@ const ControlAsistencia = () => {
           table: 'rotaciones'
         },
         (payload) => {
-          console.log('🔔 Cambio detectado en rotaciones:', payload);
           fetchData();
         }
       )
@@ -51,7 +51,6 @@ const ControlAsistencia = () => {
           table: 'asistencias'
         },
         (payload) => {
-          console.log('🔔 Cambio detectado en asistencias:', payload);
           if (payload.new?.fecha === fechaSeleccionada || payload.old?.fecha === fechaSeleccionada) {
             fetchData();
           }
@@ -61,7 +60,6 @@ const ControlAsistencia = () => {
 
     // Cleanup
     return () => {
-      console.log('🧹 Limpiando realtime de Control de Asistencia');
       supabase.removeChannel(rotacionesChannel);
       supabase.removeChannel(asistenciasChannel);
     };
@@ -72,42 +70,34 @@ const ControlAsistencia = () => {
       setLoading(true);
       setError('');
       
-      // Obtener estudiantes en rotación con sus datos
-      const { data: estudiantesData, error: estudiantesError } = await supabase
-        .from('estudiantes_rotacion')
+      // Obtener alumnos en rotación con sus datos
+      const { data: alumnosData, error: alumnosError } = await supabase
+        .from('alumnos')
         .select(`
           *,
-          solicitud:solicitudes_rotacion(
-            id,
-            especialidad,
-            fecha_inicio,
-            fecha_termino,
-            estado,
-            centro_formador:centros_formadores(nombre)
-          ),
-          rotacion:rotaciones(
+          centro_formador:centros_formadores(nombre),
+          rotaciones!alumno_id(
             id,
             fecha_inicio,
             fecha_termino,
             estado,
-            servicio:servicios_clinicos(id, nombre),
-            tutor:tutores(id, nombres, apellidos)
+            servicio:servicios_clinicos(id, nombre)
           )
         `)
-        .eq('solicitud.estado', 'aprobada');
+        .eq('estado', 'en_rotacion');
 
-      if (estudiantesError) {
-        console.error('Error en estudiantes:', estudiantesError);
-        throw estudiantesError;
+      if (alumnosError) {
+        console.error('Error en alumnos:', alumnosError);
+        throw alumnosError;
       }
 
-      // Filtrar y mapear estudiantes que tienen rotaciones activas en la fecha seleccionada
-      const rotacionesMapeadas = (estudiantesData || [])
+      // Filtrar y mapear alumnos que tienen rotaciones activas en la fecha seleccionada
+      const rotacionesMapeadas = (alumnosData || [])
         .filter(est => {
           // Verificar si tiene rotación activa
-          if (!est.rotacion || est.rotacion.length === 0) return false;
+          if (!est.rotaciones || est.rotaciones.length === 0) return false;
           
-          const rotacion = est.rotacion[0];
+          const rotacion = est.rotaciones[0];
           const fechaInicio = new Date(rotacion.fecha_inicio);
           const fechaTermino = new Date(rotacion.fecha_termino);
           const fechaActual = new Date(fechaSeleccionada);
@@ -116,28 +106,32 @@ const ControlAsistencia = () => {
                  fechaActual >= fechaInicio && 
                  fechaActual <= fechaTermino;
         })
-        .map(est => {
-          const rotacion = est.rotacion[0];
+        .map(alumno => {
+          const rotacion = alumno.rotaciones[0];
+          
           return {
             id: rotacion.id,
-            estudiante_id: est.id,
+            estudiante_id: alumno.id,
             fecha_inicio: rotacion.fecha_inicio,
             fecha_termino: rotacion.fecha_termino,
             estado: rotacion.estado,
             alumno: {
-              id: est.id,
-              rut: est.rut,
-              nombres: `${est.primer_nombre || ''} ${est.segundo_nombre || ''}`.trim(),
-              apellidos: `${est.primer_apellido || ''} ${est.segundo_apellido || ''}`.trim(),
-              carrera: est.carrera,
-              centro_formador: est.solicitud?.centro_formador
+              id: alumno.id,
+              rut: alumno.rut,
+              nombres: `${alumno.primer_apellido || ''} ${alumno.segundo_apellido || ''}`.trim(),
+              apellidos: `${alumno.nombre || ''}`.trim(),
+              carrera: alumno.carrera,
+              centro_formador: alumno.centro_formador
             },
             servicio: rotacion.servicio,
-            tutor: rotacion.tutor
+            // Tutor es el contacto del centro formador
+            tutor: {
+              nombre: alumno.contacto_nombre,
+              email: alumno.contacto_email
+            }
           };
         });
 
-      console.log('✅ Rotaciones activas encontradas:', rotacionesMapeadas.length);
       setRotaciones(rotacionesMapeadas);
 
       // Obtener asistencias del día seleccionado
@@ -266,9 +260,12 @@ const ControlAsistencia = () => {
     { 
       header: 'Tutor', 
       render: (row) => (
-        <span className="text-sm text-gray-700 dark:text-gray-300">
-          {row.tutor ? `${row.tutor.nombres} ${row.tutor.apellidos}` : row.tutor_responsable || '-'}
-        </span>
+        <div className="text-sm">
+          <p className="text-gray-700 dark:text-gray-300">{row.tutor?.nombre || '-'}</p>
+          {row.tutor?.email && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">{row.tutor.email}</p>
+          )}
+        </div>
       )
     },
     { 
@@ -323,14 +320,7 @@ const ControlAsistencia = () => {
   ];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando asistencias...</p>
-        </div>
-      </div>
-    );
+    return <Loader message="Cargando asistencias..." />;
   }
 
   if (error) {

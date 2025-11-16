@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import Modal from '../components/UI/Modal';
+import Loader from '../components/Loader';
 import DocumentosAlerta from '../components/DocumentosAlerta';
 import DocumentoCard from '../components/DocumentoCard';
 import {
@@ -465,7 +466,7 @@ const GestionDocumental = () => {
     return cumpleTipo && cumpleCategoria && cumpleEstado && cumpleBusqueda;
   });
 
-  if (loading) return <p className="text-gray-600 dark:text-gray-400">Cargando documentos...</p>;
+  if (loading) return <Loader message="Cargando documentos..." />;
   if (error) return <p className="text-red-500 dark:text-red-400">{error}</p>;
 
   return (

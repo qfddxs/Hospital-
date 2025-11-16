@@ -96,7 +96,6 @@ const PortalSolicitudes = () => {
           table: 'solicitudes_cupos'
         },
         (payload) => {
-          console.log('🔄 Solicitud actualizada:', payload);
           // Recargar solicitudes cuando hay cambios
           fetchData();
         }

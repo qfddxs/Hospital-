@@ -1,59 +1,635 @@
-import { WrenchScrewdriverIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+import Table from '../components/UI/Table';
+import Button from '../components/UI/Button';
+import Modal from '../components/UI/Modal';
+import {
+  CurrencyDollarIcon,
+  DocumentArrowDownIcon,
+  CalendarIcon,
+  BuildingOffice2Icon,
+  ChartBarIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  XCircleIcon,
+  EyeIcon,
+  CalculatorIcon,
+  DocumentTextIcon,
+  ArrowPathIcon
+} from '@heroicons/react/24/outline';
+import { useNivelFormacion } from '../context/NivelFormacionContext';
 
 const Retribuciones = () => {
+  const { nivelFormacion } = useNivelFormacion();
+  const [retribuciones, setRetribuciones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('todas');
+  const [filtroSemestre, setFiltroSemestre] = useState('actual');
+  const [modalState, setModalState] = useState({ type: null, data: null });
+  const [calculando, setCalculando] = useState(false);
+
+  // Valores UF según documento
+  const VALOR_UF_SEMESTRE_1 = 36028.10; // 30 de junio
+  const VALOR_UF_SEMESTRE_2 = 36028.10; // 31 de diciembre
+  const FACTOR_COBRO_UF = 4.5;
+
+  const [estadisticas, setEstadisticas] = useState({
+    totalRetribuciones: 0,
+    pendientes: 0,
+    pagadas: 0,
+    montoTotal: 0,
+    montoPendiente: 0,
+    montoPagado: 0
+  });
+
+  useEffect(() => {
+    fetchRetribuciones();
+  }, [nivelFormacion, filtroSemestre]);
+
+  const fetchRetribuciones = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      // Verificar si la tabla existe
+      const { error: tableCheckError } = await supabase
+        .from('retribuciones')
+        .select('id')
+        .limit(1);
+
+      if (tableCheckError) {
+        if (tableCheckError.message.includes('does not exist')) {
+          setError('⚠️ La tabla "retribuciones" no existe. Por favor, ejecuta el script SQL primero. Consulta INSTRUCCIONES_RETRIBUCIONES.md para más detalles.');
+          setLoading(false);
+          return;
+        }
+        throw tableCheckError;
+      }
+
+      // Obtener retribuciones con información del centro formador
+      const { data, error: retError } = await supabase
+        .from('retribuciones')
+        .select(`
+          *,
+          centro_formador:centros_formadores(
+            id,
+            nombre,
+            codigo,
+            email,
+            contacto_nombre,
+            nivel_formacion
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (retError) throw retError;
+
+      console.log('Retribuciones obtenidas:', data);
+      console.log('Nivel de formación actual:', nivelFormacion);
+
+      // Filtrar por nivel de formación
+      const retribucionesFiltradas = data?.filter(
+        ret => ret.centro_formador?.nivel_formacion === nivelFormacion || !ret.centro_formador
+      ) || [];
+
+      console.log('Retribuciones filtradas:', retribucionesFiltradas);
+
+      setRetribuciones(retribucionesFiltradas);
+      calcularEstadisticas(retribucionesFiltradas);
+    } catch (err) {
+      setError('Error al cargar retribuciones: ' + err.message);
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calcularEstadisticas = (data) => {
+    const stats = {
+      totalRetribuciones: data.length,
+      pendientes: data.filter(r => r.estado === 'pendiente').length,
+      pagadas: data.filter(r => r.estado === 'pagada').length,
+      montoTotal: data.reduce((sum, r) => sum + (r.monto_total || 0), 0),
+      montoPendiente: data.filter(r => r.estado === 'pendiente').reduce((sum, r) => sum + (r.monto_total || 0), 0),
+      montoPagado: data.filter(r => r.estado === 'pagada').reduce((sum, r) => sum + (r.monto_total || 0), 0)
+    };
+    setEstadisticas(stats);
+  };
+
+  const calcularRetribucion = (rotacion) => {
+    // Según documento:
+    // Cantidad de Días = (Fecha Término - Fecha Inicio) + 1
+    const fechaInicio = new Date(rotacion.fecha_inicio);
+    const fechaTermino = new Date(rotacion.fecha_termino);
+    const cantidadDias = Math.ceil((fechaTermino - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
+
+    // Cantidad de Meses = Cantidad de días / 30
+    const cantidadMeses = cantidadDias / 30;
+
+    // Determinar valor UF según semestre
+    const mes = fechaInicio.getMonth();
+    const valorUF = mes < 6 ? VALOR_UF_SEMESTRE_1 : VALOR_UF_SEMESTRE_2;
+
+    // Valor por Cupo = Cantidad de Meses × Valor UF × Factor de Cobro
+    const valorPorCupo = cantidadMeses * valorUF * FACTOR_COBRO_UF;
+
+    // Monto Total = Cupos Diarios × Valor por Cupo
+    const cuposDiarios = rotacion.cupos_diarios || 1;
+    const montoTotal = cuposDiarios * valorPorCupo;
+
+    return {
+      cantidadDias,
+      cantidadMeses: cantidadMeses.toFixed(2),
+      valorUF,
+      factorCobro: FACTOR_COBRO_UF,
+      valorPorCupo,
+      cuposDiarios,
+      montoTotal
+    };
+  };
+
+  const handleCalcularRetribuciones = async () => {
+    if (!confirm('¿Deseas calcular las retribuciones para el período actual? Esto generará registros de pago para todos los centros formadores con solicitudes aprobadas.')) {
+      return;
+    }
+
+    try {
+      setCalculando(true);
+
+      // Primero verificar si la tabla existe
+      const { error: tableCheckError } = await supabase
+        .from('retribuciones')
+        .select('id')
+        .limit(1);
+
+      if (tableCheckError) {
+        throw new Error('La tabla "retribuciones" no existe. Por favor, ejecuta el script SQL primero: supabase/migrations/crear-tabla-retribuciones.sql');
+      }
+
+      // Obtener todas las solicitudes aprobadas con información del centro formador
+      const { data: solicitudes, error: solError } = await supabase
+        .from('solicitudes_cupos')
+        .select(`
+          *,
+          centro_formador:centros_formadores(
+            id,
+            nombre,
+            codigo,
+            nivel_formacion
+          )
+        `)
+        .eq('estado', 'aprobada');
+
+      if (solError) {
+        console.error('Error al obtener solicitudes:', solError);
+        throw new Error(`Error al obtener solicitudes: ${solError.message}`);
+      }
+
+      if (!solicitudes || solicitudes.length === 0) {
+        alert('No hay solicitudes aprobadas pendientes de retribución.');
+        return;
+      }
+
+      // Filtrar solicitudes que tienen información completa
+      const solicitudesValidas = solicitudes.filter(s => s.centro_formador);
+
+      if (solicitudesValidas.length === 0) {
+        alert('No se encontraron solicitudes con información completa de centro formador.');
+        return;
+      }
+
+      // Agrupar por centro formador
+      const retribucionesPorCentro = {};
+
+      solicitudesValidas.forEach(solicitud => {
+        const centroId = solicitud.centro_formador?.id;
+        if (!centroId) return;
+
+        if (!retribucionesPorCentro[centroId]) {
+          retribucionesPorCentro[centroId] = {
+            centro_formador_id: centroId,
+            centro: solicitud.centro_formador,
+            solicitudes: [],
+            montoTotal: 0
+          };
+        }
+
+        // Calcular retribución basada en la solicitud
+        const calculo = calcularRetribucion({
+          fecha_inicio: solicitud.fecha_inicio,
+          fecha_termino: solicitud.fecha_termino,
+          cupos_diarios: solicitud.numero_cupos
+        });
+
+        retribucionesPorCentro[centroId].solicitudes.push({
+          ...solicitud,
+          calculo
+        });
+        retribucionesPorCentro[centroId].montoTotal += calculo.montoTotal;
+      });
+
+      // Crear registros de retribución
+      const retribucionesNuevas = Object.values(retribucionesPorCentro).map(grupo => ({
+        centro_formador_id: grupo.centro_formador_id,
+        periodo: `${new Date().getFullYear()}-${new Date().getMonth() < 6 ? '1' : '2'}`,
+        fecha_calculo: new Date().toISOString(),
+        cantidad_rotaciones: grupo.solicitudes.length,
+        monto_total: grupo.montoTotal,
+        estado: 'pendiente',
+        detalles: {
+          rotaciones: grupo.solicitudes.map(s => ({
+            id: s.id,
+            especialidad: s.especialidad,
+            fecha_inicio: s.fecha_inicio,
+            fecha_termino: s.fecha_termino,
+            ...s.calculo
+          }))
+        }
+      }));
+
+      const { data: nuevasRet, error: insertError } = await supabase
+        .from('retribuciones')
+        .insert(retribucionesNuevas)
+        .select();
+
+      if (insertError) throw insertError;
+
+      alert(`Se calcularon ${nuevasRet.length} retribuciones exitosamente`);
+      fetchRetribuciones();
+    } catch (err) {
+      alert('Error al calcular retribuciones: ' + err.message);
+      console.error('Error:', err);
+    } finally {
+      setCalculando(false);
+    }
+  };
+
+  const handleMarcarPagada = async (retribucion) => {
+    if (!confirm('¿Confirmas que esta retribución ha sido pagada?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('retribuciones')
+        .update({
+          estado: 'pagada',
+          fecha_pago: new Date().toISOString()
+        })
+        .eq('id', retribucion.id);
+
+      if (error) throw error;
+
+      alert('Retribución marcada como pagada');
+      fetchRetribuciones();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  const handleVerDetalle = (retribucion) => {
+    setModalState({ type: 'detalle', data: retribucion });
+  };
+
+  const handleExportarReporte = async (retribucion) => {
+    // Generar reporte en formato CSV
+    const detalles = retribucion.detalles?.rotaciones || [];
+    
+    let csv = 'Cupos Diarios,Fecha Inicio,Fecha Término,Cantidad de Días,Cantidad de Meses,Fecha UF,Valor UF,Factor de Cobro (Uf),Valor por Cupo en $,Monto Total en $\n';
+    
+    detalles.forEach(det => {
+      csv += `${det.cuposDiarios},${det.fecha_inicio},${det.fecha_termino},${det.cantidadDias},${det.cantidadMeses},${det.valorUF},${det.valorUF},${det.factorCobro},${det.valorPorCupo.toFixed(0)},${det.montoTotal.toFixed(0)}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `retribucion_${retribucion.centro_formador?.nombre}_${retribucion.periodo}.csv`;
+    a.click();
+  };
+
+  const formatMonto = (monto) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP'
+    }).format(monto);
+  };
+
+  const columns = [
+    {
+      header: 'Centro Formador',
+      render: (row) => (
+        <div>
+          <p className="font-medium text-gray-900 dark:text-gray-100">{row.centro_formador?.nombre}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{row.centro_formador?.codigo}</p>
+        </div>
+      )
+    },
+    {
+      header: 'Período',
+      render: (row) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">{row.periodo}</span>
+      )
+    },
+    {
+      header: 'Rotaciones',
+      render: (row) => (
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{row.cantidad_rotaciones}</span>
+      )
+    },
+    {
+      header: 'Monto Total',
+      render: (row) => (
+        <span className="text-sm font-bold text-teal-600 dark:text-teal-400">
+          {formatMonto(row.monto_total)}
+        </span>
+      )
+    },
+    {
+      header: 'Estado',
+      render: (row) => {
+        const estados = {
+          pendiente: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-400', icon: ClockIcon },
+          pagada: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-400', icon: CheckCircleIcon },
+          rechazada: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-800 dark:text-red-400', icon: XCircleIcon }
+        };
+        const estado = estados[row.estado] || estados.pendiente;
+        const Icon = estado.icon;
+        
+        return (
+          <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${estado.bg} ${estado.text}`}>
+            <Icon className="w-4 h-4" />
+            {row.estado.charAt(0).toUpperCase() + row.estado.slice(1)}
+          </span>
+        );
+      }
+    },
+    {
+      header: 'Fecha Cálculo',
+      render: (row) => (
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {new Date(row.fecha_calculo).toLocaleDateString('es-CL')}
+        </span>
+      )
+    },
+    {
+      header: 'Acciones',
+      render: (row) => (
+        <div className="flex gap-1">
+          <button
+            onClick={() => handleVerDetalle(row)}
+            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+            title="Ver detalle"
+          >
+            <EyeIcon className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleExportarReporte(row)}
+            className="p-1.5 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded transition-colors"
+            title="Exportar reporte"
+          >
+            <DocumentArrowDownIcon className="w-4 h-4" />
+          </button>
+          {row.estado === 'pendiente' && (
+            <button
+              onClick={() => handleMarcarPagada(row)}
+              className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+              title="Marcar como pagada"
+            >
+              <CheckCircleIcon className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )
+    }
+  ];
+
+  const retribucionesFiltradas = retribuciones.filter(ret => {
+    if (filtroEstado === 'todas') return true;
+    return ret.estado === filtroEstado;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 dark:border-teal-400 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando retribuciones...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <div className="flex items-start gap-3">
+            <XCircleIcon className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-red-900 dark:text-red-300 mb-2">Error al cargar el módulo</h3>
+              <p className="text-red-700 dark:text-red-300 mb-4">{error}</p>
+              
+              {error.includes('no existe') && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-red-200 dark:border-red-700">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">📋 Pasos para solucionar:</h4>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                    <li>Ve a tu <strong>Supabase Dashboard</strong></li>
+                    <li>Abre el <strong>SQL Editor</strong></li>
+                    <li>Copia y pega el script de: <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">supabase/migrations/crear-tabla-retribuciones.sql</code></li>
+                    <li>Haz clic en <strong>"Run"</strong></li>
+                    <li>Refresca esta página</li>
+                  </ol>
+                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                      💡 <strong>Tip:</strong> Consulta el archivo <code>INSTRUCCIONES_RETRIBUCIONES.md</code> para instrucciones detalladas.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center justify-center min-h-[70vh]">
-      <div className="text-center max-w-md">
-        {/* Icono */}
-        <div className="flex justify-center mb-6">
-          <div className="relative">
-            <WrenchScrewdriverIcon className="w-24 h-24 text-gray-300 dark:text-gray-600" />
-            <ClockIcon className="w-12 h-12 text-yellow-500 dark:text-yellow-400 absolute -bottom-2 -right-2" />
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Retribuciones y Reportes</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Gestión de pagos a centros formadores por uso de campos clínicos
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button
+            variant="secondary"
+            onClick={fetchRetribuciones}
+            className="flex items-center gap-2"
+          >
+            <ArrowPathIcon className="w-5 h-5" />
+            Actualizar
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleCalcularRetribuciones}
+            disabled={calculando}
+            className="flex items-center gap-2"
+          >
+            <CalculatorIcon className="w-5 h-5" />
+            {calculando ? 'Calculando...' : 'Calcular Retribuciones'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Retribuciones</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.totalRetribuciones}</p>
+            </div>
+            <DocumentTextIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
 
-        {/* Título */}
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-3">
-          Módulo en Construcción
-        </h2>
-
-        {/* Descripción */}
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          El módulo de <strong>Retribuciones y Reportes</strong> está actualmente en desarrollo.
-        </p>
-
-        {/* Características próximamente */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-6 text-left transition-colors">
-          <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Próximamente:</h3>
-          <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-              <span>Gestión de pagos a centros formadores</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-              <span>Reportes financieros detallados</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-              <span>Historial de retribuciones</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-              <span>Exportación de documentos</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-              <span>Gráficos y estadísticas</span>
-            </li>
-          </ul>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Pendientes</p>
+              <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{estadisticas.pendientes}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatMonto(estadisticas.montoPendiente)}</p>
+            </div>
+            <ClockIcon className="w-12 h-12 text-yellow-400 dark:text-yellow-500" />
+          </div>
         </div>
 
-        {/* Mensaje adicional */}
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">
-          Mientras tanto, puedes utilizar los demás módulos del sistema.
-        </p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Pagadas</p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">{estadisticas.pagadas}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatMonto(estadisticas.montoPagado)}</p>
+            </div>
+            <CheckCircleIcon className="w-12 h-12 text-green-400 dark:text-green-500" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Monto Total</p>
+              <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{formatMonto(estadisticas.montoTotal)}</p>
+            </div>
+            <CurrencyDollarIcon className="w-12 h-12 text-teal-400 dark:text-teal-500" />
+          </div>
+        </div>
       </div>
+
+      {/* Información del cálculo */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 transition-colors">
+        <div className="flex items-start gap-3">
+          <CalculatorIcon className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">Modalidad de Cálculo</h3>
+            <div className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
+              <p>• <strong>Valor UF:</strong> ${VALOR_UF_SEMESTRE_1.toLocaleString('es-CL')} (30 junio) / ${VALOR_UF_SEMESTRE_2.toLocaleString('es-CL')} (31 diciembre)</p>
+              <p>• <strong>Factor de Cobro:</strong> {FACTOR_COBRO_UF} UF</p>
+              <p>• <strong>Fórmula:</strong> Valor por Cupo = (Cantidad de Meses × Valor UF × Factor de Cobro)</p>
+              <p>• <strong>Monto Total:</strong> Cupos Diarios × Valor por Cupo</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por estado:</span>
+          {['todas', 'pendiente', 'pagada'].map(estado => (
+            <button
+              key={estado}
+              onClick={() => setFiltroEstado(estado)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filtroEstado === estado
+                  ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              {estado.charAt(0).toUpperCase() + estado.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabla */}
+      <Table columns={columns} data={retribucionesFiltradas} />
+
+      {/* Modal de Detalle */}
+      {modalState.type === 'detalle' && modalState.data && (
+        <Modal
+          isOpen={true}
+          onClose={() => setModalState({ type: null, data: null })}
+          title={`Detalle de Retribución - ${modalState.data.centro_formador?.nombre}`}
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 font-medium">Período</p>
+                <p className="text-gray-900 dark:text-gray-100">{modalState.data.periodo}</p>
+              </div>
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 font-medium">Estado</p>
+                <p className="text-gray-900 dark:text-gray-100 capitalize">{modalState.data.estado}</p>
+              </div>
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 font-medium">Cantidad de Rotaciones</p>
+                <p className="text-gray-900 dark:text-gray-100">{modalState.data.cantidad_rotaciones}</p>
+              </div>
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 font-medium">Monto Total</p>
+                <p className="text-teal-600 dark:text-teal-400 font-bold text-lg">{formatMonto(modalState.data.monto_total)}</p>
+              </div>
+            </div>
+
+            {modalState.data.detalles?.rotaciones && (
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Detalle de Solicitudes</h4>
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {modalState.data.detalles.rotaciones.map((rot, idx) => (
+                    <div key={idx} className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg text-sm">
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{rot.especialidad || rot.alumno || 'Sin especificar'}</p>
+                      <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-gray-600 dark:text-gray-400">
+                        <p>Período: {new Date(rot.fecha_inicio).toLocaleDateString('es-CL')} - {new Date(rot.fecha_termino).toLocaleDateString('es-CL')}</p>
+                        <p>Días: {rot.cantidadDias}</p>
+                        <p>Meses: {rot.cantidadMeses}</p>
+                        <p>Cupos: {rot.cuposDiarios}</p>
+                        <p className="col-span-2 font-semibold text-teal-600 dark:text-teal-400">
+                          Monto: {formatMonto(rot.montoTotal)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button variant="secondary" onClick={() => setModalState({ type: null, data: null })}>
+                Cerrar
+              </Button>
+              <Button variant="primary" onClick={() => handleExportarReporte(modalState.data)}>
+                <DocumentArrowDownIcon className="w-5 h-5 inline mr-1" />
+                Exportar Reporte
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

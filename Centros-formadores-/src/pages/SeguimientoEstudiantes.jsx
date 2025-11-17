@@ -46,6 +46,33 @@ const SeguimientoEstudiantes = () => {
     }
   }, [estudianteSeleccionado, mesActual]);
 
+  // Realtime para asistencias
+  useEffect(() => {
+    if (!estudianteSeleccionado) return;
+
+    const asistenciasChannel = supabase
+      .channel('asistencias_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'asistencias',
+          filter: `alumno_id=eq.${estudianteSeleccionado.id}`
+        },
+        (payload) => {
+          console.log('🔔 Cambio en asistencias:', payload);
+          fetchAsistencias();
+          calcularEstadisticas();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(asistenciasChannel);
+    };
+  }, [estudianteSeleccionado, mesActual]);
+
   const fetchData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -55,31 +82,46 @@ const SeguimientoEstudiantes = () => {
         return;
       }
 
-      // Obtener información del centro
-      const { data: centroData } = await supabase
+      // Obtener información del centro desde usuarios_centros
+      const { data: centroData, error: centroError } = await supabase
         .from('usuarios_centros')
         .select('*, centro_formador:centros_formadores(*)')
         .eq('user_id', user.id)
+        .eq('activo', true)
         .single();
+
+      if (centroError || !centroData) {
+        console.error('Error al obtener centro formador:', centroError);
+        alert('No se pudo obtener la información del centro formador. Por favor, contacta al administrador.');
+        navigate('/login');
+        return;
+      }
 
       setCentroInfo(centroData);
 
-      // Obtener estudiantes en rotación del centro
-      const { data: estudiantesData } = await supabase
-        .from('estudiantes_rotacion')
+      // Obtener estudiantes (alumnos) del centro - FILTRADO POR CENTRO
+      const { data: estudiantesData, error: estudiantesError } = await supabase
+        .from('alumnos')
         .select(`
           *,
-          solicitud_rotacion:solicitudes_rotacion(
+          centro_formador:centros_formadores(nombre),
+          rotaciones!alumno_id(
             id,
-            especialidad,
             fecha_inicio,
             fecha_termino,
-            estado
+            estado,
+            servicio:servicios_clinicos(nombre)
           )
         `)
-        .eq('solicitud_rotacion.centro_formador_id', centroData.centro_formador_id)
+        .eq('centro_formador_id', centroData.centro_formador_id)
+        .eq('estado', 'en_rotacion')
         .order('primer_apellido', { ascending: true });
 
+      if (estudiantesError) {
+        console.error('Error al obtener estudiantes:', estudiantesError);
+      }
+
+      console.log(`📚 Estudiantes filtrados para ${centroData.centro_formador?.nombre}:`, estudiantesData?.length || 0);
       setEstudiantes(estudiantesData || []);
       
       // Seleccionar el primer estudiante por defecto
@@ -100,9 +142,9 @@ const SeguimientoEstudiantes = () => {
     const ultimoDia = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0);
 
     const { data } = await supabase
-      .from('asistencia_estudiantes')
+      .from('asistencias')
       .select('*')
-      .eq('estudiante_rotacion_id', estudianteSeleccionado.id)
+      .eq('alumno_id', estudianteSeleccionado.id)
       .gte('fecha', primerDia.toISOString().split('T')[0])
       .lte('fecha', ultimoDia.toISOString().split('T')[0]);
 
@@ -112,10 +154,12 @@ const SeguimientoEstudiantes = () => {
   const fetchObservaciones = async () => {
     if (!estudianteSeleccionado) return;
 
+    // Obtener observaciones desde la tabla asistencias
     const { data } = await supabase
-      .from('observaciones_estudiantes')
-      .select('*')
-      .eq('estudiante_rotacion_id', estudianteSeleccionado.id)
+      .from('asistencias')
+      .select('fecha, observaciones, estado')
+      .eq('alumno_id', estudianteSeleccionado.id)
+      .not('observaciones', 'is', null)
       .order('fecha', { ascending: false })
       .limit(10);
 
@@ -239,8 +283,24 @@ const SeguimientoEstudiantes = () => {
             'bg-white dark:bg-gray-900'
           } ${esHoy ? 'ring-2 ring-teal-500' : ''} cursor-pointer`}
         >
+          {/* Indicador de asistencia - Esquina superior izquierda */}
+          {asistencia && !domingo && (
+            <div className={`absolute top-1 left-1 w-3 h-3 rounded-full ${
+              asistencia.estado === 'presente' ? 'bg-green-500 dark:bg-green-400' :
+              asistencia.estado === 'ausente' ? 'bg-red-400 dark:bg-red-500' :
+              asistencia.estado === 'justificado' ? 'bg-yellow-500 dark:bg-yellow-400' :
+              asistencia.estado === 'tarde' ? 'bg-orange-500 dark:bg-orange-400' :
+              'bg-gray-400'
+            }`} title={`Estado: ${asistencia.estado}`}></div>
+          )}
+          
+          {/* Indicador de observaciones - Esquina superior derecha */}
+          {tieneObservaciones && (
+            <div className="absolute top-1 right-1 w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full" title="Tiene observaciones"></div>
+          )}
+          
           <div className="flex flex-col h-full">
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-center mt-2">
               <span className={`text-sm font-medium ${
                 esHoy ? 'text-teal-600 dark:text-teal-400' : 
                 feriado ? 'text-red-600 dark:text-red-400' :
@@ -248,26 +308,23 @@ const SeguimientoEstudiantes = () => {
               }`}>
                 {dia}
               </span>
-              {tieneObservaciones && (
-                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" title="Tiene observaciones"></div>
-              )}
             </div>
             
             {feriado && (
-              <div className="mt-1 text-[10px] text-red-600 dark:text-red-400 font-medium truncate">
+              <div className="mt-1 text-[10px] text-red-600 dark:text-red-400 font-medium truncate text-center">
                 {feriado}
               </div>
             )}
             
             {asistencia && !domingo && (
-              <div className={`mt-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${getEstadoColor(asistencia.estado)} flex items-center gap-1`}>
+              <div className={`mt-auto px-1.5 py-0.5 rounded text-[10px] font-medium border ${getEstadoColor(asistencia.estado)} flex items-center justify-center gap-1`}>
                 {getEstadoIcon(asistencia.estado)}
-                <span className="truncate">{asistencia.estado}</span>
+                <span className="truncate capitalize">{asistencia.estado}</span>
               </div>
             )}
             
             {sabado && !feriado && (
-              <div className="mt-auto text-[9px] text-blue-600 dark:text-blue-400 font-medium">
+              <div className="mt-auto text-[9px] text-blue-600 dark:text-blue-400 font-medium text-center">
                 Sábado
               </div>
             )}

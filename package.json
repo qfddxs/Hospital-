@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:hospital": "vite",
+    "dev:centros": "cd Centros-formadores && npm run dev",
+    "dev:rotaciones": "cd Portal-rotaciones && npm run dev",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

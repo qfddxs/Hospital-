@@ -21,7 +21,9 @@ import {
   DocumentDuplicateIcon,
   FunnelIcon,
   Squares2X2Icon,
-  TableCellsIcon
+  TableCellsIcon,
+  CheckCircleIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline';
 
 const GestionDocumental = () => {
@@ -38,12 +40,23 @@ const GestionDocumental = () => {
   };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pestañaActiva, setPestañaActiva] = useState('institucionales'); // 'institucionales' o 'estudiantes'
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [filtroCategoria, setFiltroCategoria] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
+  const [filtroAprobacion, setFiltroAprobacion] = useState('todos');
+  const [filtroCentroFormador, setFiltroCentroFormador] = useState('todos');
+  const [centrosFormadores, setCentrosFormadores] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [mostrarFiltrosAvanzados, setMostrarFiltrosAvanzados] = useState(false);
-  const [vistaActual, setVistaActual] = useState('tabla'); // 'tabla' o 'tarjetas'
+  const [vistaActual, setVistaActual] = useState('tabla');
+  
+  // Estados para modal de aprobación
+  const [modalAprobar, setModalAprobar] = useState(false);
+  const [documentoAprobar, setDocumentoAprobar] = useState(null);
+  const [accionAprobacion, setAccionAprobacion] = useState(null);
+  const [comentariosAprobacion, setComentariosAprobacion] = useState('');
+  const [procesandoAprobacion, setProcesandoAprobacion] = useState(false);
   
   const [modalState, setModalState] = useState({ type: null, data: null });
   const [formData, setFormData] = useState({
@@ -72,15 +85,30 @@ const GestionDocumental = () => {
     fetchDocumentos();
     fetchCategorias();
     fetchEstadisticas();
-  }, []);
+    if (pestañaActiva === 'estudiantes') {
+      fetchCentrosFormadores();
+    }
+  }, [pestañaActiva]);
 
   const fetchDocumentos = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('documentos')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      let query = supabase.from('documentos');
+      
+      if (pestañaActiva === 'institucionales') {
+        // Documentos institucionales (sin alumno_id)
+        query = query.select('*').is('alumno_id', null);
+      } else {
+        // Documentos de estudiantes (con alumno_id)
+        query = query.select(`
+          *,
+          alumno:alumnos(id, nombre, primer_apellido, segundo_apellido, rut),
+          centro_formador:centros_formadores(id, nombre)
+        `).not('alumno_id', 'is', null);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
       setDocumentos(data || []);
@@ -104,6 +132,21 @@ const GestionDocumental = () => {
       setCategorias(data || []);
     } catch (err) {
       console.error('Error al cargar categorías:', err);
+    }
+  };
+
+  const fetchCentrosFormadores = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('centros_formadores')
+        .select('id, nombre, codigo')
+        .eq('activo', true)
+        .order('nombre');
+      
+      if (error) throw error;
+      setCentrosFormadores(data || []);
+    } catch (err) {
+      console.error('Error al cargar centros formadores:', err);
     }
   };
 
@@ -328,6 +371,57 @@ const GestionDocumental = () => {
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   };
 
+  // Funciones de aprobación para documentos de estudiantes
+  const handleAprobarClick = (doc) => {
+    setDocumentoAprobar(doc);
+    setAccionAprobacion('aprobar');
+    setComentariosAprobacion('');
+    setModalAprobar(true);
+  };
+
+  const handleRechazarClick = (doc) => {
+    setDocumentoAprobar(doc);
+    setAccionAprobacion('rechazar');
+    setComentariosAprobacion('');
+    setModalAprobar(true);
+  };
+
+  const handleProcesarAprobacion = async () => {
+    if (accionAprobacion === 'rechazar' && !comentariosAprobacion.trim()) {
+      alert('Debe proporcionar un motivo de rechazo');
+      return;
+    }
+
+    try {
+      setProcesandoAprobacion(true);
+      const { data: { user } } = await supabase.auth.getUser();
+
+      await supabase
+        .from('documentos')
+        .update({
+          aprobado: accionAprobacion === 'aprobar',
+          aprobado_por: user?.id,
+          fecha_aprobacion: new Date().toISOString(),
+          comentarios_aprobacion: comentariosAprobacion.trim() || null
+        })
+        .eq('id', documentoAprobar.id);
+
+      await registrarAccion(
+        documentoAprobar.id, 
+        accionAprobacion === 'aprobar' ? 'aprobado' : 'rechazado',
+        comentariosAprobacion.trim() || `Documento ${accionAprobacion === 'aprobar' ? 'aprobado' : 'rechazado'}`
+      );
+
+      alert(`Documento ${accionAprobacion === 'aprobar' ? 'aprobado' : 'rechazado'} exitosamente`);
+      setModalAprobar(false);
+      fetchDocumentos();
+    } catch (err) {
+      alert('Error al procesar: ' + err.message);
+    } finally {
+      setProcesandoAprobacion(false);
+    }
+  };
+
   const handleAddClick = () => {
     setFormData({
       titulo: '',
@@ -363,7 +457,8 @@ const GestionDocumental = () => {
     }
   };
 
-  const columns = [
+  // Columnas para documentos institucionales
+  const columnsInstitucionales = [
     { 
       header: 'Documento', 
       render: (row) => (
@@ -455,15 +550,155 @@ const GestionDocumental = () => {
     }
   ];
 
+  // Columnas para documentos de estudiantes
+  const columnsEstudiantes = [
+    {
+      header: 'Estudiante',
+      render: (row) => (
+        <div>
+          <p className="font-medium text-gray-900 dark:text-white">
+            {row.alumno?.nombre} {row.alumno?.primer_apellido} {row.alumno?.segundo_apellido || ''}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            RUT: {row.alumno?.rut || '-'}
+          </p>
+        </div>
+      )
+    },
+    {
+      header: 'Centro Formador',
+      render: (row) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {row.centro_formador?.nombre || '-'}
+        </span>
+      )
+    },
+    {
+      header: 'Documento',
+      render: (row) => (
+        <div>
+          <p className="font-medium text-gray-900 dark:text-white">{row.titulo}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            📄 {row.archivo_nombre || 'Sin archivo'}
+          </p>
+        </div>
+      )
+    },
+    {
+      header: 'Tipo',
+      render: (row) => (
+        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
+          {row.tipo_documento || row.tipo}
+        </span>
+      )
+    },
+    {
+      header: 'Estado Aprobación',
+      render: (row) => {
+        if (row.aprobado === null) {
+          return (
+            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs flex items-center gap-1">
+              <ClockIcon className="w-3 h-3" />
+              Pendiente
+            </span>
+          );
+        } else if (row.aprobado === true) {
+          return (
+            <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs flex items-center gap-1">
+              <CheckCircleIcon className="w-3 h-3" />
+              Aprobado
+            </span>
+          );
+        } else {
+          return (
+            <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded text-xs flex items-center gap-1">
+              <XCircleIcon className="w-3 h-3" />
+              Rechazado
+            </span>
+          );
+        }
+      }
+    },
+    {
+      header: 'Fecha',
+      render: (row) => (
+        <div>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {formatearFecha(row.created_at)}
+          </p>
+          {row.fecha_expiracion && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Vence: {formatearFecha(row.fecha_expiracion)}
+            </p>
+          )}
+        </div>
+      )
+    },
+    {
+      header: 'Acciones',
+      render: (row) => (
+        <div className="flex space-x-2">
+          {row.archivo_url && (
+            <button
+              onClick={() => handleViewClick(row)}
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+              title="Ver documento"
+            >
+              <EyeIcon className="h-4 w-4" />
+            </button>
+          )}
+          {row.aprobado === null && (
+            <>
+              <button
+                onClick={() => handleAprobarClick(row)}
+                className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300"
+                title="Aprobar"
+              >
+                <CheckCircleIcon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleRechazarClick(row)}
+                className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                title="Rechazar"
+              >
+                <XCircleIcon className="h-4 w-4" />
+              </button>
+            </>
+          )}
+        </div>
+      )
+    }
+  ];
+
   const datosFiltrados = documentos.filter(doc => {
     const cumpleTipo = filtroTipo === 'todos' || doc.tipo === filtroTipo;
     const cumpleCategoria = filtroCategoria === 'todos' || doc.categoria === filtroCategoria;
     const cumpleEstado = filtroEstado === 'todos' || doc.estado === filtroEstado;
+    
+    // Filtro de aprobación solo para documentos de estudiantes
+    let cumpleAprobacion = true;
+    if (pestañaActiva === 'estudiantes' && filtroAprobacion !== 'todos') {
+      if (filtroAprobacion === 'pendiente') {
+        cumpleAprobacion = doc.aprobado === null;
+      } else if (filtroAprobacion === 'aprobado') {
+        cumpleAprobacion = doc.aprobado === true;
+      } else if (filtroAprobacion === 'rechazado') {
+        cumpleAprobacion = doc.aprobado === false;
+      }
+    }
+
+    // Filtro de centro formador solo para documentos de estudiantes
+    let cumpleCentroFormador = true;
+    if (pestañaActiva === 'estudiantes' && filtroCentroFormador !== 'todos') {
+      cumpleCentroFormador = doc.centro_formador_id === filtroCentroFormador;
+    }
+    
     const cumpleBusqueda = 
       doc.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
       (doc.descripcion && doc.descripcion.toLowerCase().includes(busqueda.toLowerCase())) ||
       (doc.tags && doc.tags.some(tag => tag.toLowerCase().includes(busqueda.toLowerCase())));
-    return cumpleTipo && cumpleCategoria && cumpleEstado && cumpleBusqueda;
+    
+    return cumpleTipo && cumpleCategoria && cumpleEstado && cumpleAprobacion && cumpleCentroFormador && cumpleBusqueda;
   });
 
   if (loading) return <Loader message="Cargando documentos..." />;
@@ -478,7 +713,12 @@ const GestionDocumental = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Gestión Documental</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Administración de documentos y archivos del sistema</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            {pestañaActiva === 'institucionales' 
+              ? 'Administra documentos normativos y protocolos institucionales'
+              : 'Revisa y aprueba documentos de estudiantes'
+            }
+          </p>
         </div>
         <div className="flex gap-2">
           {/* Toggle Vista */}
@@ -502,6 +742,38 @@ const GestionDocumental = () => {
             <ArrowUpTrayIcon className="w-5 h-5" />
             Subir Documento
           </Button>
+        </div>
+      </div>
+
+      {/* Pestañas */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => setPestañaActiva('institucionales')}
+            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+              pestañaActiva === 'institucionales'
+                ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/20'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <DocumentTextIcon className="w-5 h-5" />
+              <span>Documentos Institucionales</span>
+            </div>
+          </button>
+          <button
+            onClick={() => setPestañaActiva('estudiantes')}
+            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+              pestañaActiva === 'estudiantes'
+                ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/20'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <DocumentTextIcon className="w-5 h-5" />
+              <span>Documentos de Estudiantes</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -605,6 +877,38 @@ const GestionDocumental = () => {
                   <option value="archivado">Archivado</option>
                 </select>
               </div>
+              {pestañaActiva === 'estudiantes' && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Centro Formador:</label>
+                    <select
+                      value={filtroCentroFormador}
+                      onChange={(e) => setFiltroCentroFormador(e.target.value)}
+                      className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
+                    >
+                      <option value="todos">Todos los centros</option>
+                      {centrosFormadores.map(centro => (
+                        <option key={centro.id} value={centro.id}>
+                          {centro.nombre} {centro.codigo ? `(${centro.codigo})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Estado Aprobación:</label>
+                    <select
+                      value={filtroAprobacion}
+                      onChange={(e) => setFiltroAprobacion(e.target.value)}
+                      className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
+                    >
+                      <option value="todos">Todos</option>
+                      <option value="pendiente">Pendientes</option>
+                      <option value="aprobado">Aprobados</option>
+                      <option value="rechazado">Rechazados</option>
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -612,7 +916,10 @@ const GestionDocumental = () => {
 
       {/* Contenido - Vista de Tabla o Tarjetas */}
       {vistaActual === 'tabla' ? (
-        <Table columns={columns} data={datosFiltrados} />
+        <Table 
+          columns={pestañaActiva === 'institucionales' ? columnsInstitucionales : columnsEstudiantes} 
+          data={datosFiltrados} 
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {datosFiltrados.length > 0 ? (
@@ -908,6 +1215,62 @@ const GestionDocumental = () => {
             </form>
           )}
         </Modal>
+      )}
+
+      {/* Modal de Aprobación/Rechazo */}
+      {modalAprobar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {accionAprobacion === 'aprobar' ? 'Aprobar Documento' : 'Rechazar Documento'}
+            </h3>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <span className="font-medium">Documento:</span> {documentoAprobar?.titulo}
+              </p>
+              {documentoAprobar?.alumno && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Estudiante:</span> {documentoAprobar.alumno.nombre} {documentoAprobar.alumno.primer_apellido}
+                </p>
+              )}
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {accionAprobacion === 'rechazar' ? 'Motivo del rechazo *' : 'Comentarios (opcional)'}
+              </label>
+              <textarea
+                value={comentariosAprobacion}
+                onChange={(e) => setComentariosAprobacion(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400"
+                placeholder={accionAprobacion === 'rechazar' ? 'Explica el motivo del rechazo...' : 'Agrega comentarios adicionales...'}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setModalAprobar(false)}
+                disabled={procesandoAprobacion}
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleProcesarAprobacion}
+                disabled={procesandoAprobacion}
+                className={`flex-1 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 ${
+                  accionAprobacion === 'aprobar'
+                    ? 'bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700'
+                    : 'bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700'
+                }`}
+              >
+                {procesandoAprobacion ? 'Procesando...' : (accionAprobacion === 'aprobar' ? 'Aprobar' : 'Rechazar')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

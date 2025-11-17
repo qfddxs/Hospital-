@@ -10,7 +10,9 @@ import {
   CalendarIcon,
   UserGroupIcon,
   CheckCircleIcon,
-  XCircleIcon
+  XCircleIcon,
+  ClockIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 const ControlAsistencia = () => {
@@ -20,6 +22,11 @@ const ControlAsistencia = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
+  
+  // Estados para modal de observación obligatoria
+  const [modalObservacion, setModalObservacion] = useState(false);
+  const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
+  const [observacionObligatoria, setObservacionObligatoria] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -157,17 +164,54 @@ const ControlAsistencia = () => {
     }
   };
 
-  const handleAsistenciaChange = (rotacionId, presente) => {
+  const handleAsistenciaChange = (rotacionId, alumnoId, estado, observacion = null) => {
+    // Si es "justificado", abrir modal para observación obligatoria
+    if (estado === 'justificado') {
+      setAlumnoSeleccionado({ rotacionId, alumnoId });
+      setModalObservacion(true);
+      return;
+    }
+    
+    // Para otros estados, guardar normalmente
     setAsistencias(prev => ({
       ...prev,
       [rotacionId]: {
         ...prev[rotacionId],
         rotacion_id: rotacionId,
+        alumno_id: alumnoId,
         fecha: fechaSeleccionada,
         tipo: 'alumno',
-        presente,
+        estado: estado,
+        presente: estado === 'presente' || estado === 'tarde', // Mantener compatibilidad
+        observaciones: observacion || prev[rotacionId]?.observaciones,
       }
     }));
+  };
+  
+  const guardarAsistenciaJustificada = () => {
+    if (!observacionObligatoria.trim()) {
+      alert('Debe proporcionar una justificación para la ausencia');
+      return;
+    }
+    
+    const { rotacionId, alumnoId } = alumnoSeleccionado;
+    setAsistencias(prev => ({
+      ...prev,
+      [rotacionId]: {
+        ...prev[rotacionId],
+        rotacion_id: rotacionId,
+        alumno_id: alumnoId,
+        fecha: fechaSeleccionada,
+        tipo: 'alumno',
+        estado: 'justificado',
+        presente: false,
+        observaciones: observacionObligatoria,
+      }
+    }));
+    
+    setModalObservacion(false);
+    setObservacionObligatoria('');
+    setAlumnoSeleccionado(null);
   };
 
   const handleObservacionChange = (rotacionId, observaciones) => {
@@ -186,7 +230,26 @@ const ControlAsistencia = () => {
     try {
       setGuardando(true);
       
-      const asistenciasArray = Object.values(asistencias).filter(a => a.rotacion_id && a.presente !== undefined);
+      const asistenciasArray = Object.values(asistencias)
+        .filter(a => a.rotacion_id && a.estado)
+        .map(a => {
+          // Preparar objeto sin el campo id para que la BD lo genere automáticamente
+          const asistenciaData = {
+            rotacion_id: a.rotacion_id,
+            alumno_id: a.alumno_id,
+            fecha: a.fecha,
+            tipo: a.tipo || 'alumno',
+            estado: a.estado,
+            presente: a.estado === 'presente' || a.estado === 'tarde'
+          };
+          
+          // Solo incluir observaciones si existen
+          if (a.observaciones && a.observaciones.trim()) {
+            asistenciaData.observaciones = a.observaciones.trim();
+          }
+          
+          return asistenciaData;
+        });
       
       if (asistenciasArray.length === 0) {
         alert('No hay cambios para guardar');
@@ -218,8 +281,10 @@ const ControlAsistencia = () => {
       nuevasAsistencias[rot.id] = {
         ...nuevasAsistencias[rot.id],
         rotacion_id: rot.id,
+        alumno_id: rot.estudiante_id,
         fecha: fechaSeleccionada,
         tipo: 'alumno',
+        estado: 'presente',
         presente: true,
       };
     });
@@ -228,10 +293,12 @@ const ControlAsistencia = () => {
 
   // Calcular estadísticas
   const totalRotaciones = rotaciones.length;
-  const presentes = Object.values(asistencias).filter(a => a.presente === true).length;
-  const ausentes = Object.values(asistencias).filter(a => a.presente === false).length;
-  const sinRegistro = totalRotaciones - presentes - ausentes;
-  const porcentajeAsistencia = totalRotaciones > 0 ? Math.round((presentes / totalRotaciones) * 100) : 0;
+  const presentes = Object.values(asistencias).filter(a => a.estado === 'presente').length;
+  const tarde = Object.values(asistencias).filter(a => a.estado === 'tarde').length;
+  const ausentes = Object.values(asistencias).filter(a => a.estado === 'ausente').length;
+  const justificados = Object.values(asistencias).filter(a => a.estado === 'justificado').length;
+  const sinRegistro = totalRotaciones - presentes - tarde - ausentes - justificados;
+  const porcentajeAsistencia = totalRotaciones > 0 ? Math.round(((presentes + tarde) / totalRotaciones) * 100) : 0;
 
   const columns = [
     { 
@@ -272,31 +339,57 @@ const ControlAsistencia = () => {
       header: 'Asistencia', 
       render: (row) => {
         const asistencia = asistencias[row.id];
-        const presente = asistencia?.presente;
+        const estado = asistencia?.estado;
         
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={() => handleAsistenciaChange(row.id, true)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                presente === true
+              onClick={() => handleAsistenciaChange(row.id, row.estudiante_id, 'presente')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                estado === 'presente'
                   ? 'bg-green-500 dark:bg-green-600 text-white shadow-md'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
+              title="Presente"
             >
               <CheckIcon className="w-4 h-4 inline mr-1" />
               Presente
             </button>
             <button
-              onClick={() => handleAsistenciaChange(row.id, false)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                presente === false
+              onClick={() => handleAsistenciaChange(row.id, row.estudiante_id, 'tarde')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                estado === 'tarde'
+                  ? 'bg-orange-500 dark:bg-orange-600 text-white shadow-md'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              title="Presente pero tarde"
+            >
+              <ClockIcon className="w-4 h-4 inline mr-1" />
+              Tarde
+            </button>
+            <button
+              onClick={() => handleAsistenciaChange(row.id, row.estudiante_id, 'ausente')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                estado === 'ausente'
                   ? 'bg-red-500 dark:bg-red-600 text-white shadow-md'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
+              title="Ausente"
             >
               <XMarkIcon className="w-4 h-4 inline mr-1" />
               Ausente
+            </button>
+            <button
+              onClick={() => handleAsistenciaChange(row.id, row.estudiante_id, 'justificado')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                estado === 'justificado'
+                  ? 'bg-yellow-500 dark:bg-yellow-600 text-white shadow-md'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              title="Ausencia justificada"
+            >
+              <ExclamationTriangleIcon className="w-4 h-4 inline mr-1" />
+              Justificado
             </button>
           </div>
         );
@@ -447,6 +540,56 @@ const ControlAsistencia = () => {
           <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
             Selecciona otra fecha o asigna rotaciones desde <strong>Gestión de Alumnos</strong>
           </p>
+        </div>
+      )}
+
+      {/* Modal de Observación Obligatoria */}
+      {modalObservacion && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                <ExclamationTriangleIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Justificación de Ausencia
+              </h3>
+            </div>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Debe proporcionar una justificación para registrar la ausencia como justificada. 
+              Esta información quedará registrada en el sistema.
+            </p>
+            
+            <textarea
+              value={observacionObligatoria}
+              onChange={(e) => setObservacionObligatoria(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+              rows="4"
+              placeholder="Ej: Certificado médico presentado por enfermedad..."
+              required
+            />
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setModalObservacion(false);
+                  setObservacionObligatoria('');
+                  setAlumnoSeleccionado(null);
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={guardarAsistenciaJustificada}
+                disabled={!observacionObligatoria.trim()}
+                className="flex-1 px-4 py-2 bg-yellow-500 dark:bg-yellow-600 text-white rounded-lg hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Guardar Justificación
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

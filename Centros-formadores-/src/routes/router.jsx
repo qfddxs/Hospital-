@@ -10,6 +10,7 @@ import SolicitudRotacion from '../pages/SolicitudRotacion'
 import GestionDocumental from '../pages/GestionDocumental'
 import SeguimientoEstudiantes from '../pages/SeguimientoEstudiantes'
 import SolicitudesRotacion from '../pages/SolicitudesRotacion'
+import DocumentosEstudiantes from '../pages/DocumentosEstudiantes'
 
 function Providers({ children }) {
   return (
@@ -89,6 +90,14 @@ const router = createBrowserRouter([
     element: (
       <Providers>
         <SolicitudesRotacion />
+      </Providers>
+    )
+  },
+  {
+    path: '/documentos-estudiantes',
+    element: (
+      <Providers>
+        <DocumentosEstudiantes />
       </Providers>
     )
   }

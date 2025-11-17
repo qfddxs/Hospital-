@@ -17,6 +17,7 @@ import { subirDocumentoPDF, eliminarArchivo } from '../utils/storageHelper';
 const GestionDocumental = () => {
   const navigate = useNavigate();
   const [centroInfo, setCentroInfo] = useState(null);
+  const [pestañaActiva, setPestañaActiva] = useState('centro'); // 'centro' o 'estudiantes'
   const [documentos, setDocumentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -26,7 +27,7 @@ const GestionDocumental = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [pestañaActiva]);
 
   const fetchData = async () => {
     try {
@@ -45,15 +46,31 @@ const GestionDocumental = () => {
 
       setCentroInfo(centroData);
 
-      // Cargar documentos del centro
-      const { data: docsData, error: docsError } = await supabase
-        .from('documentos_centro')
-        .select('*')
-        .eq('centro_formador_id', centroData.centro_formador_id)
-        .order('fecha_subida', { ascending: false });
+      if (pestañaActiva === 'centro') {
+        // Cargar documentos del centro
+        const { data: docsData, error: docsError } = await supabase
+          .from('documentos_centro')
+          .select('*')
+          .eq('centro_formador_id', centroData.centro_formador_id)
+          .order('fecha_subida', { ascending: false });
 
-      if (docsError) throw docsError;
-      setDocumentos(docsData || []);
+        if (docsError) throw docsError;
+        setDocumentos(docsData || []);
+      } else {
+        // Cargar documentos de estudiantes del centro
+        const { data: docsData, error: docsError } = await supabase
+          .from('documentos')
+          .select(`
+            *,
+            alumno:alumnos(id, nombre, primer_apellido, segundo_apellido, rut)
+          `)
+          .eq('centro_formador_id', centroData.centro_formador_id)
+          .not('alumno_id', 'is', null)
+          .order('created_at', { ascending: false });
+
+        if (docsError) throw docsError;
+        setDocumentos(docsData || []);
+      }
 
     } catch (err) {
       console.error('Error:', err);
@@ -197,14 +214,47 @@ const GestionDocumental = () => {
       />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
+        {/* Pestañas */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8 transition-colors duration-300">
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setPestañaActiva('centro')}
+              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                pestañaActiva === 'centro'
+                  ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/20'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <DocumentTextIcon className="w-5 h-5" />
+                <span>Documentos del Centro</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setPestañaActiva('estudiantes')}
+              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                pestañaActiva === 'estudiantes'
+                  ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/20'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <DocumentTextIcon className="w-5 h-5" />
+                <span>Documentos de Estudiantes</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
         {error && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
             {error}
           </div>
         )}
 
-        {/* Área de Subida */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8 transition-colors duration-300">
+        {/* Área de Subida - Solo para documentos del centro */}
+        {pestañaActiva === 'centro' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8 transition-colors duration-300">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 transition-colors">Subir Documento</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 transition-colors">
             Sube documentos importantes como certificados de vacunación, seguros, o cualquier otro documento requerido.
@@ -266,10 +316,13 @@ const GestionDocumental = () => {
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 transition-colors">PDF - Máx. 10MB</p>
           </div>
         </motion.div>
+        )}
 
         {/* Lista de Documentos */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 transition-colors duration-300">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 transition-colors">Documentos Subidos</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 transition-colors">
+            {pestañaActiva === 'centro' ? 'Documentos del Centro' : 'Documentos de Estudiantes'}
+          </h2>
 
           {documentos.length === 0 ? (
             <div className="text-center py-12">
@@ -297,12 +350,41 @@ const GestionDocumental = () => {
                       <DocumentTextIcon className="w-6 h-6 text-red-600 dark:text-red-400 transition-colors" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white transition-colors">{doc.nombre_archivo}</p>
+                      {pestañaActiva === 'estudiantes' && doc.alumno && (
+                        <p className="text-sm font-medium text-teal-600 dark:text-teal-400 mb-1 transition-colors">
+                          {doc.alumno.nombre} {doc.alumno.primer_apellido} {doc.alumno.segundo_apellido || ''} - RUT: {doc.alumno.rut}
+                        </p>
+                      )}
+                      <p className="font-medium text-gray-900 dark:text-white transition-colors">
+                        {pestañaActiva === 'centro' ? doc.nombre_archivo : (doc.titulo || doc.archivo_nombre)}
+                      </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors">
-                        <span className="capitalize">{doc.tipo_documento.replace(/_/g, ' ')}</span> • {new Date(doc.fecha_subida).toLocaleDateString('es-CL')} • {(doc.tamaño_bytes / 1024).toFixed(2)} KB
+                        <span className="capitalize">{(doc.tipo_documento || doc.tipo || '').replace(/_/g, ' ')}</span> • 
+                        {new Date(doc.fecha_subida || doc.created_at).toLocaleDateString('es-CL')} • 
+                        {doc.tamaño_bytes ? ` ${(doc.tamaño_bytes / 1024).toFixed(2)} KB` : ''}
                       </p>
                       {doc.descripcion && (
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 transition-colors">{doc.descripcion}</p>
+                      )}
+                      {pestañaActiva === 'estudiantes' && (
+                        <div className="mt-2 flex items-center gap-2">
+                          {doc.aprobado === null && (
+                            <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
+                              Pendiente de aprobación
+                            </span>
+                          )}
+                          {doc.aprobado === true && (
+                            <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs flex items-center gap-1">
+                              <CheckCircleIcon className="w-3 h-3" />
+                              Aprobado
+                            </span>
+                          )}
+                          {doc.aprobado === false && (
+                            <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded text-xs">
+                              Rechazado
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -310,17 +392,19 @@ const GestionDocumental = () => {
                     <button
                       onClick={() => handleDownload(doc)}
                       className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                      title="Descargar"
+                      title="Ver/Descargar"
                     >
                       <ArrowDownTrayIcon className="w-5 h-5" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(doc)}
-                      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                      title="Eliminar"
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
+                    {pestañaActiva === 'centro' && (
+                      <button
+                        onClick={() => handleDelete(doc)}
+                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                        title="Eliminar"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               ))}

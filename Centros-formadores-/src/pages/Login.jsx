@@ -33,6 +33,19 @@ const Login = () => {
       if (error) throw error
       
       if (data.session) {
+        // Verificar que el usuario esté en usuarios_centros
+        const { data: centroData, error: centroError } = await supabase
+          .from('usuarios_centros')
+          .select('centro_formador_id, activo')
+          .eq('user_id', data.user.id)
+          .eq('activo', true)
+          .single()
+
+        if (centroError || !centroData) {
+          await supabase.auth.signOut()
+          throw new Error('Usuario no autorizado para acceder al portal de centros formadores')
+        }
+
         navigate('/dashboard')
       }
     } catch (err) {
@@ -44,6 +57,8 @@ const Login = () => {
         errorMessage = 'Debes confirmar tu correo electrónico'
       } else if (errorMessage.includes('User not found')) {
         errorMessage = 'Usuario no encontrado'
+      } else if (errorMessage.includes('no autorizado')) {
+        errorMessage = 'Usuario no autorizado para acceder al portal de centros formadores'
       }
       
       setError(errorMessage)

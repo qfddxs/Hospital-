@@ -12,6 +12,7 @@ import GestionAlumnos from '../pages/GestionAlumnos'
 import ControlAsistencia from '../pages/ControlAsistencia'
 import Retribuciones from '../pages/Retribuciones'
 import GestionDocumental from '../pages/GestionDocumental'
+import DocumentosPendientes from '../pages/DocumentosPendientes'
 import TestSupabase from '../pages/TestSupabase'
 import TestCRUD from '../pages/TestCRUD'
 
@@ -113,6 +114,10 @@ const router = createBrowserRouter([
           {
             path: 'gestion-documental',
             element: <GestionDocumental />,
+          },
+          {
+            path: 'documentos-pendientes',
+            element: <DocumentosPendientes />,
           },
         ],
       },

@@ -15,7 +15,10 @@ import {
   EyeIcon,
   CalculatorIcon,
   DocumentTextIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { useNivelFormacion } from '../context/NivelFormacionContext';
 
@@ -28,6 +31,7 @@ const Retribuciones = () => {
   const [filtroSemestre, setFiltroSemestre] = useState('actual');
   const [modalState, setModalState] = useState({ type: null, data: null });
   const [calculando, setCalculando] = useState(false);
+  const [mostrarModalidadCalculo, setMostrarModalidadCalculo] = useState(false);
 
   // Valores UF según documento
   const VALOR_UF_SEMESTRE_1 = 36028.10; // 30 de junio
@@ -286,6 +290,27 @@ const Retribuciones = () => {
     }
   };
 
+  const handleEliminar = async (retribucion) => {
+    if (!confirm(`¿Estás seguro de eliminar la retribución de ${retribucion.centro_formador?.nombre}?\n\nPeríodo: ${retribucion.periodo}\nMonto: ${formatMonto(retribucion.monto_total)}\n\nEsta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('retribuciones')
+        .delete()
+        .eq('id', retribucion.id);
+
+      if (error) throw error;
+
+      alert('Retribución eliminada exitosamente');
+      fetchRetribuciones();
+    } catch (err) {
+      alert('Error al eliminar: ' + err.message);
+      console.error('Error:', err);
+    }
+  };
+
   const handleVerDetalle = (retribucion) => {
     setModalState({ type: 'detalle', data: retribucion });
   };
@@ -399,6 +424,13 @@ const Retribuciones = () => {
               <CheckCircleIcon className="w-4 h-4" />
             </button>
           )}
+          <button
+            onClick={() => handleEliminar(row)}
+            className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+            title="Eliminar retribución"
+          >
+            <TrashIcon className="w-4 h-4" />
+          </button>
         </div>
       )
     }
@@ -530,20 +562,43 @@ const Retribuciones = () => {
         </div>
       </div>
 
-      {/* Información del cálculo */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 transition-colors">
-        <div className="flex items-start gap-3">
-          <CalculatorIcon className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">Modalidad de Cálculo</h3>
-            <div className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
+      {/* Información del cálculo - Desplegable */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors overflow-hidden">
+        <button
+          onClick={() => setMostrarModalidadCalculo(!mostrarModalidadCalculo)}
+          className="w-full p-4 flex items-center justify-between hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <CalculatorIcon className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+            <h3 className="font-semibold text-blue-900 dark:text-blue-300">Modalidad de Cálculo</h3>
+          </div>
+          {mostrarModalidadCalculo ? (
+            <ChevronUpIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          ) : (
+            <ChevronDownIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          )}
+        </button>
+        
+        {mostrarModalidadCalculo && (
+          <div className="px-4 pb-4 pt-2 border-t border-blue-200 dark:border-blue-700">
+            <div className="text-sm text-blue-800 dark:text-blue-400 space-y-2">
               <p>• <strong>Valor UF:</strong> ${VALOR_UF_SEMESTRE_1.toLocaleString('es-CL')} (30 junio) / ${VALOR_UF_SEMESTRE_2.toLocaleString('es-CL')} (31 diciembre)</p>
               <p>• <strong>Factor de Cobro:</strong> {FACTOR_COBRO_UF} UF</p>
               <p>• <strong>Fórmula:</strong> Valor por Cupo = (Cantidad de Meses × Valor UF × Factor de Cobro)</p>
               <p>• <strong>Monto Total:</strong> Cupos Diarios × Valor por Cupo</p>
+              
+              <div className="mt-3 pt-3 border-t border-blue-300 dark:border-blue-600">
+                <p className="font-semibold mb-2">Ejemplo de cálculo:</p>
+                <div className="bg-white dark:bg-gray-800 rounded p-3 space-y-1 text-xs">
+                  <p>1. Período: 1 marzo - 30 junio (91 días)</p>
+                  <p>2. Cantidad de Meses: 91 ÷ 30 = 3.03 meses</p>
+                  <p>3. Valor por Cupo: 3.03 × $36,028.10 × 4.5 = $491,063</p>
+                  <p>4. Monto Total (5 cupos): 5 × $491,063 = <strong className="text-teal-600 dark:text-teal-400">$2,455,315</strong></p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Filtros */}

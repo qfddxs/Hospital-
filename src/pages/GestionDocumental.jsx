@@ -40,7 +40,7 @@ const GestionDocumental = () => {
   };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [pestañaActiva, setPestañaActiva] = useState('institucionales'); // 'institucionales' o 'estudiantes'
+  const [pestañaActiva, setPestañaActiva] = useState('institucionales'); // 'institucionales' o 'centros'
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [filtroCategoria, setFiltroCategoria] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
@@ -85,7 +85,7 @@ const GestionDocumental = () => {
     fetchDocumentos();
     fetchCategorias();
     fetchEstadisticas();
-    if (pestañaActiva === 'estudiantes') {
+    if (pestañaActiva === 'centros') {
       fetchCentrosFormadores();
     }
   }, [pestañaActiva]);
@@ -94,24 +94,29 @@ const GestionDocumental = () => {
     try {
       setLoading(true);
       
-      let query = supabase.from('documentos');
-      
       if (pestañaActiva === 'institucionales') {
-        // Documentos institucionales (sin alumno_id)
-        query = query.select('*').is('alumno_id', null);
+        // Documentos institucionales del hospital
+        const { data, error } = await supabase
+          .from('documentos')
+          .select('*')
+          .is('alumno_id', null)
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setDocumentos(data || []);
       } else {
-        // Documentos de estudiantes (con alumno_id)
-        query = query.select(`
-          *,
-          alumno:alumnos(id, nombre, primer_apellido, segundo_apellido, rut),
-          centro_formador:centros_formadores(id, nombre)
-        `).not('alumno_id', 'is', null);
+        // Documentos de centros formadores
+        const { data, error } = await supabase
+          .from('documentos_centro')
+          .select(`
+            *,
+            centro_formador:centros_formadores(id, nombre, codigo)
+          `)
+          .order('fecha_subida', { ascending: false });
+        
+        if (error) throw error;
+        setDocumentos(data || []);
       }
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      setDocumentos(data || []);
     } catch (err) {
       setError('No se pudieron cargar los documentos');
       console.error('Error:', err);
@@ -396,8 +401,11 @@ const GestionDocumental = () => {
       setProcesandoAprobacion(true);
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Detectar qué tabla usar según la pestaña activa
+      const tabla = pestañaActiva === 'centros' ? 'documentos_centro' : 'documentos';
+
       await supabase
-        .from('documentos')
+        .from(tabla)
         .update({
           aprobado: accionAprobacion === 'aprobar',
           aprobado_por: user?.id,
@@ -406,11 +414,14 @@ const GestionDocumental = () => {
         })
         .eq('id', documentoAprobar.id);
 
-      await registrarAccion(
-        documentoAprobar.id, 
-        accionAprobacion === 'aprobar' ? 'aprobado' : 'rechazado',
-        comentariosAprobacion.trim() || `Documento ${accionAprobacion === 'aprobar' ? 'aprobado' : 'rechazado'}`
-      );
+      // Solo registrar en historial si es documento institucional (no centros)
+      if (pestañaActiva !== 'centros') {
+        await registrarAccion(
+          documentoAprobar.id, 
+          accionAprobacion === 'aprobar' ? 'aprobado' : 'rechazado',
+          comentariosAprobacion.trim() || `Documento ${accionAprobacion === 'aprobar' ? 'aprobado' : 'rechazado'}`
+        );
+      }
 
       alert(`Documento ${accionAprobacion === 'aprobar' ? 'aprobado' : 'rechazado'} exitosamente`);
       setModalAprobar(false);
@@ -550,45 +561,39 @@ const GestionDocumental = () => {
     }
   ];
 
-  // Columnas para documentos de estudiantes
-  const columnsEstudiantes = [
-    {
-      header: 'Estudiante',
-      render: (row) => (
-        <div>
-          <p className="font-medium text-gray-900 dark:text-white">
-            {row.alumno?.nombre} {row.alumno?.primer_apellido} {row.alumno?.segundo_apellido || ''}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            RUT: {row.alumno?.rut || '-'}
-          </p>
-        </div>
-      )
-    },
+  // Columnas para documentos de centros formadores
+  const columnsCentros = [
     {
       header: 'Centro Formador',
       render: (row) => (
-        <span className="text-sm text-gray-700 dark:text-gray-300">
-          {row.centro_formador?.nombre || '-'}
-        </span>
+        <div>
+          <p className="font-medium text-gray-900 dark:text-white">
+            {row.centro_formador?.nombre || '-'}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Código: {row.centro_formador?.codigo || '-'}
+          </p>
+        </div>
       )
     },
     {
       header: 'Documento',
       render: (row) => (
         <div>
-          <p className="font-medium text-gray-900 dark:text-white">{row.titulo}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            📄 {row.archivo_nombre || 'Sin archivo'}
-          </p>
+          <p className="font-medium text-gray-900 dark:text-white">{row.nombre_archivo}</p>
+          {row.descripcion && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {row.descripcion}
+            </p>
+          )}
         </div>
       )
     },
     {
       header: 'Tipo',
       render: (row) => (
-        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
-          {row.tipo_documento || row.tipo}
+        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs capitalize">
+          {(row.tipo_documento || '').replace(/_/g, ' ')}
         </span>
       )
     },
@@ -620,18 +625,19 @@ const GestionDocumental = () => {
       }
     },
     {
+      header: 'Tamaño',
+      render: (row) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {row.tamaño_bytes ? `${(row.tamaño_bytes / 1024).toFixed(2)} KB` : '-'}
+        </span>
+      )
+    },
+    {
       header: 'Fecha',
       render: (row) => (
-        <div>
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            {formatearFecha(row.created_at)}
-          </p>
-          {row.fecha_expiracion && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Vence: {formatearFecha(row.fecha_expiracion)}
-            </p>
-          )}
-        </div>
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {new Date(row.fecha_subida).toLocaleDateString('es-CL')}
+        </span>
       )
     },
     {
@@ -671,13 +677,13 @@ const GestionDocumental = () => {
   ];
 
   const datosFiltrados = documentos.filter(doc => {
-    const cumpleTipo = filtroTipo === 'todos' || doc.tipo === filtroTipo;
+    const cumpleTipo = filtroTipo === 'todos' || doc.tipo === filtroTipo || doc.tipo_documento === filtroTipo;
     const cumpleCategoria = filtroCategoria === 'todos' || doc.categoria === filtroCategoria;
     const cumpleEstado = filtroEstado === 'todos' || doc.estado === filtroEstado;
     
-    // Filtro de aprobación solo para documentos de estudiantes
+    // Filtro de aprobación solo para documentos de centros
     let cumpleAprobacion = true;
-    if (pestañaActiva === 'estudiantes' && filtroAprobacion !== 'todos') {
+    if (pestañaActiva === 'centros' && filtroAprobacion !== 'todos') {
       if (filtroAprobacion === 'pendiente') {
         cumpleAprobacion = doc.aprobado === null;
       } else if (filtroAprobacion === 'aprobado') {
@@ -687,16 +693,32 @@ const GestionDocumental = () => {
       }
     }
 
-    // Filtro de centro formador solo para documentos de estudiantes
+    // Filtro de centro formador solo para documentos de centros
     let cumpleCentroFormador = true;
-    if (pestañaActiva === 'estudiantes' && filtroCentroFormador !== 'todos') {
+    if (pestañaActiva === 'centros' && filtroCentroFormador !== 'todos') {
       cumpleCentroFormador = doc.centro_formador_id === filtroCentroFormador;
     }
     
-    const cumpleBusqueda = 
-      doc.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
-      (doc.descripcion && doc.descripcion.toLowerCase().includes(busqueda.toLowerCase())) ||
-      (doc.tags && doc.tags.some(tag => tag.toLowerCase().includes(busqueda.toLowerCase())));
+    // Búsqueda adaptada según el tipo de documento
+    const searchTerm = busqueda.toLowerCase();
+    let cumpleBusqueda = true;
+    
+    if (searchTerm) {
+      if (pestañaActiva === 'centros') {
+        // Para documentos de centros: buscar en nombre_archivo, descripcion, centro
+        cumpleBusqueda = 
+          (doc.nombre_archivo && doc.nombre_archivo.toLowerCase().includes(searchTerm)) ||
+          (doc.descripcion && doc.descripcion.toLowerCase().includes(searchTerm)) ||
+          (doc.centro_formador?.nombre && doc.centro_formador.nombre.toLowerCase().includes(searchTerm)) ||
+          (doc.tipo_documento && doc.tipo_documento.toLowerCase().includes(searchTerm));
+      } else {
+        // Para documentos institucionales: buscar en titulo, descripcion, tags
+        cumpleBusqueda = 
+          (doc.titulo && doc.titulo.toLowerCase().includes(searchTerm)) ||
+          (doc.descripcion && doc.descripcion.toLowerCase().includes(searchTerm)) ||
+          (doc.tags && doc.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+      }
+    }
     
     return cumpleTipo && cumpleCategoria && cumpleEstado && cumpleAprobacion && cumpleCentroFormador && cumpleBusqueda;
   });
@@ -716,7 +738,7 @@ const GestionDocumental = () => {
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             {pestañaActiva === 'institucionales' 
               ? 'Administra documentos normativos y protocolos institucionales'
-              : 'Revisa y aprueba documentos de estudiantes'
+              : 'Revisa y aprueba documentos de centros formadores'
             }
           </p>
         </div>
@@ -762,16 +784,16 @@ const GestionDocumental = () => {
             </div>
           </button>
           <button
-            onClick={() => setPestañaActiva('estudiantes')}
+            onClick={() => setPestañaActiva('centros')}
             className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
-              pestañaActiva === 'estudiantes'
+              pestañaActiva === 'centros'
                 ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/20'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >
             <div className="flex items-center justify-center gap-2">
               <DocumentTextIcon className="w-5 h-5" />
-              <span>Documentos de Estudiantes</span>
+              <span>Documentos de Centros Formadores</span>
             </div>
           </button>
         </div>
@@ -877,7 +899,7 @@ const GestionDocumental = () => {
                   <option value="archivado">Archivado</option>
                 </select>
               </div>
-              {pestañaActiva === 'estudiantes' && (
+              {pestañaActiva === 'centros' && (
                 <>
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Centro Formador:</label>
@@ -917,7 +939,7 @@ const GestionDocumental = () => {
       {/* Contenido - Vista de Tabla o Tarjetas */}
       {vistaActual === 'tabla' ? (
         <Table 
-          columns={pestañaActiva === 'institucionales' ? columnsInstitucionales : columnsEstudiantes} 
+          columns={pestañaActiva === 'institucionales' ? columnsInstitucionales : columnsCentros} 
           data={datosFiltrados} 
         />
       ) : (
@@ -1227,8 +1249,13 @@ const GestionDocumental = () => {
 
             <div className="mb-4">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                <span className="font-medium">Documento:</span> {documentoAprobar?.titulo}
+                <span className="font-medium">Documento:</span> {documentoAprobar?.titulo || documentoAprobar?.nombre_archivo}
               </p>
+              {documentoAprobar?.centro_formador && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <span className="font-medium">Centro Formador:</span> {documentoAprobar.centro_formador.nombre}
+                </p>
+              )}
               {documentoAprobar?.alumno && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Estudiante:</span> {documentoAprobar.alumno.nombre} {documentoAprobar.alumno.primer_apellido}

@@ -4,13 +4,16 @@ import './index.css'
 import App from './App.jsx'
 import { NivelFormacionProvider } from './context/NivelFormacionContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { NotificacionesProvider } from './context/NotificacionesContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider>
-      <NivelFormacionProvider>
-        <App />
-      </NivelFormacionProvider>
+      <NotificacionesProvider>
+        <NivelFormacionProvider>
+          <App />
+        </NivelFormacionProvider>
+      </NotificacionesProvider>
     </ThemeProvider>
   </StrictMode>,
 )

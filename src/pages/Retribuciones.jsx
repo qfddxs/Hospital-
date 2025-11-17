@@ -3,6 +3,9 @@ import { supabase } from '../supabaseClient';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import Modal from '../components/UI/Modal';
+import ConfirmDialog from '../components/UI/ConfirmDialog';
+import Toast from '../components/UI/Toast';
+import { useNotificaciones } from '../context/NotificacionesContext';
 import {
   CurrencyDollarIcon,
   DocumentArrowDownIcon,
@@ -18,12 +21,14 @@ import {
   ArrowPathIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  TrashIcon
+  TrashIcon,
+  ArrowUturnLeftIcon
 } from '@heroicons/react/24/outline';
 import { useNivelFormacion } from '../context/NivelFormacionContext';
 
 const Retribuciones = () => {
   const { nivelFormacion } = useNivelFormacion();
+  const { agregarNotificacion } = useNotificaciones();
   const [retribuciones, setRetribuciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,6 +37,10 @@ const Retribuciones = () => {
   const [modalState, setModalState] = useState({ type: null, data: null });
   const [calculando, setCalculando] = useState(false);
   const [mostrarModalidadCalculo, setMostrarModalidadCalculo] = useState(false);
+  
+  // Estados para diálogos y notificaciones
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, type: 'warning' });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   // Valores UF según documento
   const VALOR_UF_SEMESTRE_1 = 36028.10; // 30 de junio
@@ -110,13 +119,16 @@ const Retribuciones = () => {
   };
 
   const calcularEstadisticas = (data) => {
+    // Filtrar solo retribuciones activas (no eliminadas)
+    const retribucionesActivas = data.filter(r => !r.eliminado);
+    
     const stats = {
-      totalRetribuciones: data.length,
-      pendientes: data.filter(r => r.estado === 'pendiente').length,
-      pagadas: data.filter(r => r.estado === 'pagada').length,
-      montoTotal: data.reduce((sum, r) => sum + (r.monto_total || 0), 0),
-      montoPendiente: data.filter(r => r.estado === 'pendiente').reduce((sum, r) => sum + (r.monto_total || 0), 0),
-      montoPagado: data.filter(r => r.estado === 'pagada').reduce((sum, r) => sum + (r.monto_total || 0), 0)
+      totalRetribuciones: retribucionesActivas.length,
+      pendientes: retribucionesActivas.filter(r => r.estado === 'pendiente').length,
+      pagadas: retribucionesActivas.filter(r => r.estado === 'pagada').length,
+      montoTotal: retribucionesActivas.reduce((sum, r) => sum + (r.monto_total || 0), 0),
+      montoPendiente: retribucionesActivas.filter(r => r.estado === 'pendiente').reduce((sum, r) => sum + (r.monto_total || 0), 0),
+      montoPagado: retribucionesActivas.filter(r => r.estado === 'pagada').reduce((sum, r) => sum + (r.monto_total || 0), 0)
     };
     setEstadisticas(stats);
   };
@@ -153,10 +165,17 @@ const Retribuciones = () => {
     };
   };
 
-  const handleCalcularRetribuciones = async () => {
-    if (!confirm('¿Deseas calcular las retribuciones para el período actual? Esto generará registros de pago para todos los centros formadores con solicitudes aprobadas.')) {
-      return;
-    }
+  const handleCalcularRetribuciones = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Calcular Retribuciones',
+      message: '¿Deseas calcular las retribuciones para el período actual?\n\nEsto generará registros de pago para todos los centros formadores con solicitudes aprobadas.',
+      type: 'info',
+      onConfirm: ejecutarCalculoRetribuciones
+    });
+  };
+
+  const ejecutarCalculoRetribuciones = async () => {
 
     try {
       setCalculando(true);
@@ -191,7 +210,7 @@ const Retribuciones = () => {
       }
 
       if (!solicitudes || solicitudes.length === 0) {
-        alert('No hay solicitudes aprobadas pendientes de retribución.');
+        setToast({ show: true, message: 'No hay solicitudes aprobadas pendientes de retribución', type: 'info' });
         return;
       }
 
@@ -199,7 +218,7 @@ const Retribuciones = () => {
       const solicitudesValidas = solicitudes.filter(s => s.centro_formador);
 
       if (solicitudesValidas.length === 0) {
-        alert('No se encontraron solicitudes con información completa de centro formador.');
+        setToast({ show: true, message: 'No se encontraron solicitudes con información completa de centro formador', type: 'info' });
         return;
       }
 
@@ -259,19 +278,36 @@ const Retribuciones = () => {
 
       if (insertError) throw insertError;
 
-      alert(`Se calcularon ${nuevasRet.length} retribuciones exitosamente`);
+      // Agregar notificación a la campanita
+      agregarNotificacion({
+        tipo: 'retribucion_calculada',
+        titulo: 'Retribuciones Calculadas',
+        mensaje: `Se calcularon ${nuevasRet.length} retribuciones exitosamente para el período actual`,
+        icono: 'retribucion'
+      });
+
+      setToast({ show: true, message: `Se calcularon ${nuevasRet.length} retribuciones exitosamente`, type: 'success' });
       fetchRetribuciones();
     } catch (err) {
-      alert('Error al calcular retribuciones: ' + err.message);
+      setToast({ show: true, message: `Error al calcular retribuciones: ${err.message}`, type: 'error' });
       console.error('Error:', err);
     } finally {
       setCalculando(false);
     }
   };
 
-  const handleMarcarPagada = async (retribucion) => {
-    if (!confirm('¿Confirmas que esta retribución ha sido pagada?')) return;
+  const handleMarcarPagada = (retribucion) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Confirmar Pago',
+      message: `¿Confirmas que esta retribución ha sido pagada?\n\nCentro: ${retribucion.centro_formador?.nombre}\nMonto: ${formatMonto(retribucion.monto_total)}`,
+      type: 'success',
+      confirmText: 'Sí, marcar como pagada',
+      onConfirm: () => ejecutarMarcarPagada(retribucion)
+    });
+  };
 
+  const ejecutarMarcarPagada = async (retribucion) => {
     try {
       const { error } = await supabase
         .from('retribuciones')
@@ -283,30 +319,80 @@ const Retribuciones = () => {
 
       if (error) throw error;
 
-      alert('Retribución marcada como pagada');
+      setToast({ show: true, message: 'Retribución marcada como pagada', type: 'success' });
       fetchRetribuciones();
     } catch (err) {
-      alert('Error: ' + err.message);
+      setToast({ show: true, message: `Error: ${err.message}`, type: 'error' });
     }
   };
 
-  const handleEliminar = async (retribucion) => {
-    if (!confirm(`¿Estás seguro de eliminar la retribución de ${retribucion.centro_formador?.nombre}?\n\nPeríodo: ${retribucion.periodo}\nMonto: ${formatMonto(retribucion.monto_total)}\n\nEsta acción no se puede deshacer.`)) {
-      return;
-    }
+  const handleEliminar = (retribucion) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar Retribución',
+      message: `¿Estás seguro de eliminar la retribución de ${retribucion.centro_formador?.nombre}?\n\nPeríodo: ${retribucion.periodo}\nMonto: ${formatMonto(retribucion.monto_total)}\n\n⚠️ Esta acción no se puede deshacer.`,
+      type: 'danger',
+      confirmText: 'Sí, eliminar',
+      onConfirm: () => ejecutarEliminar(retribucion)
+    });
+  };
 
+  const ejecutarEliminar = async (retribucion) => {
     try {
+      // Soft delete: marcar como eliminado en lugar de borrar
       const { error } = await supabase
         .from('retribuciones')
-        .delete()
+        .update({
+          eliminado: true,
+          fecha_eliminacion: new Date().toISOString()
+        })
         .eq('id', retribucion.id);
 
       if (error) throw error;
 
-      alert('Retribución eliminada exitosamente');
+      // Agregar notificación a la campanita
+      agregarNotificacion({
+        tipo: 'retribucion_eliminada',
+        titulo: 'Retribución Eliminada',
+        mensaje: `Se eliminó la retribución de ${retribucion.centro_formador?.nombre} (${retribucion.periodo})`,
+        icono: 'eliminar'
+      });
+
+      setToast({ show: true, message: 'Retribución eliminada exitosamente', type: 'success' });
       fetchRetribuciones();
     } catch (err) {
-      alert('Error al eliminar: ' + err.message);
+      setToast({ show: true, message: `Error al eliminar: ${err.message}`, type: 'error' });
+      console.error('Error:', err);
+    }
+  };
+
+  const handleRestaurar = (retribucion) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Restaurar Retribución',
+      message: `¿Deseas restaurar la retribución de ${retribucion.centro_formador?.nombre}?\n\nPeríodo: ${retribucion.periodo}\nMonto: ${formatMonto(retribucion.monto_total)}`,
+      type: 'info',
+      confirmText: 'Sí, restaurar',
+      onConfirm: () => ejecutarRestaurar(retribucion)
+    });
+  };
+
+  const ejecutarRestaurar = async (retribucion) => {
+    try {
+      const { error } = await supabase
+        .from('retribuciones')
+        .update({
+          eliminado: false,
+          fecha_eliminacion: null
+        })
+        .eq('id', retribucion.id);
+
+      if (error) throw error;
+
+      setToast({ show: true, message: 'Retribución restaurada exitosamente', type: 'success' });
+      fetchRetribuciones();
+    } catch (err) {
+      setToast({ show: true, message: `Error al restaurar: ${err.message}`, type: 'error' });
       console.error('Error:', err);
     }
   };
@@ -401,42 +487,74 @@ const Retribuciones = () => {
       header: 'Acciones',
       render: (row) => (
         <div className="flex gap-1">
-          <button
-            onClick={() => handleVerDetalle(row)}
-            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-            title="Ver detalle"
-          >
-            <EyeIcon className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => handleExportarReporte(row)}
-            className="p-1.5 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded transition-colors"
-            title="Exportar reporte"
-          >
-            <DocumentArrowDownIcon className="w-4 h-4" />
-          </button>
-          {row.estado === 'pendiente' && (
-            <button
-              onClick={() => handleMarcarPagada(row)}
-              className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
-              title="Marcar como pagada"
-            >
-              <CheckCircleIcon className="w-4 h-4" />
-            </button>
+          {/* Botones disponibles para retribuciones eliminadas */}
+          {row.eliminado ? (
+            <>
+              <button
+                onClick={() => handleVerDetalle(row)}
+                className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                title="Ver detalle"
+              >
+                <EyeIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleRestaurar(row)}
+                className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+                title="Restaurar retribución"
+              >
+                <ArrowUturnLeftIcon className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            /* Botones disponibles para retribuciones activas */
+            <>
+              <button
+                onClick={() => handleVerDetalle(row)}
+                className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                title="Ver detalle"
+              >
+                <EyeIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleExportarReporte(row)}
+                className="p-1.5 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded transition-colors"
+                title="Exportar reporte"
+              >
+                <DocumentArrowDownIcon className="w-4 h-4" />
+              </button>
+              {row.estado === 'pendiente' && (
+                <button
+                  onClick={() => handleMarcarPagada(row)}
+                  className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+                  title="Marcar como pagada"
+                >
+                  <CheckCircleIcon className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={() => handleEliminar(row)}
+                className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                title="Eliminar retribución"
+              >
+                <TrashIcon className="w-4 h-4" />
+              </button>
+            </>
           )}
-          <button
-            onClick={() => handleEliminar(row)}
-            className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-            title="Eliminar retribución"
-          >
-            <TrashIcon className="w-4 h-4" />
-          </button>
         </div>
       )
     }
   ];
 
   const retribucionesFiltradas = retribuciones.filter(ret => {
+    // Filtrar por estado de eliminación
+    if (filtroEstado === 'eliminadas') {
+      return ret.eliminado === true;
+    }
+    
+    // Para otros filtros, excluir las eliminadas
+    if (ret.eliminado === true) return false;
+    
+    // Filtrar por estado
     if (filtroEstado === 'todas') return true;
     return ret.estado === filtroEstado;
   });
@@ -603,15 +721,17 @@ const Retribuciones = () => {
 
       {/* Filtros */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por estado:</span>
-          {['todas', 'pendiente', 'pagada'].map(estado => (
+          {['todas', 'pendiente', 'pagada', 'eliminadas'].map(estado => (
             <button
               key={estado}
               onClick={() => setFiltroEstado(estado)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 filtroEstado === estado
-                  ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300'
+                  ? estado === 'eliminadas'
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                    : 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
@@ -685,6 +805,26 @@ const Retribuciones = () => {
           </div>
         </Modal>
       )}
+
+      {/* Diálogo de Confirmación */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        confirmText={confirmDialog.confirmText}
+        cancelText={confirmDialog.cancelText}
+      />
+
+      {/* Toast de Notificaciones */}
+      <Toast
+        show={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        message={toast.message}
+        type={toast.type}
+      />
     </div>
   );
 };

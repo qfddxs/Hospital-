@@ -188,6 +188,49 @@ const DocumentosEstudiantes = () => {
 
       if (docError) throw docError;
 
+      // Actualizar el campo JSONB del alumno
+      const { data: alumnoData, error: alumnoError } = await supabase
+        .from('alumnos')
+        .select('expediente_digital')
+        .eq('id', estudianteSeleccionado.id)
+        .single();
+
+      if (!alumnoError && alumnoData) {
+        const expediente = alumnoData.expediente_digital || { documentos: [] };
+        const documentos = expediente.documentos || [];
+        
+        // Buscar si ya existe el documento del mismo tipo
+        const indexExistente = documentos.findIndex(d => d.tipo_documento === documentoASubir.tipo_documento);
+        
+        const documentoActualizado = {
+          ...documentoASubir,
+          estado: 'subido',
+          archivo_url: publicUrl,
+          archivo_nombre: archivo.name,
+          fecha_subida: new Date().toISOString(),
+          fecha_expiracion: fechaExp
+        };
+
+        if (indexExistente >= 0) {
+          // Actualizar documento existente
+          documentos[indexExistente] = documentoActualizado;
+        } else {
+          // Agregar nuevo documento
+          documentos.push(documentoActualizado);
+        }
+
+        // Guardar expediente actualizado
+        await supabase
+          .from('alumnos')
+          .update({
+            expediente_digital: {
+              ...expediente,
+              documentos: documentos
+            }
+          })
+          .eq('id', estudianteSeleccionado.id);
+      }
+
       alert('Documento subido exitosamente. Pendiente de aprobación por el hospital.');
       setModalSubir(false);
       fetchChecklist();

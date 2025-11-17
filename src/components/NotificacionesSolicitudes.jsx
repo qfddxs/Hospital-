@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { BellIcon, XMarkIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
+import { BellIcon, XMarkIcon, AcademicCapIcon, CurrencyDollarIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNotificaciones } from '../context/NotificacionesContext';
 
 const NotificacionesSolicitudes = () => {
-  const [notificaciones, setNotificaciones] = useState([]);
+  const { notificaciones, nuevasNotificaciones, agregarNotificacion, marcarComoLeida, marcarTodasLeidas, eliminarNotificacion } = useNotificaciones();
   const [mostrarPanel, setMostrarPanel] = useState(false);
-  const [nuevasSolicitudes, setNuevasSolicitudes] = useState(0);
   const panelRef = useRef(null);
 
   // Cerrar panel al hacer clic fuera
@@ -53,16 +53,14 @@ const NotificacionesSolicitudes = () => {
 
           if (solicitud) {
             const nuevaNotificacion = {
-              id: solicitud.id,
+              tipo: 'solicitud',
               titulo: `Nueva Solicitud de ${solicitud.centro_formador.nivel_formacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}`,
               mensaje: `${solicitud.centro_formador.nombre} solicita ${solicitud.numero_cupos} cupos para ${solicitud.especialidad}`,
               nivel: solicitud.centro_formador.nivel_formacion,
-              timestamp: new Date(),
-              leida: false
+              icono: 'solicitud'
             };
 
-            setNotificaciones(prev => [nuevaNotificacion, ...prev]);
-            setNuevasSolicitudes(prev => prev + 1);
+            agregarNotificacion(nuevaNotificacion);
 
             // Mostrar notificación toast
             mostrarToast(nuevaNotificacion);
@@ -136,28 +134,30 @@ const NotificacionesSolicitudes = () => {
     oscillator.stop(audioContext.currentTime + 0.5);
   };
 
-  const marcarComoLeida = (id) => {
-    setNotificaciones(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, leida: true } : notif
-      )
-    );
-    setNuevasSolicitudes(prev => Math.max(0, prev - 1));
+  const getIconoNotificacion = (notif) => {
+    switch (notif.tipo) {
+      case 'retribucion_calculada':
+        return CurrencyDollarIcon;
+      case 'retribucion_eliminada':
+        return TrashIcon;
+      case 'solicitud':
+      default:
+        return AcademicCapIcon;
+    }
   };
 
-  const marcarTodasLeidas = () => {
-    setNotificaciones(prev =>
-      prev.map(notif => ({ ...notif, leida: true }))
-    );
-    setNuevasSolicitudes(0);
-  };
-
-  const eliminarNotificacion = (id) => {
-    setNotificaciones(prev => prev.filter(notif => notif.id !== id));
-    setNuevasSolicitudes(prev => {
-      const notif = notificaciones.find(n => n.id === id);
-      return notif && !notif.leida ? Math.max(0, prev - 1) : prev;
-    });
+  const getColorNotificacion = (notif) => {
+    switch (notif.tipo) {
+      case 'retribucion_calculada':
+        return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+      case 'retribucion_eliminada':
+        return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+      case 'solicitud':
+      default:
+        return notif.nivel === 'pregrado'
+          ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+          : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400';
+    }
   };
 
   return (
@@ -169,13 +169,13 @@ const NotificacionesSolicitudes = () => {
           className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
         >
           <BellIcon className="w-6 h-6" />
-          {nuevasSolicitudes > 0 && (
+          {nuevasNotificaciones > 0 && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
             >
-              {nuevasSolicitudes > 9 ? '9+' : nuevasSolicitudes}
+              {nuevasNotificaciones > 9 ? '9+' : nuevasNotificaciones}
             </motion.span>
           )}
         </button>
@@ -194,9 +194,9 @@ const NotificacionesSolicitudes = () => {
               <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                 <h3 className="font-semibold text-gray-900 dark:text-white">
                   Notificaciones
-                  {nuevasSolicitudes > 0 && (
+                  {nuevasNotificaciones > 0 && (
                     <span className="ml-2 text-sm text-gray-500">
-                      ({nuevasSolicitudes} nuevas)
+                      ({nuevasNotificaciones} nuevas)
                     </span>
                   )}
                 </h3>
@@ -232,12 +232,11 @@ const NotificacionesSolicitudes = () => {
                       onClick={() => marcarComoLeida(notif.id)}
                     >
                       <div className="flex items-start gap-3">
-                        <div className={`flex-shrink-0 rounded-full p-2 ${
-                          notif.nivel === 'pregrado'
-                            ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                            : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
-                        }`}>
-                          <AcademicCapIcon className="w-5 h-5" />
+                        <div className={`flex-shrink-0 rounded-full p-2 ${getColorNotificacion(notif)}`}>
+                          {(() => {
+                            const Icon = getIconoNotificacion(notif);
+                            return <Icon className="w-5 h-5" />;
+                          })()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">

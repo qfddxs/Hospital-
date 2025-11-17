@@ -291,12 +291,19 @@ const ControlAsistencia = () => {
     setAsistencias(nuevasAsistencias);
   };
 
-  // Calcular estadísticas
+  // Calcular estadísticas - solo contar asistencias de rotaciones activas
   const totalRotaciones = rotaciones.length;
-  const presentes = Object.values(asistencias).filter(a => a.estado === 'presente').length;
-  const tarde = Object.values(asistencias).filter(a => a.estado === 'tarde').length;
-  const ausentes = Object.values(asistencias).filter(a => a.estado === 'ausente').length;
-  const justificados = Object.values(asistencias).filter(a => a.estado === 'justificado').length;
+  const rotacionesIds = new Set(rotaciones.map(r => String(r.id)));
+  
+  // Filtrar solo asistencias que corresponden a rotaciones activas del día
+  const asistenciasValidas = Object.entries(asistencias)
+    .filter(([rotacionId]) => rotacionesIds.has(String(rotacionId)))
+    .map(([_, asistencia]) => asistencia);
+  
+  const presentes = asistenciasValidas.filter(a => a.estado === 'presente').length;
+  const tarde = asistenciasValidas.filter(a => a.estado === 'tarde').length;
+  const ausentes = asistenciasValidas.filter(a => a.estado === 'ausente').length;
+  const justificados = asistenciasValidas.filter(a => a.estado === 'justificado').length;
   const sinRegistro = totalRotaciones - presentes - tarde - ausentes - justificados;
   const porcentajeAsistencia = totalRotaciones > 0 ? Math.round(((presentes + tarde) / totalRotaciones) * 100) : 0;
 

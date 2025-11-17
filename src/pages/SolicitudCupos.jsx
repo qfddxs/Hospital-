@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import Loader from '../components/Loader';
+import { ToastContainer } from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 import {
   BuildingOffice2Icon,
   CalendarDaysIcon,
@@ -18,6 +20,7 @@ const SolicitudCupos = () => {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState('todas');
+  const { toasts, removeToast, success, error, warning } = useToast();
 
   const fetchSolicitudes = useCallback(async () => {
     try {
@@ -121,7 +124,7 @@ const SolicitudCupos = () => {
       // Obtener la solicitud para saber cuántos cupos y de qué centro
       const solicitud = solicitudes.find(s => s.id === id);
       if (!solicitud) {
-        alert('No se encontró la solicitud');
+        error('No se encontró la solicitud');
         return;
       }
 
@@ -136,7 +139,7 @@ const SolicitudCupos = () => {
 
       // Verificar que hay cupos disponibles
       if (centroData.capacidad_disponible < solicitud.numero_cupos) {
-        alert(`No hay suficientes cupos disponibles. Disponibles: ${centroData.capacidad_disponible}, Solicitados: ${solicitud.numero_cupos}`);
+        warning(`No hay suficientes cupos disponibles. Disponibles: ${centroData.capacidad_disponible}, Solicitados: ${solicitud.numero_cupos}`);
         return;
       }
 
@@ -162,10 +165,10 @@ const SolicitudCupos = () => {
       if (capacidadError) throw capacidadError;
 
       fetchSolicitudes();
-      alert(`Solicitud aprobada exitosamente. Cupos disponibles actualizados: ${nuevaCapacidadDisponible}`);
+      success(`✅ Solicitud aprobada exitosamente. ${solicitud.numero_cupos} cupos asignados. Disponibles: ${nuevaCapacidadDisponible}`);
     } catch (err) {
       console.error('Error:', err);
-      alert('Error al aprobar solicitud: ' + err.message);
+      error('❌ Error al aprobar solicitud: ' + err.message);
     }
   };
 
@@ -174,7 +177,9 @@ const SolicitudCupos = () => {
     if (!motivo) return;
 
     try {
-      const { error } = await supabase
+      const solicitud = solicitudes.find(s => s.id === id);
+      
+      const { error: rechazarError } = await supabase
         .from('solicitudes_cupos')
         .update({ 
           estado: 'rechazada',
@@ -182,13 +187,13 @@ const SolicitudCupos = () => {
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (rechazarError) throw rechazarError;
       
       fetchSolicitudes();
-      alert('Solicitud rechazada');
+      warning(`⚠️ Solicitud de ${solicitud?.centro_formador?.nombre} rechazada`);
     } catch (err) {
       console.error('Error:', err);
-      alert('Error al rechazar solicitud: ' + err.message);
+      error('❌ Error al rechazar solicitud: ' + err.message);
     }
   };
 
@@ -209,9 +214,11 @@ const SolicitudCupos = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
           Solicitud de Cupos - {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
         </h2>
@@ -403,7 +410,8 @@ const SolicitudCupos = () => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

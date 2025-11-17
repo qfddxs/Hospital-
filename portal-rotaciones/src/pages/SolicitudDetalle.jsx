@@ -292,9 +292,25 @@ const SolicitudDetalle = () => {
   const esPendiente = solicitud?.estado === 'pendiente'
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Fondo con gradiente */}
+      <div className="fixed inset-0 bg-gradient-to-br from-teal-100 via-cyan-100 to-blue-100 dark:from-gray-900 dark:via-teal-950 dark:to-cyan-950"></div>
+      
+      {/* Efectos de blur - Modo claro */}
+      <div className="fixed inset-0 dark:hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-300/40 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-300/40 rounded-full blur-[120px]"></div>
+      </div>
+      
+      {/* Efectos de blur - Modo oscuro */}
+      <div className="fixed inset-0 hidden dark:block">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/15 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-500/15 rounded-full blur-[120px]"></div>
+      </div>
+      
+      <div className="relative z-10">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <header className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-lg border-b border-teal-200/60 dark:border-gray-700/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => navigate('/dashboard')}
@@ -304,30 +320,95 @@ const SolicitudDetalle = () => {
             Volver al Dashboard
           </button>
 
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                {solicitud?.especialidad}
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                {solicitud?.centro_formador?.nombre}
-              </p>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  {solicitud?.especialidad}
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {solicitud?.centro_formador?.nombre}
+                </p>
+              </div>
+
+              <span className={`px-4 py-2 rounded-full text-sm font-semibold shadow-sm ${
+                solicitud?.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800' :
+                solicitud?.estado === 'aprobada' ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' :
+                'bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
+              }`}>
+                {solicitud?.estado?.toUpperCase()}
+              </span>
             </div>
 
-            <span className={`px-4 py-2 rounded-full text-sm font-medium ${
-              solicitud?.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
-              solicitud?.estado === 'aprobada' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-              'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-            }`}>
-              {solicitud?.estado?.toUpperCase()}
-            </span>
+            {/* Botones de acción en el header */}
+            {esPendiente && (
+              <div className="flex flex-wrap gap-3 pt-4 border-t border-teal-200 dark:border-gray-700">
+                {!mostrarRechazo ? (
+                  <>
+                    <button
+                      onClick={handleAprobar}
+                      disabled={procesando || estudiantes.length === 0}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                    >
+                      <CheckCircleIcon className="w-5 h-5" />
+                      {procesando ? 'Procesando...' : `Aprobar (${estudiantes.length} estudiantes)`}
+                    </button>
+
+                    <button
+                      onClick={() => setMostrarRechazo(true)}
+                      disabled={procesando}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                    >
+                      <XCircleIcon className="w-5 h-5" />
+                      Rechazar Solicitud
+                    </button>
+                  </>
+                ) : (
+                  <div className="w-full space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Motivo del Rechazo
+                      </label>
+                      <textarea
+                        value={motivoRechazo}
+                        onChange={(e) => setMotivoRechazo(e.target.value)}
+                        rows={3}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 focus:border-transparent resize-none"
+                        placeholder="Explica el motivo del rechazo..."
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleRechazar}
+                        disabled={procesando || !motivoRechazo.trim()}
+                        className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                      >
+                        {procesando ? 'Procesando...' : 'Confirmar Rechazo'}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setMostrarRechazo(false)
+                          setMotivoRechazo('')
+                        }}
+                        disabled={procesando}
+                        className="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors shadow-sm"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Información de la solicitud */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 mb-6">
+        <div className="bg-white/70 dark:bg-gray-800/60 backdrop-blur-md rounded-2xl p-6 border border-teal-200 dark:border-gray-700/50 mb-6 shadow-md">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Información de la Rotación
           </h2>
@@ -375,7 +456,7 @@ const SolicitudDetalle = () => {
               <div className="md:col-span-2">
                 <button
                   onClick={descargarExcel}
-                  className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                  className="flex items-center gap-2 text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
                 >
                   <DocumentArrowDownIcon className="w-5 h-5" />
                   Descargar Excel Original
@@ -386,7 +467,7 @@ const SolicitudDetalle = () => {
         </div>
 
         {/* Lista de estudiantes */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 mb-6">
+        <div className="bg-white/70 dark:bg-gray-800/60 backdrop-blur-md rounded-2xl p-6 border border-teal-200 dark:border-gray-700/50 mb-6 shadow-md">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Estudiantes ({estudiantes.length})
@@ -454,13 +535,13 @@ const SolicitudDetalle = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => setEditando(editando === estudiante.id ? null : estudiante.id)}
-                            className="p-1 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded"
+                            className="p-1 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded transition-colors"
                           >
                             <PencilIcon className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEliminarEstudiante(estudiante.id)}
-                            className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                            className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                           >
                             <TrashIcon className="w-4 h-4" />
                           </button>
@@ -474,73 +555,9 @@ const SolicitudDetalle = () => {
           </div>
         </div>
 
-        {/* Acciones */}
-        {esPendiente && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Acciones
-            </h2>
 
-            {!mostrarRechazo ? (
-              <div className="flex gap-4">
-                <button
-                  onClick={handleAprobar}
-                  disabled={procesando || estudiantes.length === 0}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <CheckCircleIcon className="w-5 h-5" />
-                  {procesando ? 'Procesando...' : 'Aprobar Solicitud'}
-                </button>
-
-                <button
-                  onClick={() => setMostrarRechazo(true)}
-                  disabled={procesando}
-                  className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <XCircleIcon className="w-5 h-5" />
-                  Rechazar Solicitud
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Motivo del Rechazo
-                  </label>
-                  <textarea
-                    value={motivoRechazo}
-                    onChange={(e) => setMotivoRechazo(e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 focus:border-transparent resize-none"
-                    placeholder="Explica el motivo del rechazo..."
-                  />
-                </div>
-
-                <div className="flex gap-4">
-                  <button
-                    onClick={handleRechazar}
-                    disabled={procesando || !motivoRechazo.trim()}
-                    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {procesando ? 'Procesando...' : 'Confirmar Rechazo'}
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setMostrarRechazo(false)
-                      setMotivoRechazo('')
-                    }}
-                    disabled={procesando}
-                    className="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </main>
+      </div>
     </div>
   )
 }

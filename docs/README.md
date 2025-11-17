@@ -1,42 +1,66 @@
-# Documentación del Sistema Hospitalario
+# 📚 Documentación del Proyecto
 
-Este directorio contiene toda la documentación del proyecto.
+Esta carpeta contiene toda la documentación del proyecto Hospital Regional Rancagua.
 
-## 📁 Estructura
+## 📂 Estructura
 
-- **setup/** - Guías de instalación y configuración
-- **database/** - Scripts SQL y documentación de base de datos
-- **guides/** - Guías de uso y características
-- **troubleshooting/** - Solución de problemas comunes
-- **archive/** - Documentos históricos
+```
+docs/
+├── cambios/                    # Historial de cambios importantes
+│   ├── CAMBIOS_OBSERVACIONES.md
+│   ├── CONTROL_ASISTENCIA_ACTUALIZADO.md
+│   ├── ESTUDIANTES-ROTACION-TEMPORAL.md
+│   ├── ESTRUCTURA-FINAL-CONTACTOS.md
+│   ├── NOTIFICACIONES-SOLICITUDES.md
+│   ├── PASOS-CORREGIR-RELACION.md
+│   ├── RESUMEN-ELIMINACION-TUTORES.md
+│   └── RESUMEN-TUTOR-CONTACTO.md
+│
+├── guias/                      # Guías de uso y configuración
+│   ├── GUIA-SIMPLE-USUARIOS-CENTROS.md
+│   └── INSTRUCCIONES_RETRIBUCIONES.md
+│
+├── ESTRUCTURA-PROYECTO.md      # Estructura general del proyecto
+└── MODULO_RETRIBUCIONES.md     # Documentación del módulo de retribuciones
+```
 
-## 🚀 Inicio Rápido
+## 📋 Contenido
 
-1. Lee las guías en [setup/](setup/) para configurar el proyecto
-2. Ejecuta los scripts SQL en [database/](database/)
-3. Consulta [guides/](guides/) para aprender a usar el sistema
+### 🔄 Cambios
+Documentación de cambios importantes realizados en el sistema:
+- Actualizaciones de módulos
+- Cambios en estructura de datos
+- Eliminación de funcionalidades obsoletas
+- Nuevas implementaciones
 
-## 📚 Guías Principales
+### 📖 Guías
+Manuales y guías paso a paso:
+- Configuración de usuarios
+- Uso de módulos específicos
+- Instrucciones de implementación
 
-### Instalación
-- Configuración inicial del proyecto
-- Setup de Supabase
-- Variables de entorno
+### 📊 Documentación General
+- Estructura del proyecto
+- Módulos del sistema
+- Arquitectura de la aplicación
 
-### Base de Datos
-- Schema completo
-- Políticas de seguridad
-- Scripts de migración
+## 🎯 Documentos Principales
 
-### Uso del Sistema
-- Gestión de alumnos
-- Sistema documental
-- Portal de centros
+### Para Desarrolladores
+- `ESTRUCTURA-PROYECTO.md` - Visión general de la arquitectura
+- `cambios/` - Historial de cambios técnicos
 
-## 🐛 Solución de Problemas
+### Para Usuarios
+- `guias/GUIA-SIMPLE-USUARIOS-CENTROS.md` - Guía de usuarios de centros formadores
+- `guias/INSTRUCCIONES_RETRIBUCIONES.md` - Cómo usar el módulo de retribuciones
 
-Si encuentras problemas, consulta la carpeta [troubleshooting/](troubleshooting/)
+### Para Administradores
+- `MODULO_RETRIBUCIONES.md` - Configuración del módulo de retribuciones
+- Documentos en `cambios/` para entender el historial del sistema
 
-## 📞 Soporte
+## 🔍 Búsqueda Rápida
 
-Para soporte adicional, contacta al equipo de desarrollo del hospital.
+- **¿Cómo funcionan los contactos?** → `cambios/ESTRUCTURA-FINAL-CONTACTOS.md`
+- **¿Qué pasó con los tutores?** → `cambios/RESUMEN-ELIMINACION-TUTORES.md`
+- **¿Cómo usar notificaciones?** → `cambios/NOTIFICACIONES-SOLICITUDES.md`
+- **¿Cómo crear usuarios de centros?** → `guias/GUIA-SIMPLE-USUARIOS-CENTROS.md`

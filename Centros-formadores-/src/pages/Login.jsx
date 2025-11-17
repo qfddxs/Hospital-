@@ -43,7 +43,7 @@ const Login = () => {
 
         if (centroError || !centroData) {
           await supabase.auth.signOut()
-          throw new Error('Usuario no autorizado para acceder al portal de centros formadores')
+          throw new Error('USUARIO_NO_AUTORIZADO')
         }
 
         navigate('/dashboard')
@@ -52,13 +52,13 @@ const Login = () => {
       let errorMessage = err.message || 'Error al iniciar sesión'
       
       if (errorMessage.includes('Invalid login credentials')) {
-        errorMessage = 'Correo o contraseña incorrectos'
+        errorMessage = 'Usuario o contraseña incorrectos'
       } else if (errorMessage.includes('Email not confirmed')) {
         errorMessage = 'Debes confirmar tu correo electrónico'
       } else if (errorMessage.includes('User not found')) {
-        errorMessage = 'Usuario no encontrado'
-      } else if (errorMessage.includes('no autorizado')) {
-        errorMessage = 'Usuario no autorizado para acceder al portal de centros formadores'
+        errorMessage = 'Usuario o contraseña incorrectos'
+      } else if (errorMessage.includes('USUARIO_NO_AUTORIZADO')) {
+        errorMessage = 'Usuario o contraseña incorrectos'
       }
       
       setError(errorMessage)

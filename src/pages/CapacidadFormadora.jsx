@@ -769,15 +769,6 @@ const CapacidadFormadora = () => {
             </span>
           </p>
         </div>
-        <div className="flex gap-3 flex-shrink-0">
-          <Button variant="secondary" onClick={handleImportClick}>
-            <ArrowUpTrayIcon className="w-5 h-5" />
-            <span>Importar</span>
-          </Button>
-          <Button variant="primary" onClick={handleAddClick}>
-            <span>+ Agregar Centro</span>
-          </Button>
-        </div>
       </div>
 
       {/* Estadísticas */}

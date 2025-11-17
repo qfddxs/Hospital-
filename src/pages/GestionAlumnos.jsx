@@ -519,20 +519,6 @@ const GestionAlumnos = () => {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Gestión de Alumnos</h2>
           <p className="text-gray-600 dark:text-gray-400 mt-1">Administración de estudiantes en rotación</p>
         </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="secondary" 
-            onClick={handleRotacionMasivaClick}
-            className="flex items-center gap-2 bg-purple-600 text-white hover:bg-purple-700"
-          >
-            <CalendarDaysIcon className="w-5 h-5" />
-            Asignar Rotaciones
-          </Button>
-          <Button variant="primary" onClick={handleAddClick} className="flex items-center gap-2">
-            <PlusIcon className="w-5 h-5" />
-            Agregar Alumno
-          </Button>
-        </div>
       </div>
 
       {/* Estadísticas */}

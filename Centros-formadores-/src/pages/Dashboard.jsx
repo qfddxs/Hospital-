@@ -226,17 +226,7 @@ const PortalDashboard = () => {
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white transition-colors">
                   {centroInfo?.centro_formador?.nombre}
                 </h1>
-                <div className="flex items-center gap-2">
-                  {centroInfo?.centro_formador?.contacto_nombre && (
-                    <>
-                      <p className="text-sm font-medium text-teal-600 dark:text-teal-400 transition-colors">
-                        {centroInfo.centro_formador.contacto_nombre}
-                      </p>
-                      <span className="text-gray-400 dark:text-gray-600">•</span>
-                    </>
-                  )}
-                  <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors">Portal de Centros Formadores</p>
-                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors">Portal de Centros Formadores</p>
               </div>
             </div>
             <div className="flex items-center gap-4">

@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import Loader from '../components/Loader';
+import { ToastContainer } from '../components/Toast';
 import '../pages/Dashboard.css';
 import { 
   CheckIcon, 
@@ -28,6 +29,9 @@ const ControlAsistencia = () => {
   const [modalObservacion, setModalObservacion] = useState(false);
   const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
   const [observacionObligatoria, setObservacionObligatoria] = useState('');
+  
+  // Estados para toast
+  const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
     fetchData();
@@ -213,9 +217,18 @@ const ControlAsistencia = () => {
     }));
   };
   
+  const addToast = (message, type = 'success', duration = 5000) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type, duration }]);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
   const guardarAsistenciaJustificada = () => {
     if (!observacionObligatoria.trim()) {
-      alert('Debe proporcionar una justificación para la ausencia');
+      addToast('Debe proporcionar una justificación para la ausencia', 'warning');
       return;
     }
     
@@ -277,7 +290,7 @@ const ControlAsistencia = () => {
         });
       
       if (asistenciasArray.length === 0) {
-        alert('No hay cambios para guardar');
+        addToast('No hay cambios para guardar', 'info');
         return;
       }
 
@@ -290,10 +303,10 @@ const ControlAsistencia = () => {
 
       if (error) throw error;
 
-      alert('Asistencias guardadas exitosamente');
+      addToast('Asistencias guardadas exitosamente', 'success');
       await fetchData();
     } catch (err) {
-      alert('Error al guardar asistencias: ' + err.message);
+      addToast('Error al guardar asistencias: ' + err.message, 'error');
       console.error('Error:', err);
     } finally {
       setGuardando(false);
@@ -457,7 +470,9 @@ const ControlAsistencia = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <div className="space-y-6">
       {/* Header */}
       <div className="dashboard-header" style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -664,7 +679,8 @@ const ControlAsistencia = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

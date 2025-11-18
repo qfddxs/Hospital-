@@ -129,44 +129,48 @@ const SolicitudCupos = () => {
         return;
       }
 
-      // Obtener el centro formador actual
-      const { data: centroData, error: centroError } = await supabase
-        .from('centros_formadores')
-        .select('capacidad_total, capacidad_disponible')
-        .eq('id', solicitud.centro_formador_id)
-        .single();
+      // Validar cupos disponibles usando la función SQL
+      const { data: validacion, error: validacionError } = await supabase
+        .rpc('validar_cupos_disponibles', {
+          p_centro_id: solicitud.centro_formador_id,
+          p_cupos_solicitados: solicitud.numero_cupos
+        });
 
-      if (centroError) throw centroError;
+      if (validacionError) throw validacionError;
 
-      // Verificar que hay cupos disponibles
-      if (centroData.capacidad_disponible < solicitud.numero_cupos) {
-        warning(`No hay suficientes cupos disponibles. Disponibles: ${centroData.capacidad_disponible}, Solicitados: ${solicitud.numero_cupos}`);
+      // Verificar si hay cupos suficientes
+      if (!validacion.valido) {
+        warning(
+          `⚠️ No hay suficientes cupos disponibles\n\n` +
+          `Centro: ${validacion.centro_nombre}\n` +
+          `Disponibles: ${validacion.capacidad_disponible}\n` +
+          `Solicitados: ${validacion.cupos_solicitados}\n` +
+          `Faltan: ${validacion.cupos_faltantes} cupos`
+        );
         return;
       }
 
-      // Actualizar la solicitud a aprobada
+      // Aprobar solicitud (el trigger se encarga del descuento automático)
       const { error: updateError } = await supabase
         .from('solicitudes_cupos')
-        .update({ 
-          estado: 'aprobada'
-        })
+        .update({ estado: 'aprobada' })
         .eq('id', id);
 
       if (updateError) throw updateError;
 
-      // Actualizar la capacidad disponible del centro
-      const nuevaCapacidadDisponible = centroData.capacidad_disponible - solicitud.numero_cupos;
-      const { error: capacidadError } = await supabase
+      // Obtener capacidad actualizada para mostrar en el mensaje
+      const { data: centroActualizado } = await supabase
         .from('centros_formadores')
-        .update({ 
-          capacidad_disponible: nuevaCapacidadDisponible
-        })
-        .eq('id', solicitud.centro_formador_id);
-
-      if (capacidadError) throw capacidadError;
+        .select('capacidad_disponible')
+        .eq('id', solicitud.centro_formador_id)
+        .single();
 
       fetchSolicitudes();
-      success(`✅ Solicitud aprobada exitosamente. ${solicitud.numero_cupos} cupos asignados. Disponibles: ${nuevaCapacidadDisponible}`);
+      success(
+        `✅ Solicitud aprobada exitosamente\n\n` +
+        `${solicitud.numero_cupos} cupos asignados a ${solicitud.centro_formador?.nombre}\n` +
+        `Cupos disponibles ahora: ${centroActualizado?.capacidad_disponible || 0}`
+      );
     } catch (err) {
       console.error('Error:', err);
       error('❌ Error al aprobar solicitud: ' + err.message);

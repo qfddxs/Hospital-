@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useSession } from '../context/SessionContext'
 import { useTheme } from '../context/ThemeContext'
+import { ToastContainer } from '../components/Toast'
+import { useToast } from '../hooks/useToast'
 import {
   ClipboardDocumentListIcon,
   MagnifyingGlassIcon,
@@ -22,6 +24,7 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const { user, signOut } = useSession()
   const { isDark, toggleTheme } = useTheme()
+  const { toasts, removeToast, error } = useToast()
   const [solicitudes, setSolicitudes] = useState([])
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState('todas') // todas, pendiente, aprobada, rechazada
@@ -94,8 +97,8 @@ const Dashboard = () => {
       } else {
         setSolicitudes(simpleData || [])
       }
-    } catch (error) {
-      alert('Error al cargar solicitudes. Verifica tu conexión y permisos.')
+    } catch (err) {
+      error('Error al cargar solicitudes. Verifica tu conexión y permisos.')
     } finally {
       setLoading(false)
     }
@@ -163,8 +166,10 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Fondo base con gradiente suave - Colores hospitalarios */}
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Fondo base con gradiente suave - Colores hospitalarios */}
       <div className="fixed inset-0 bg-gradient-to-br from-teal-100 via-cyan-100 to-blue-100 dark:from-gray-900 dark:via-teal-950 dark:to-cyan-950"></div>
       
       {/* Efectos de blur con gradientes - Modo claro */}
@@ -394,6 +399,7 @@ const Dashboard = () => {
       </main>
       </div>
     </div>
+    </>
   )
 }
 

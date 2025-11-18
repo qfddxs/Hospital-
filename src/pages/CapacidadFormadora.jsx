@@ -23,7 +23,9 @@ import {
   XCircleIcon,
   HashtagIcon,
   MapPinIcon,
-  FunnelIcon
+  FunnelIcon,
+  ArrowPathIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 import { useNivelFormacion } from '../context/NivelFormacionContext';
 
@@ -52,6 +54,8 @@ const CapacidadFormadora = () => {
   const [formError, setFormError] = useState('');
   const [importData, setImportData] = useState([]);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0, status: '' });
+  const [estadisticasReinicio, setEstadisticasReinicio] = useState(null);
+  const [reiniciandoCupos, setReiniciandoCupos] = useState(false);
 
   const isModalOpen = modalState.type !== null;
   const closeModal = () => {
@@ -59,6 +63,8 @@ const CapacidadFormadora = () => {
     setFormError('');
     setImportData([]);
     setImportProgress({ current: 0, total: 0, status: '' });
+    setEstadisticasReinicio(null);
+    setReiniciandoCupos(false);
   };
 
   const columns = [
@@ -586,6 +592,90 @@ const CapacidadFormadora = () => {
     setModalState({ type: 'import', data: null });
   };
 
+  const handleReiniciarCuposClick = async () => {
+    try {
+      // Obtener estadísticas antes de reiniciar
+      const { data, error } = await supabase.rpc('obtener_estadisticas_pre_reinicio', {
+        p_nivel_formacion: nivelFormacion === 'ambos' ? null : nivelFormacion
+      });
+
+      if (error) throw error;
+
+      setEstadisticasReinicio(data);
+      setModalState({ type: 'reiniciar', data: null });
+    } catch (err) {
+      console.error('Error al obtener estadísticas:', err);
+      setFormError('No se pudieron cargar las estadísticas. Intente de nuevo.');
+    }
+  };
+
+  const confirmarReinicioCupos = async () => {
+    try {
+      setReiniciandoCupos(true);
+      setFormError('');
+
+      // Obtener el usuario actual
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Ejecutar reinicio
+      const { data, error } = await supabase.rpc('reiniciar_cupos_manual', {
+        p_nivel_formacion: nivelFormacion === 'ambos' ? null : nivelFormacion,
+        p_usuario_id: user?.id || null,
+        p_observaciones: `Reinicio manual desde interfaz - Nivel: ${nivelFormacion || 'todos'}`
+      });
+
+      if (error) throw error;
+
+      if (data && data.success) {
+        // Recargar datos
+        const query = supabase
+          .from('centros_formadores')
+          .select('*');
+
+        if (nivelFormacion) {
+          query.or(`nivel_formacion.eq.${nivelFormacion},nivel_formacion.eq.ambos`);
+        }
+
+        const { data: centrosActualizados, error: errorCentros } = await query.order('nombre');
+
+        if (!errorCentros && centrosActualizados) {
+          const transformedData = centrosActualizados.map(centro => ({
+            id: centro.id,
+            nombre: centro.nombre,
+            codigo: centro.codigo || '',
+            direccion: centro.direccion || '',
+            telefono: centro.telefono || '',
+            email: centro.email || '',
+            contacto_nombre: centro.contacto_nombre || '',
+            contacto_cargo: centro.contacto_cargo || '',
+            especialidades: centro.especialidades || [],
+            capacidadTotal: centro.capacidad_total || 0,
+            capacidadDisponible: centro.capacidad_disponible || 0,
+            estado: centro.activo ? 'activo' : 'completo',
+            ubicacion: centro.direccion || '',
+            nivel_formacion: centro.nivel_formacion || 'pregrado'
+          }));
+
+          setCentrosData(transformedData);
+        }
+
+        // Cerrar modal y mostrar éxito
+        closeModal();
+        alert(`✅ Reinicio exitoso!\n\n` +
+          `• Centros afectados: ${data.centros_afectados}\n` +
+          `• Cupos liberados: ${data.cupos_liberados}\n` +
+          `• Solicitudes finalizadas: ${data.solicitudes_afectadas}`);
+      } else {
+        throw new Error(data?.error || 'Error desconocido al reiniciar cupos');
+      }
+    } catch (err) {
+      console.error('Error al reiniciar cupos:', err);
+      setFormError(err.message || 'Ocurrió un error al reiniciar los cupos. Intente de nuevo.');
+    } finally {
+      setReiniciandoCupos(false);
+    }
+  };
+
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -759,23 +849,33 @@ const CapacidadFormadora = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="dashboard-header" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-              Capacidad Formadora
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
-              Gestiona los centros formadores y su capacidad de cupos.
-              <span className="inline-flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400">
-                <span className="w-2 h-2 bg-sky-500 dark:bg-sky-400 rounded-full animate-pulse"></span>
-                Actualización en tiempo real
-              </span>
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
-            <BuildingOffice2Icon className="w-8 h-8" />
-          </div>
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Capacidad Formadora</h1>
+          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
+            Gestiona los centros formadores y su capacidad de cupos.
+            <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+              <span className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></span>
+              Actualización en tiempo real
+            </span>
+          </p>
+        </div>
+        <div className="flex gap-3 flex-shrink-0">
+          <Button 
+            variant="secondary" 
+            onClick={handleReiniciarCuposClick}
+            className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 border-amber-300 dark:border-amber-700"
+          >
+            <ArrowPathIcon className="w-5 h-5" />
+            <span>Reiniciar Cupos</span>
+          </Button>
+          <Button variant="secondary" onClick={handleImportClick}>
+            <ArrowUpTrayIcon className="w-5 h-5" />
+            <span>Importar</span>
+          </Button>
+          <Button variant="primary" onClick={handleAddClick}>
+            <span>+ Agregar Centro</span>
+          </Button>
         </div>
       </div>
 
@@ -894,10 +994,124 @@ const CapacidadFormadora = () => {
               modalState.type === 'edit' ? 'Editar Centro Formador' :
                 modalState.type === 'view' ? 'Detalles del Centro' :
                   modalState.type === 'import' ? 'Importar Centros Formadores desde Plantilla' :
-                    'Confirmar Eliminación'
+                    modalState.type === 'reiniciar' ? '⚠️ Reiniciar Cupos del Sistema' :
+                      'Confirmar Eliminación'
           }
         >
-          {modalState.type === 'import' ? (
+          {modalState.type === 'reiniciar' ? (
+            <div className="space-y-4">
+              {formError && (
+                <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded" role="alert">
+                  {formError}
+                </div>
+              )}
+
+              <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-5">
+                <div className="flex items-start gap-3 mb-4">
+                  <ExclamationTriangleIcon className="w-8 h-8 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-bold text-amber-900 dark:text-amber-200 mb-2">
+                      ¿Estás seguro de reiniciar los cupos?
+                    </h3>
+                    <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
+                      Esta acción realizará los siguientes cambios en el sistema:
+                    </p>
+                    <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1 list-disc list-inside">
+                      <li>Todos los cupos disponibles se restaurarán a su capacidad total</li>
+                      <li>Las solicitudes aprobadas cambiarán a estado "finalizada"</li>
+                      <li>Se registrará esta acción en el historial del sistema</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {estadisticasReinicio && (
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                    <ChartBarIcon className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                    Estadísticas Actuales
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                      <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Centros Activos</p>
+                      <p className="text-2xl font-bold text-blue-900 dark:text-blue-200">
+                        {estadisticasReinicio.total_centros}
+                      </p>
+                    </div>
+                    <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4">
+                      <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1">Cupos Totales</p>
+                      <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-200">
+                        {estadisticasReinicio.cupos_totales}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                      <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">Cupos Disponibles</p>
+                      <p className="text-2xl font-bold text-green-900 dark:text-green-200">
+                        {estadisticasReinicio.cupos_disponibles}
+                      </p>
+                    </div>
+                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-1">Cupos en Uso</p>
+                      <p className="text-2xl font-bold text-amber-900 dark:text-amber-200">
+                        {estadisticasReinicio.cupos_en_uso}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
+                      <span className="text-sm font-medium text-red-700 dark:text-red-300">
+                        Solicitudes que serán finalizadas:
+                      </span>
+                      <span className="text-xl font-bold text-red-900 dark:text-red-200">
+                        {estadisticasReinicio.solicitudes_activas}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                    <ClockIcon className="w-4 h-4" />
+                    <span>Nivel de formación: <strong className="text-gray-900 dark:text-gray-100">{estadisticasReinicio.nivel_formacion}</strong></span>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <strong>Nota:</strong> Esta acción quedará registrada en el historial del sistema con fecha y hora exacta.
+                  Los cupos liberados estarán disponibles inmediatamente para nuevas solicitudes.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  onClick={closeModal}
+                  disabled={reiniciandoCupos}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={confirmarReinicioCupos}
+                  disabled={reiniciandoCupos}
+                  className="bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-800"
+                >
+                  {reiniciandoCupos ? (
+                    <>
+                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                      <span>Reiniciando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ArrowPathIcon className="w-5 h-5" />
+                      <span>Confirmar Reinicio</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : modalState.type === 'import' ? (
             <div className="space-y-4">
               {formError && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">{formError}</div>}
 

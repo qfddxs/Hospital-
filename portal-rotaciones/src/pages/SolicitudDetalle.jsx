@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useSession } from '../context/SessionContext'
+import { ToastContainer } from '../components/Toast'
+import { useToast } from '../hooks/useToast'
 import {
   ArrowLeftIcon,
   CheckCircleIcon,
@@ -16,6 +18,7 @@ const SolicitudDetalle = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useSession()
+  const { toasts, removeToast, success, error, warning, info } = useToast()
   const [solicitud, setSolicitud] = useState(null)
   const [estudiantes, setEstudiantes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -23,6 +26,8 @@ const SolicitudDetalle = () => {
   const [editando, setEditando] = useState(null)
   const [mostrarRechazo, setMostrarRechazo] = useState(false)
   const [motivoRechazo, setMotivoRechazo] = useState('')
+  const [mostrarConfirmacionAprobar, setMostrarConfirmacionAprobar] = useState(false)
+  const [estudianteAEliminar, setEstudianteAEliminar] = useState(null)
 
   // Helper para formatear fechas correctamente
   const formatearFecha = (fecha) => {
@@ -58,17 +63,20 @@ const SolicitudDetalle = () => {
 
       setSolicitud(solicitudData)
       setEstudiantes(estudiantesData || [])
-    } catch (error) {
-      alert('Error al cargar la solicitud')
+    } catch (err) {
+      error('Error al cargar la solicitud')
       navigate('/dashboard')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleAprobar = async () => {
-    if (!confirm(`¿Aprobar esta solicitud con ${estudiantes.length} estudiantes?`)) return
+  const confirmarAprobar = () => {
+    setMostrarConfirmacionAprobar(true)
+  }
 
+  const handleAprobar = async () => {
+    setMostrarConfirmacionAprobar(false)
     setProcesando(true)
     try {
       // 1. Actualizar estado de solicitud
@@ -128,39 +136,59 @@ const SolicitudDetalle = () => {
 
       if (alumnosError) throw alumnosError
 
-      // 3. Crear rotaciones vinculadas a los alumnos (no a estudiantes_rotacion)
+      // 3. Buscar servicios clínicos únicos del Excel
+      const serviciosUnicos = [...new Set(estudiantes.map(e => e.campo_clinico_solicitado).filter(Boolean))];
+      
+      // Buscar servicios existentes en la BD
+      const { data: serviciosExistentes } = await supabase
+        .from('servicios_clinicos')
+        .select('id, nombre')
+        .in('nombre', serviciosUnicos);
+
+      // Crear mapa de servicios existentes (nombre -> id)
+      const mapaServicios = {};
+      if (serviciosExistentes) {
+        serviciosExistentes.forEach(s => {
+          mapaServicios[s.nombre.toLowerCase()] = s.id;
+        });
+      }
+
+      // Identificar servicios que NO existen y necesitan crearse
+      const serviciosACrear = serviciosUnicos.filter(
+        nombre => !mapaServicios[nombre.toLowerCase()]
+      );
+
+      // Crear servicios nuevos en batch (si hay)
+      if (serviciosACrear.length > 0) {
+        const { data: serviciosNuevos, error: crearError } = await supabase
+          .from('servicios_clinicos')
+          .insert(serviciosACrear.map(nombre => ({ nombre, activo: true })))
+          .select('id, nombre');
+
+        if (!crearError && serviciosNuevos) {
+          // Agregar nuevos servicios al mapa
+          serviciosNuevos.forEach(s => {
+            mapaServicios[s.nombre.toLowerCase()] = s.id;
+          });
+        }
+      }
+
+      // 4. Crear rotaciones vinculadas a los alumnos
       const rotacionesPromises = estudiantes.map(async (est) => {
         // Encontrar el alumno creado que corresponde a este estudiante
         const alumno = alumnosCreados.find(a => a.rut === est.rut)
         if (!alumno) return null
 
-        // Buscar o crear el servicio clínico
-        let servicioId = null;
-        if (est.campo_clinico_solicitado) {
-          const { data: servicio } = await supabase
-            .from('servicios_clinicos')
-            .select('id')
-            .ilike('nombre', est.campo_clinico_solicitado)
-            .single();
-          
-          if (servicio) {
-            servicioId = servicio.id;
-          } else {
-            // Crear el servicio si no existe
-            const { data: nuevoServicio } = await supabase
-              .from('servicios_clinicos')
-              .insert({ nombre: est.campo_clinico_solicitado, activo: true })
-              .select('id')
-              .single();
-            servicioId = nuevoServicio?.id;
-          }
-        }
+        // Buscar el servicio clínico en el mapa
+        const servicioId = est.campo_clinico_solicitado 
+          ? mapaServicios[est.campo_clinico_solicitado.toLowerCase()] || null
+          : null;
 
         // Crear la rotación vinculada al alumno
         return supabase
           .from('rotaciones')
           .insert({
-            alumno_id: alumno.id,  // Usar alumno_id en lugar de estudiante_rotacion_id
+            alumno_id: alumno.id,
             servicio_clinico_id: servicioId,
             fecha_inicio: est.fecha_inicio || solicitud.fecha_inicio,
             fecha_termino: est.fecha_termino || solicitud.fecha_termino,
@@ -182,15 +210,15 @@ const SolicitudDetalle = () => {
 
       if (deleteEstudiantesError) {
         console.error('❌ Error al eliminar estudiantes temporales:', deleteEstudiantesError)
-        alert(`⚠️ Advertencia: Los alumnos se crearon correctamente, pero hubo un error al limpiar estudiantes_rotacion: ${deleteEstudiantesError.message}`)
+        warning(`Los alumnos se crearon correctamente, pero hubo un error al limpiar estudiantes_rotacion: ${deleteEstudiantesError.message}`)
       } else {
         console.log(`✅ Eliminados ${deletedData?.length || 0} estudiantes de estudiantes_rotacion`)
       }
 
-      alert(`✅ Solicitud aprobada exitosamente. ${estudiantes.length} estudiantes creados en alumnos.`)
-      navigate('/dashboard')
-    } catch (error) {
-      alert('Error al aprobar la solicitud: ' + error.message)
+      success(`Solicitud aprobada exitosamente. ${estudiantes.length} estudiantes creados en alumnos.`)
+      setTimeout(() => navigate('/dashboard'), 1500)
+    } catch (err) {
+      error('Error al aprobar la solicitud: ' + err.message)
     } finally {
       setProcesando(false)
     }
@@ -198,11 +226,7 @@ const SolicitudDetalle = () => {
 
   const handleRechazar = async () => {
     if (!motivoRechazo.trim()) {
-      alert('Debes ingresar un motivo de rechazo')
-      return
-    }
-
-    if (!confirm(`¿Rechazar esta solicitud? Se eliminarán ${estudiantes.length} estudiantes de la base de datos.`)) {
+      warning('Debes ingresar un motivo de rechazo')
       return
     }
 
@@ -229,10 +253,10 @@ const SolicitudDetalle = () => {
 
       if (updateError) throw updateError
 
-      alert(`Solicitud rechazada. Se eliminaron ${estudiantes.length} estudiantes.`)
-      navigate('/dashboard')
-    } catch (error) {
-      alert('Error al rechazar la solicitud: ' + error.message)
+      success(`Solicitud rechazada. Se eliminaron ${estudiantes.length} estudiantes.`)
+      setTimeout(() => navigate('/dashboard'), 1500)
+    } catch (err) {
+      error('Error al rechazar la solicitud: ' + err.message)
     } finally {
       setProcesando(false)
     }
@@ -250,13 +274,19 @@ const SolicitudDetalle = () => {
       setEstudiantes(prev =>
         prev.map(est => est.id === estudianteId ? { ...est, [campo]: valor } : est)
       )
-    } catch (error) {
-      alert('Error al actualizar estudiante')
+      success('Estudiante actualizado correctamente')
+    } catch (err) {
+      error('Error al actualizar estudiante')
     }
   }
 
-  const handleEliminarEstudiante = async (estudianteId) => {
-    if (!confirm('¿Eliminar este estudiante de la solicitud?')) return
+  const confirmarEliminarEstudiante = (estudianteId) => {
+    setEstudianteAEliminar(estudianteId)
+  }
+
+  const handleEliminarEstudiante = async () => {
+    const estudianteId = estudianteAEliminar
+    setEstudianteAEliminar(null)
 
     try {
       const { error } = await supabase
@@ -267,8 +297,9 @@ const SolicitudDetalle = () => {
       if (error) throw error
 
       setEstudiantes(prev => prev.filter(est => est.id !== estudianteId))
-    } catch (error) {
-      alert('Error al eliminar estudiante')
+      success('Estudiante eliminado correctamente')
+    } catch (err) {
+      error('Error al eliminar estudiante')
     }
   }
 
@@ -292,9 +323,11 @@ const SolicitudDetalle = () => {
   const esPendiente = solicitud?.estado === 'pendiente'
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Fondo con gradiente */}
-      <div className="fixed inset-0 bg-gradient-to-br from-teal-100 via-cyan-100 to-blue-100 dark:from-gray-900 dark:via-teal-950 dark:to-cyan-950"></div>
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Fondo con gradiente */}
+        <div className="fixed inset-0 bg-gradient-to-br from-teal-100 via-cyan-100 to-blue-100 dark:from-gray-900 dark:via-teal-950 dark:to-cyan-950"></div>
       
       {/* Efectos de blur - Modo claro */}
       <div className="fixed inset-0 dark:hidden">
@@ -346,7 +379,7 @@ const SolicitudDetalle = () => {
                 {!mostrarRechazo ? (
                   <>
                     <button
-                      onClick={handleAprobar}
+                      onClick={confirmarAprobar}
                       disabled={procesando || estudiantes.length === 0}
                       className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                     >
@@ -540,7 +573,7 @@ const SolicitudDetalle = () => {
                             <PencilIcon className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleEliminarEstudiante(estudiante.id)}
+                            onClick={() => confirmarEliminarEstudiante(estudiante.id)}
                             className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                           >
                             <TrashIcon className="w-4 h-4" />
@@ -559,6 +592,77 @@ const SolicitudDetalle = () => {
       </main>
       </div>
     </div>
+
+    {/* Modal de confirmación para aprobar */}
+    {mostrarConfirmacionAprobar && (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                ¿Aprobar esta solicitud?
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Se crearán {estudiantes.length} estudiantes en el sistema y se aprobarán sus rotaciones.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => setMostrarConfirmacionAprobar(false)}
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleAprobar}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Sí, Aprobar
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Modal de confirmación para eliminar estudiante */}
+    {estudianteAEliminar && (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+              <TrashIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                ¿Eliminar estudiante?
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Esta acción no se puede deshacer. El estudiante será eliminado de la solicitud.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => setEstudianteAEliminar(null)}
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleEliminarEstudiante}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Sí, Eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }
 

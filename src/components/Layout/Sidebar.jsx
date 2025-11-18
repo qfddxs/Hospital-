@@ -92,25 +92,53 @@ const Sidebar = () => {
         />
       )}
       
-      <aside className={`fixed lg:sticky top-0 h-screen inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 ease-in-out ${
-        isCollapsed ? 'w-20' : 'w-64'
-      }`}>
+      <aside 
+        className={`fixed lg:sticky top-0 h-screen inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out ${
+          isCollapsed ? 'w-20' : 'w-72'
+        }`}
+        style={{
+          background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+          boxShadow: '2px 0 20px rgba(14, 165, 233, 0.08)',
+          borderRight: '1px solid rgba(14, 165, 233, 0.1)'
+        }}
+      >
+        <style>{`
+          .dark aside {
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important;
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3) !important;
+            border-right: 1px solid rgba(75, 85, 99, 0.3) !important;
+          }
+        `}</style>
         {/* Header */}
-        <div className={`flex items-center h-16 px-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 relative ${
+        <div className={`flex items-center h-20 px-5 border-b border-sky-100 dark:border-gray-700 flex-shrink-0 relative ${
           isCollapsed ? 'justify-center' : 'justify-between'
-        }`}>
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-8 h-8 bg-teal-500 dark:bg-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+        }`} style={{ background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.03) 0%, rgba(20, 184, 166, 0.03) 100%)' }}>
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div style={{
+              width: '2.75rem',
+              height: '2.75rem',
+              background: 'linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%)',
+              borderRadius: '0.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              flexShrink: 0,
+              boxShadow: '0 8px 16px rgba(14, 165, 233, 0.25)',
+              border: '2px solid rgba(255, 255, 255, 0.2)'
+            }}>
                 HR
             </div>
-            <div className={`transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap">Hospital Regional</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Dr. Franco Ravera Zunino</p>
+            <div className={`transition-all duration-300 overflow-hidden ${isCollapsed ? 'w-0 opacity-0' : 'flex-1 opacity-100'}`}>
+              <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">Hospital Regional</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">Dr. Franco Ravera Zunino</p>
             </div>
           </div>
           <button
             onClick={toggleSidebar}
-            className="absolute top-4 right-0 translate-x-1/2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-teal-600 dark:hover:text-teal-400 transition-all z-10 hidden lg:block"
+            className="absolute top-6 right-0 translate-x-1/2 bg-white dark:bg-gray-800 border-2 border-sky-200 dark:border-gray-600 rounded-full p-2 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-gray-700 hover:border-sky-400 transition-all z-10 hidden lg:block shadow-lg"
             title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
           >
             <ChevronDoubleLeftIcon className={`w-4 h-4 transition-transform duration-300 ${isCollapsed && 'rotate-180'}`} />
@@ -121,8 +149,8 @@ const Sidebar = () => {
         </div>
 
         {/* Menu Items */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2">
-          <ul className="space-y-1">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden p-3">
+          <ul className="space-y-2">
             {menuItems.map((item, index) => {
               const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
               const IconComponent = isActive ? item.iconSolid : item.icon;
@@ -131,25 +159,27 @@ const Sidebar = () => {
                 <li key={item.path} className="relative">
                   <Link
                     to={item.path}
-                    className={`flex items-center h-12 rounded-lg transition-all duration-200 group ${
-                      isCollapsed ? 'justify-center' : 'px-3 gap-3'
+                    className={`flex items-center h-12 rounded-xl transition-all duration-200 group relative ${
+                      isCollapsed ? 'justify-center px-2' : 'px-4 gap-3'
                     } ${
                       isActive
-                        ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-semibold'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                        ? 'bg-gradient-to-r from-sky-500 to-mint-500 text-white font-semibold shadow-lg shadow-sky-500/30'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-sky-50 hover:to-mint-50 dark:hover:from-sky-900/20 dark:hover:to-mint-900/20 hover:text-sky-700 dark:hover:text-sky-300'
                     }`}
                     onMouseEnter={() => setHoveredItem(item.path)}
                     onMouseLeave={() => setHoveredItem(null)}
                     title={isCollapsed ? item.label : ''}
                   >
-                    <IconComponent className="w-6 h-6 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"></div>
+                    )}
+                    <IconComponent className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
                     <span 
-                      className={`text-sm whitespace-nowrap transition-all duration-300 ${
+                      className={`text-sm font-medium whitespace-nowrap transition-all duration-300 ${
                         isCollapsed 
                           ? 'opacity-0 -translate-x-3 w-0' 
                           : 'opacity-100 translate-x-0'
                       }`}
-                      // El retraso se aplica solo al expandir para el efecto escalonado
                       style={{ transitionDelay: isCollapsed ? '0ms' : `${index * 30}ms` }}
                     >
                       {item.label}

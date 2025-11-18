@@ -186,55 +186,63 @@ const SolicitudesRotacion = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+          <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{estadisticas.total}</p>
+                <p className="text-sm text-teal-100 mb-1 font-medium">Total</p>
+                <p className="text-3xl font-bold text-white">{estadisticas.total}</p>
               </div>
-              <UserGroupIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
+                <UserGroupIcon className="w-8 h-8 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+          <div className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Pendientes</p>
-                <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-500">{estadisticas.pendientes}</p>
+                <p className="text-sm text-amber-100 mb-1 font-medium">Pendientes</p>
+                <p className="text-3xl font-bold text-white">{estadisticas.pendientes}</p>
               </div>
-              <ClockIcon className="w-12 h-12 text-yellow-400 dark:text-yellow-500" />
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
+                <ClockIcon className="w-8 h-8 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+          <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Aprobadas</p>
-                <p className="text-3xl font-bold text-green-600 dark:text-green-500">{estadisticas.aprobadas}</p>
+                <p className="text-sm text-emerald-100 mb-1 font-medium">Aprobadas</p>
+                <p className="text-3xl font-bold text-white">{estadisticas.aprobadas}</p>
               </div>
-              <CheckCircleIcon className="w-12 h-12 text-green-400 dark:text-green-500" />
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
+                <CheckCircleIcon className="w-8 h-8 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+          <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Rechazadas</p>
-                <p className="text-3xl font-bold text-red-600 dark:text-red-500">{estadisticas.rechazadas}</p>
+                <p className="text-sm text-red-100 mb-1 font-medium">Rechazadas</p>
+                <p className="text-3xl font-bold text-white">{estadisticas.rechazadas}</p>
               </div>
-              <XCircleIcon className="w-12 h-12 text-red-400 dark:text-red-500" />
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
+                <XCircleIcon className="w-8 h-8 text-white" />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6 transition-colors duration-300">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <FunnelIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por estado:</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {[
                 { key: 'todas', label: 'Todas', count: estadisticas.total },
                 { key: 'pendiente', label: 'Pendientes', count: estadisticas.pendientes },
@@ -244,9 +252,9 @@ const SolicitudesRotacion = () => {
                 <button
                   key={filtro.key}
                   onClick={() => setFiltroEstado(filtro.key)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     filtroEstado === filtro.key
-                      ? 'bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-teal-700'
+                      ? 'bg-teal-500 text-white shadow-sm'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
                 >
@@ -258,7 +266,7 @@ const SolicitudesRotacion = () => {
         </div>
 
         {/* Lista de Solicitudes */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
           {solicitudesFiltradas.length === 0 ? (
             <div className="p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -285,46 +293,54 @@ const SolicitudesRotacion = () => {
           ) : (
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {solicitudesFiltradas.map((solicitud) => (
-                <div key={solicitud.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <div key={solicitud.id} className="p-6 hover:bg-gradient-to-r hover:from-teal-50 hover:to-emerald-50 dark:hover:from-teal-900/10 dark:hover:to-emerald-900/10 transition-all border-l-4 border-transparent hover:border-teal-500">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                           {solicitud.especialidad}
                         </h3>
-                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${
-                          getEstadoColor(solicitud.estado)
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+                          solicitud.estado === 'pendiente' ? 'bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-700' :
+                          solicitud.estado === 'aprobada' ? 'bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/30 dark:to-green-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' :
+                          'bg-gradient-to-r from-red-100 to-rose-100 dark:from-red-900/30 dark:to-rose-900/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-700'
                         }`}>
                           {getEstadoIcon(solicitud.estado)}
                           {solicitud.estado.charAt(0).toUpperCase() + solicitud.estado.slice(1)}
                         </span>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center gap-2">
-                          <UserGroupIcon className="w-4 h-4" />
-                          <span>{solicitud.estudiantes?.[0]?.count || 0} estudiantes</span>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                          <div className="p-1.5 bg-teal-100 dark:bg-teal-900/30 rounded">
+                            <UserGroupIcon className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                          </div>
+                          <span className="font-medium">{solicitud.estudiantes?.[0]?.count || 0} estudiantes</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <CalendarDaysIcon className="w-4 h-4" />
-                          <span>{formatearFecha(solicitud.fecha_inicio)} - {formatearFecha(solicitud.fecha_termino)}</span>
+                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                          <div className="p-1.5 bg-cyan-100 dark:bg-cyan-900/30 rounded">
+                            <CalendarDaysIcon className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                          </div>
+                          <span className="font-medium">{formatearFecha(solicitud.fecha_inicio)} - {formatearFecha(solicitud.fecha_termino)}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <ClockIcon className="w-4 h-4" />
-                          <span>Solicitado el {formatearFecha(solicitud.fecha_solicitud || solicitud.created_at)}</span>
+                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                          <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded">
+                            <ClockIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          </div>
+                          <span className="font-medium">Solicitado el {formatearFecha(solicitud.fecha_solicitud || solicitud.created_at)}</span>
                         </div>
                       </div>
                       
                       {solicitud.comentarios && (
-                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400 line-clamp-2 italic">
                           {solicitud.comentarios}
                         </p>
                       )}
                       
                       {solicitud.motivo_rechazo && (
-                        <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <div className="mt-3 p-3 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 border-l-4 border-red-500 rounded-r-lg">
                           <p className="text-sm text-red-800 dark:text-red-300">
-                            <strong>Motivo de rechazo:</strong> {solicitud.motivo_rechazo}
+                            <strong className="font-semibold">Motivo de rechazo:</strong> {solicitud.motivo_rechazo}
                           </p>
                         </div>
                       )}
@@ -333,7 +349,7 @@ const SolicitudesRotacion = () => {
                     <div className="ml-6">
                       <button
                         onClick={() => handleVerDetalle(solicitud)}
-                        className="p-2 text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors"
+                        className="p-3 text-gray-600 dark:text-gray-400 hover:text-white hover:bg-gradient-to-br hover:from-teal-500 hover:to-emerald-600 rounded-lg transition-all shadow-sm hover:shadow-md"
                         title="Ver detalles"
                       >
                         <EyeIcon className="w-5 h-5" />
@@ -350,13 +366,13 @@ const SolicitudesRotacion = () => {
       {/* Modal de Detalle */}
       {modalDetalle && solicitudSeleccionada && (
         <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300 border border-gray-200 dark:border-gray-700">
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Detalle de Solicitud de Rotación</h2>
                 <button
                   onClick={() => setModalDetalle(false)}
-                  className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg"
+                  className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg transition-colors"
                 >
                   <XCircleIcon className="w-6 h-6" />
                 </button>

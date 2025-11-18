@@ -1,0 +1,253 @@
+/* Dashboard Serenidad Hospitalaria - Azul Cielo + Verde Menta + Lavanda */
+
+.dashboard-header {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #0ea5e9;
+  position: relative;
+  overflow: hidden;
+}
+
+.dark .dashboard-header {
+  background: #1f2937;
+  border-left-color: #14b8a6;
+}
+
+.dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34c0-2.21-1.79-4-4-4s-4 1.79-4 4 1.79 4 4 4 4-1.79 4-4zm0-10c0-2.21-1.79-4-4-4s-4 1.79-4 4 1.79 4 4 4 4-1.79 4-4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.3;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.dashboard-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-card-medical {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.65) 0%, rgba(2, 132, 199, 0.65) 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card-medical::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 150px;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.stat-card-medical > * {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-card-medical:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.3);
+}
+
+.stat-card-health {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.65) 0%, rgba(13, 148, 136, 0.65) 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card-health::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 150px;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.stat-card-health > * {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-card-health:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 8px 24px rgba(20, 184, 166, 0.3);
+}
+
+.activity-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 2px solid rgba(14, 165, 233, 0.15);
+}
+
+.summary-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 2px solid rgba(167, 139, 250, 0.15);
+}
+
+.summary-item-pending {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.summary-item-pending:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.summary-item-approved {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.15) 0%, rgba(13, 148, 136, 0.15) 100%);
+  border: 2px solid rgba(20, 184, 166, 0.35);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.summary-item-approved:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25);
+}
+
+.summary-item-rejected {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 2px solid #ef4444;
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.summary-item-rejected:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.icon-badge-medical {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.icon-badge-yellow {
+  background: #fbbf24;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.icon-badge-health {
+  background: rgba(20, 184, 166, 0.75);
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.icon-badge-red {
+  background: #ef4444;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.section-title-bar {
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(180deg, #0ea5e9 0%, #14b8a6 50%, #a78bfa 100%);
+  border-radius: 4px;
+}
+
+.link-health {
+  color: rgba(14, 165, 233, 0.9);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.link-health:hover {
+  color: rgba(2, 132, 199, 0.9);
+  gap: 0.75rem;
+}
+
+.activity-icon-pending {
+  background: #fef3c7;
+  border-radius: 50%;
+  padding: 0.5rem;
+}
+
+.activity-icon-approved {
+  background: rgba(20, 184, 166, 0.15);
+  border-radius: 50%;
+  padding: 0.5rem;
+}
+
+.activity-icon-rejected {
+  background: #fee2e2;
+  border-radius: 50%;
+  padding: 0.5rem;
+}
+
+/* Loading spinner */
+.spinner-health {
+  border: 4px solid rgba(14, 165, 233, 0.2);
+  border-top: 4px solid #0ea5e9;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Dark mode */
+.dark .activity-card,
+.dark .summary-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark .summary-item-pending {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.1) 0%, rgba(253, 230, 138, 0.1) 100%);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.dark .summary-item-approved {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(13, 148, 136, 0.1) 100%);
+  border-color: rgba(20, 184, 166, 0.3);
+}
+
+.dark .summary-item-rejected {
+  background: linear-gradient(135deg, rgba(254, 226, 226, 0.1) 0%, rgba(254, 202, 202, 0.1) 100%);
+  border-color: rgba(239, 68, 68, 0.3);
+}

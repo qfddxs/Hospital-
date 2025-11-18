@@ -199,14 +199,14 @@ const PortalDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       {/* Header */}
-      <motion.header initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }} className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300 sticky top-0 z-40">
+      <motion.header initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }} className="bg-white dark:bg-gray-800 border-b-4 border-teal-500 shadow-sm transition-colors duration-300 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
               {/* Código del Centro Formador */}
               {centroInfo?.centro_formador?.codigo && (
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 dark:from-teal-600 dark:to-teal-700 rounded-xl flex items-center justify-center shadow-md hover:shadow-lg transition-all hover:scale-105">
+                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md hover:shadow-lg transition-all hover:scale-105">
                     <span className="text-white font-bold text-sm tracking-tight">
                       {centroInfo.centro_formador.codigo}
                     </span>
@@ -219,7 +219,7 @@ const PortalDashboard = () => {
                 <div className="h-10 w-px bg-gray-300 dark:bg-gray-600"></div>
               )}
 
-              <div className="w-12 h-12 bg-teal-600 dark:bg-teal-700 rounded-lg flex items-center justify-center transition-colors">
+              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-sm">
                 <BuildingOffice2Icon className="w-7 h-7 text-white" />
               </div>
               <div>
@@ -231,9 +231,9 @@ const PortalDashboard = () => {
             </div>
             <div className="flex items-center gap-4">
               {/* Indicador de actualización */}
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-200 dark:border-teal-700">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-teal-700 dark:text-teal-300 font-medium">
                   Actualizado {ultimaActualizacion.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </span>
               </div>
@@ -244,10 +244,10 @@ const PortalDashboard = () => {
               {/* Botón Salir */}
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
               >
                 <ArrowRightOnRectangleIcon className="w-5 h-5" />
-                <span>Salir</span>
+                <span className="font-medium">Salir</span>
               </button>
             </div>
           </div>
@@ -261,16 +261,16 @@ const PortalDashboard = () => {
           {/* Columna Principal (2/3) */}
           <div className="lg:col-span-2 space-y-8">
             {/* Bienvenida */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors mb-1">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-gradient-to-r from-teal-500 to-emerald-600 rounded-2xl p-6 shadow-lg">
+              <h2 className="text-3xl font-bold text-white mb-1">
                 Bienvenido(a) al Portal
                 {centroInfo?.centro_formador?.contacto_nombre && (
-                  <span className="text-teal-600 dark:text-teal-400">
+                  <span className="text-teal-100">
                     , {centroInfo.centro_formador.contacto_nombre}
                   </span>
                 )}
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 transition-colors">
+              <p className="text-teal-50">
                 Aquí tienes un resumen de la actividad de tu centro.
               </p>
             </motion.div>
@@ -281,35 +281,37 @@ const PortalDashboard = () => {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-300"
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300"
               >
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 transition-colors">Actividad Reciente</h3>
-                <div className="space-y-3">
+                <div className="bg-gradient-to-r from-teal-500 to-emerald-600 px-6 py-4">
+                  <h3 className="text-lg font-semibold text-white">Actividad Reciente</h3>
+                </div>
+                <div className="p-6 space-y-3">
                   {todasLasSolicitudes.slice(0, 10).map(solicitud => (
-                    <div key={`${solicitud.tipo}-${solicitud.id}`} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300">
+                    <div key={`${solicitud.tipo}-${solicitud.id}`} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-teal-50 dark:from-gray-700/50 dark:to-teal-900/20 rounded-lg hover:shadow-md transition-all duration-300 border border-gray-200 dark:border-gray-600">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
                             solicitud.tipo === 'cupos' 
-                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
-                              : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400'
+                              ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300'
+                              : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300'
                           }`}>
                             {solicitud.tipo === 'cupos' ? 'Solicitud de Cupos' : 'Solicitud de Rotación'}
                           </span>
                         </div>
-                        <p className="font-medium text-gray-900 dark:text-white transition-colors">
+                        <p className="font-semibold text-gray-900 dark:text-white transition-colors">
                           {solicitud.especialidad}
                         </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors">
                           {solicitud.tipo === 'cupos' 
                             ? `${solicitud.numero_cupos} cupos` 
                             : `${new Date(solicitud.fecha_inicio).toLocaleDateString('es-CL')} - ${new Date(solicitud.fecha_termino).toLocaleDateString('es-CL')}`
                           } • {new Date(solicitud.created_at).toLocaleDateString('es-CL')}
                         </p>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
                         solicitud.estado === 'pendiente' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400' :
-                        solicitud.estado === 'aprobada' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
+                        solicitud.estado === 'aprobada' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400' :
                         'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
                       }`}>
                         {solicitud.estado.charAt(0).toUpperCase() + solicitud.estado.slice(1)}
@@ -413,32 +415,34 @@ const PortalDashboard = () => {
 
           {/* Barra Lateral (1/3) */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-300">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Acciones Rápidas</h3>
-              <motion.div className="space-y-3" variants={containerVariants} initial="hidden" animate="visible">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
+              <div className="bg-gradient-to-r from-teal-500 to-emerald-600 px-6 py-4">
+                <h3 className="text-lg font-semibold text-white">Acciones Rápidas</h3>
+              </div>
+              <motion.div className="p-4 space-y-2" variants={containerVariants} initial="hidden" animate="visible">
                 {[
-                  { title: 'Solicitar Cupos', desc: 'Nueva solicitud de cupos clínicos', icon: DocumentTextIcon, path: '/solicitar', color: 'teal' },
-                  { title: 'Solicitud de Rotación', desc: 'Gestiona rotaciones de estudiantes', icon: ClockIcon, path: '/solicitud-rotacion', color: 'purple' },
-                  { title: 'Solicitudes de Rotación', desc: 'Ver estado de rotaciones enviadas', icon: CheckCircleIcon, path: '/solicitudes-rotacion', color: 'indigo' },
-                  { title: 'Seguimiento Estudiantes', desc: 'Asistencia y observaciones en tiempo real', icon: BuildingOffice2Icon, path: '/seguimiento-estudiantes', color: 'green' },
-                  { title: 'Gestión Documental', desc: 'Sube certificados y documentos', icon: DocumentTextIcon, path: '/gestion-documental', color: 'blue' },
-                  { title: 'Mis Solicitudes', desc: 'Revisa el estado de tus solicitudes', icon: CheckCircleIcon, path: '/solicitudes', color: 'orange' },
+                  { title: 'Solicitar Cupos', desc: 'Nueva solicitud de cupos clínicos', icon: DocumentTextIcon, path: '/solicitar', gradient: 'from-teal-500 to-teal-600' },
+                  { title: 'Solicitud de Rotación', desc: 'Gestiona rotaciones de estudiantes', icon: ClockIcon, path: '/solicitud-rotacion', gradient: 'from-emerald-500 to-emerald-600' },
+                  { title: 'Solicitudes de Rotación', desc: 'Ver estado de rotaciones enviadas', icon: CheckCircleIcon, path: '/solicitudes-rotacion', gradient: 'from-cyan-500 to-cyan-600' },
+                  { title: 'Seguimiento Estudiantes', desc: 'Asistencia y observaciones en tiempo real', icon: BuildingOffice2Icon, path: '/seguimiento-estudiantes', gradient: 'from-green-500 to-green-600' },
+                  { title: 'Gestión Documental', desc: 'Sube certificados y documentos', icon: DocumentTextIcon, path: '/gestion-documental', gradient: 'from-blue-500 to-blue-600' },
+                  { title: 'Mis Solicitudes', desc: 'Revisa el estado de tus solicitudes', icon: CheckCircleIcon, path: '/solicitudes', gradient: 'from-amber-500 to-amber-600' },
                 ].map((action) => (
                   <motion.div
                     key={action.title}
                     variants={itemVariants}
                     whileHover={{ scale: 1.02, x: 4 }}
-                    className="group flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                    className="group flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-teal-50 hover:to-emerald-50 dark:hover:from-teal-900/20 dark:hover:to-emerald-900/20 cursor-pointer transition-all border border-transparent hover:border-teal-200 dark:hover:border-teal-700 hover:shadow-md"
                     onClick={() => navigate(action.path)}
                   >
-                    <div className={`p-3 rounded-lg bg-${action.color}-100 dark:bg-${action.color}-900/40`}>
-                      <action.icon className={`w-6 h-6 text-${action.color}-600 dark:text-${action.color}-300`} />
+                    <div className={`p-2.5 rounded-lg bg-gradient-to-br ${action.gradient} shadow-sm`}>
+                      <action.icon className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-100">{action.title}</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{action.desc}</p>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">{action.title}</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{action.desc}</p>
                     </div>
-                    <ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:translate-x-1 transition-transform" />
+                    <ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:translate-x-1 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-all" />
                   </motion.div>
                 ))}
               </motion.div>

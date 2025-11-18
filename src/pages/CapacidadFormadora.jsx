@@ -4,6 +4,7 @@ import Button from '../components/UI/Button';
 import Modal from '../components/UI/Modal';
 import Loader from '../components/Loader';
 import { supabase } from '../supabaseClient';
+import './Dashboard.css';
 import { 
   EyeIcon, 
   PencilIcon, 
@@ -758,82 +759,125 @@ const CapacidadFormadora = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Capacidad Formadora</h1>
-          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-            Gestiona los centros formadores y su capacidad de cupos.
-            <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-              <span className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></span>
-              Actualización en tiempo real
-            </span>
-          </p>
+      <div className="dashboard-header" style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              Capacidad Formadora
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+              Gestiona los centros formadores y su capacidad de cupos.
+              <span className="inline-flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400">
+                <span className="w-2 h-2 bg-sky-500 dark:bg-sky-400 rounded-full animate-pulse"></span>
+                Actualización en tiempo real
+              </span>
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
+            <BuildingOffice2Icon className="w-8 h-8" />
+          </div>
         </div>
       </div>
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
-          <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-xl">
-            <BuildingOffice2Icon className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Centros Activos</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{centrosData.filter(c => c.estado === 'activo').length}</p>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
-          <div className="bg-indigo-100 dark:bg-indigo-900/30 p-3 rounded-xl">
-            <ChartBarIcon className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Capacidad Total</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)}</p>
+        <div className="stat-card-medical" style={{ cursor: 'default' }}>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <BuildingOffice2Icon style={{ width: '2rem', height: '2rem', color: 'white' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                Centros Activos
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {centrosData.filter(c => c.estado === 'activo').length}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
-          <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-xl">
-            <CheckCircleIcon className="w-7 h-7 text-green-600 dark:text-green-400" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Cupos Disponibles</p>
-            <p className="text-3xl font-bold text-green-600 dark:text-green-400">{centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0)}</p>
+        <div className="stat-card-health" style={{ cursor: 'default' }}>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <ChartBarIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                Capacidad Total
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
-          <div className="bg-amber-100 dark:bg-amber-900/30 p-3 rounded-xl">
-            <UserGroupIcon className="w-7 h-7 text-amber-600 dark:text-amber-400" />
+        <div className="stat-card-health" style={{ cursor: 'default' }}>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <CheckCircleIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                Cupos Disponibles
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0)}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Tasa Ocupación</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {centrosData.length > 0 && centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0) > 0
-                ? `${Math.round((1 - centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0) / centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)) * 100)}%`
-                : '0%'
-              }
-            </p>
+        </div>
+        <div style={{ 
+          background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.65) 0%, rgba(139, 92, 246, 0.65) 100%)',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          boxShadow: '0 4px 16px rgba(167, 139, 250, 0.2)',
+          transition: 'all 0.3s ease',
+          position: 'relative',
+          overflow: 'hidden',
+          cursor: 'default'
+        }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '128px', height: '128px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '50%', marginRight: '-64px', marginTop: '-64px' }}></div>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <UserGroupIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                Tasa Ocupación
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {centrosData.length > 0 && centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0) > 0
+                  ? `${Math.round((1 - centrosData.reduce((sum, c) => sum + c.capacidadDisponible, 0) / centrosData.reduce((sum, c) => sum + c.capacidadTotal, 0)) * 100)}%`
+                  : '0%'
+                }
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
-        <div className="flex items-center gap-2">
-          <FunnelIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por estado:</span>
-          {['todos', 'activo', 'completo'].map(estado => (
-            <button
-              key={estado}
-              onClick={() => setFiltroEstado(estado)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filtroEstado === estado
-                  ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              {estado.charAt(0).toUpperCase() + estado.slice(1)}
-            </button>
-          ))}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-2 border-sky-100 dark:border-gray-700 p-5 transition-colors">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <FunnelIcon className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Filtrar por estado:</span>
+          </div>
+          <div className="flex gap-2">
+            {['todos', 'activo', 'completo'].map(estado => (
+              <button
+                key={estado}
+                onClick={() => setFiltroEstado(estado)}
+                className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  filtroEstado === estado
+                    ? 'bg-sky-500 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {estado.charAt(0).toUpperCase() + estado.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

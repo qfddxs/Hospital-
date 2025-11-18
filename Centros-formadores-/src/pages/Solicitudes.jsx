@@ -223,55 +223,63 @@ const PortalSolicitudes = () => {
           initial="hidden"
           animate="visible"
         >
-          <motion.div variants={itemVariants} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+          <motion.div variants={itemVariants} className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total</p>
-                <p className="text-4xl font-bold text-gray-900 dark:text-white"><Counter to={estadisticas.total} /></p>
+                <p className="text-sm text-teal-100 mb-1 font-medium">Total</p>
+                <p className="text-3xl font-bold text-white"><Counter to={estadisticas.total} /></p>
               </div>
-              <div className="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg"><DocumentTextIcon className="w-6 h-6 text-gray-500 dark:text-gray-400" /></div>
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
+                <DocumentTextIcon className="w-8 h-8 text-white" />
+              </div>
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+          <motion.div variants={itemVariants} className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Pendientes</p>
-                <p className="text-4xl font-bold text-yellow-600 dark:text-yellow-500"><Counter to={estadisticas.pendientes} /></p>
+                <p className="text-sm text-amber-100 mb-1 font-medium">Pendientes</p>
+                <p className="text-3xl font-bold text-white"><Counter to={estadisticas.pendientes} /></p>
               </div>
-              <div className="p-3 bg-yellow-100 dark:bg-yellow-900/40 rounded-lg"><ClockIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" /></div>
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
+                <ClockIcon className="w-8 h-8 text-white" />
+              </div>
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+          <motion.div variants={itemVariants} className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Aprobadas</p>
-                <p className="text-4xl font-bold text-green-600 dark:text-green-500"><Counter to={estadisticas.aprobadas} /></p>
+                <p className="text-sm text-emerald-100 mb-1 font-medium">Aprobadas</p>
+                <p className="text-3xl font-bold text-white"><Counter to={estadisticas.aprobadas} /></p>
               </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900/40 rounded-lg"><CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400" /></div>
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
+                <CheckCircleIcon className="w-8 h-8 text-white" />
+              </div>
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+          <motion.div variants={itemVariants} className="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Rechazadas</p>
-                <p className="text-4xl font-bold text-red-600 dark:text-red-500"><Counter to={estadisticas.rechazadas} /></p>
+                <p className="text-sm text-red-100 mb-1 font-medium">Rechazadas</p>
+                <p className="text-3xl font-bold text-white"><Counter to={estadisticas.rechazadas} /></p>
               </div>
-              <div className="p-3 bg-red-100 dark:bg-red-900/40 rounded-lg"><XCircleIcon className="w-6 h-6 text-red-600 dark:text-red-400" /></div>
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
+                <XCircleIcon className="w-8 h-8 text-white" />
+              </div>
             </div>
           </motion.div>
         </motion.div>
 
         {/* Filtros */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6 transition-colors duration-300">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <FunnelIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por estado:</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {[
                 { key: 'todas', label: 'Todas', count: estadisticas.total },
                 { key: 'pendiente', label: 'Pendientes', count: estadisticas.pendientes },
@@ -281,9 +289,9 @@ const PortalSolicitudes = () => {
                 <button
                   key={filtro.key}
                   onClick={() => setFiltroEstado(filtro.key)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     filtroEstado === filtro.key
-                      ? 'bg-teal-600 text-white shadow-md'
+                      ? 'bg-teal-500 text-white shadow-sm'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
                 >
@@ -328,12 +336,12 @@ const PortalSolicitudes = () => {
             >
               {solicitudesFiltradas.map((solicitud) => (
                 <motion.div key={solicitud.id} variants={itemVariants}>
-                  <div className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between">
+                  <div className="p-6 hover:bg-gradient-to-r hover:from-teal-50 hover:to-emerald-50 dark:hover:from-teal-900/10 dark:hover:to-emerald-900/10 transition-all border-l-4 border-transparent hover:border-teal-500 flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        solicitud.estado === 'pendiente' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
-                        solicitud.estado === 'aprobada' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
-                        'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm ${
+                        solicitud.estado === 'pendiente' ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white' :
+                        solicitud.estado === 'aprobada' ? 'bg-gradient-to-br from-emerald-500 to-green-600 text-white' :
+                        'bg-gradient-to-br from-red-500 to-rose-600 text-white'
                       }`}>
                         {getEstadoIcon(solicitud.estado)}
                       </div>
@@ -342,30 +350,34 @@ const PortalSolicitudes = () => {
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             {solicitud.especialidad}
                           </h3>
-                          <span className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                            solicitud.estado === 'pendiente' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400' :
-                            solicitud.estado === 'aprobada' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
-                            'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                          <span className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+                            solicitud.estado === 'pendiente' ? 'bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-700' :
+                            solicitud.estado === 'aprobada' ? 'bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/30 dark:to-green-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' :
+                            'bg-gradient-to-r from-red-100 to-rose-100 dark:from-red-900/30 dark:to-rose-900/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-700'
                           }`}>
                             {solicitud.estado.charAt(0).toUpperCase() + solicitud.estado.slice(1)}
                           </span>
                         </div>
                         
-                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          <div className="flex items-center gap-1.5">
-                            <UserGroupIcon className="w-4 h-4" />
-                            <span>{solicitud.numero_cupos} cupos</span>
+                        <div className="flex items-center gap-4 text-sm mt-2">
+                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                            <div className="p-1.5 bg-teal-100 dark:bg-teal-900/30 rounded">
+                              <UserGroupIcon className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                            </div>
+                            <span className="font-medium">{solicitud.numero_cupos} cupos</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <CalendarDaysIcon className="w-4 h-4" />
-                            <span>{formatearFecha(solicitud.fecha_inicio)}</span>
+                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                            <div className="p-1.5 bg-cyan-100 dark:bg-cyan-900/30 rounded">
+                              <CalendarDaysIcon className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                            </div>
+                            <span className="font-medium">{formatearFecha(solicitud.fecha_inicio)}</span>
                           </div>
                         </div>
                         
                         {solicitud.motivo_rechazo && (
-                          <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                          <div className="mt-3 p-3 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 border-l-4 border-red-500 rounded-r-lg">
                             <p className="text-sm text-red-800 dark:text-red-300">
-                              <strong>Motivo de rechazo:</strong> {solicitud.motivo_rechazo}
+                              <strong className="font-semibold">Motivo de rechazo:</strong> {solicitud.motivo_rechazo}
                             </p>
                           </div>
                         )}
@@ -375,7 +387,7 @@ const PortalSolicitudes = () => {
                     <div className="ml-6">
                       <button
                         onClick={() => handleVerDetalle(solicitud)}
-                        className="p-2 text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors"
+                        className="p-3 text-gray-600 dark:text-gray-400 hover:text-white hover:bg-gradient-to-br hover:from-teal-500 hover:to-emerald-600 rounded-lg transition-all shadow-sm hover:shadow-md"
                         title="Ver detalles"
                       >
                         <EyeIcon className="w-5 h-5" />

@@ -388,11 +388,14 @@ const SeguimientoEstudiantes = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Lista de Estudiantes */}
             <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <UserGroupIcon className="w-5 h-5" />
-                  Estudiantes ({estudiantes.length})
-                </h3>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="bg-gradient-to-r from-teal-500 to-emerald-600 px-4 py-3">
+                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <UserGroupIcon className="w-5 h-5" />
+                    Estudiantes ({estudiantes.length})
+                  </h3>
+                </div>
+                <div className="p-4">
                 <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {estudiantes.map((estudiante) => (
                     <button
@@ -416,6 +419,7 @@ const SeguimientoEstudiantes = () => {
                     </button>
                   ))}
                 </div>
+                </div>
               </div>
             </div>
 
@@ -424,27 +428,27 @@ const SeguimientoEstudiantes = () => {
               {estudianteSeleccionado && (
                 <>
                   {/* Información del Estudiante */}
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl shadow-lg p-6">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        <h2 className="text-2xl font-bold text-white">
                           {estudianteSeleccionado.nombre} {estudianteSeleccionado.primer_apellido} {estudianteSeleccionado.segundo_apellido}
                         </h2>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-teal-100 mt-1">
                           {estudianteSeleccionado.carrera || estudianteSeleccionado.solicitud_rotacion?.especialidad}
                         </p>
-                        <div className="flex gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="flex gap-4 mt-3 text-sm text-teal-100">
                           <span>RUT: {estudianteSeleccionado.rut}</span>
                           {estudianteSeleccionado.correo_electronico && <span>• {estudianteSeleccionado.correo_electronico}</span>}
                           {estudianteSeleccionado.telefono && <span>• {estudianteSeleccionado.telefono}</span>}
                         </div>
                       </div>
                       {estadisticas && (
-                        <div className="text-right">
-                          <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">
+                        <div className="text-right bg-white/20 backdrop-blur-sm rounded-lg p-4">
+                          <div className="text-3xl font-bold text-white">
                             {estadisticas.porcentaje}%
                           </div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Asistencia</p>
+                          <p className="text-sm text-teal-100">Asistencia</p>
                         </div>
                       )}
                     </div>
@@ -453,53 +457,63 @@ const SeguimientoEstudiantes = () => {
                   {/* Estadísticas */}
                   {estadisticas && (
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 border-teal-500 p-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
                             <p className="text-2xl font-bold text-gray-900 dark:text-white">{estadisticas.total}</p>
                           </div>
-                          <ChartBarIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                          <div className="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
+                            <ChartBarIcon className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                          </div>
                         </div>
                       </div>
 
-                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 border-emerald-500 p-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Presentes</p>
-                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{estadisticas.presentes}</p>
+                            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{estadisticas.presentes}</p>
                           </div>
-                          <CheckCircleIcon className="w-8 h-8 text-green-400 dark:text-green-500" />
+                          <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                            <CheckCircleIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                          </div>
                         </div>
                       </div>
 
-                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 border-red-500 p-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Ausentes</p>
                             <p className="text-2xl font-bold text-red-600 dark:text-red-400">{estadisticas.ausentes}</p>
                           </div>
-                          <XCircleIcon className="w-8 h-8 text-red-400 dark:text-red-500" />
+                          <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                            <XCircleIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
+                          </div>
                         </div>
                       </div>
 
-                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 border-amber-500 p-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Justificados</p>
-                            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{estadisticas.justificados}</p>
+                            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{estadisticas.justificados}</p>
                           </div>
-                          <ExclamationTriangleIcon className="w-8 h-8 text-yellow-400 dark:text-yellow-500" />
+                          <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                            <ExclamationTriangleIcon className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                          </div>
                         </div>
                       </div>
 
-                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 border-orange-500 p-4">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Tardes</p>
                             <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{estadisticas.tardes}</p>
                           </div>
-                          <ClockIcon className="w-8 h-8 text-orange-400 dark:text-orange-500" />
+                          <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                            <ClockIcon className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                          </div>
                         </div>
                       </div>
                     </div>

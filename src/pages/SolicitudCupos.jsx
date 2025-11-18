@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import Loader from '../components/Loader';
 import { ToastContainer } from '../components/Toast';
 import { useToast } from '../hooks/useToast';
+import './Dashboard.css';
 import {
   BuildingOffice2Icon,
   CalendarDaysIcon,
@@ -218,70 +219,101 @@ const SolicitudCupos = () => {
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <div className="space-y-6">
         {/* Header */}
-        <div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-          Solicitud de Cupos - {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Gestiona las solicitudes de cupos clínicos de los centros formadores
-          <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-            <span className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></span>
-            Actualización en tiempo real
-          </span>
-        </p>
-      </div>
+        <div className="dashboard-header" style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+                Solicitud de Cupos - {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                Gestiona las solicitudes de cupos clínicos de los centros formadores
+                <span className="inline-flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400">
+                  <span className="w-2 h-2 bg-sky-500 dark:bg-sky-400 rounded-full animate-pulse"></span>
+                  Actualización en tiempo real
+                </span>
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
+              <AcademicCapIcon className="w-8 h-8" />
+            </div>
+          </div>
+        </div>
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Solicitudes</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.total}</p>
+        <div className="stat-card-medical" style={{ cursor: 'default' }}>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <BuildingOffice2Icon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <BuildingOffice2Icon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                Total Solicitudes
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {estadisticas.total}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Pendientes</p>
-              <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{estadisticas.pendientes}</p>
+        <div className="summary-item-pending" style={{ cursor: 'default', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-yellow">
+              <ClockIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <ClockIcon className="w-12 h-12 text-yellow-400 dark:text-yellow-500" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#92400e', margin: 0 }}>
+                Pendientes
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#b45309', margin: '0.25rem 0 0 0' }}>
+                {estadisticas.pendientes}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Aprobadas</p>
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400">{estadisticas.aprobadas}</p>
+        <div className="summary-item-approved" style={{ cursor: 'default', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-health">
+              <CheckCircleIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <CheckCircleIcon className="w-12 h-12 text-green-400 dark:text-green-500" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#064e3b', margin: 0 }}>
+                Aprobadas
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0d9488', margin: '0.25rem 0 0 0' }}>
+                {estadisticas.aprobadas}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Rechazadas</p>
-              <p className="text-3xl font-bold text-red-600 dark:text-red-400">{estadisticas.rechazadas}</p>
+        <div className="summary-item-rejected" style={{ cursor: 'default', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-red">
+              <XCircleIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <XCircleIcon className="w-12 h-12 text-red-400 dark:text-red-500" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#7f1d1d', margin: 0 }}>
+                Rechazadas
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#dc2626', margin: '0.25rem 0 0 0' }}>
+                {estadisticas.rechazadas}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-sky-100 dark:border-gray-700 p-6 transition-colors">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <FunnelIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+            <FunnelIcon className="w-5 h-5 text-sky-500 dark:text-sky-400" />
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por estado:</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {[
               { key: 'todas', label: 'Todas', count: estadisticas.total },
               { key: 'pendiente', label: 'Pendientes', count: estadisticas.pendientes },
@@ -291,9 +323,9 @@ const SolicitudCupos = () => {
               <button
                 key={filtro.key}
                 onClick={() => setFiltroEstado(filtro.key)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                   filtroEstado === filtro.key
-                    ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-700'
+                    ? 'bg-sky-500 text-white shadow-md'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
@@ -322,23 +354,33 @@ const SolicitudCupos = () => {
         ) : (
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {solicitudesFiltradas.map((solicitud) => (
-              <div key={solicitud.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              <div key={solicitud.id} className="p-6 hover:bg-gradient-to-r hover:from-sky-50/50 hover:to-mint-50/50 dark:hover:bg-gray-700/50 transition-all duration-200 border-l-4 border-transparent hover:border-sky-500">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
-                        <BuildingOffice2Icon className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                      <div style={{ 
+                        width: '3rem', 
+                        height: '3rem', 
+                        background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(20, 184, 166, 0.15) 100%)',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px solid rgba(14, 165, 233, 0.2)'
+                      }}>
+                        <BuildingOffice2Icon style={{ width: '1.5rem', height: '1.5rem', color: '#0ea5e9' }} />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                           {solicitud.centro_formador?.nombre}
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {solicitud.centro_formador?.codigo} • {solicitud.centro_formador?.contacto_nombre}
+                          <span className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{solicitud.centro_formador?.codigo}</span>
+                          {solicitud.centro_formador?.contacto_nombre && <> • {solicitud.centro_formador?.contacto_nombre}</>}
                         </p>
                       </div>
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border-2 ${
                         getEstadoColor(solicitud.estado)
                       }`}>
                         {getEstadoIcon(solicitud.estado)}
@@ -347,24 +389,54 @@ const SolicitudCupos = () => {
                     </div>
 
                     {/* Detalles */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <AcademicCapIcon className="w-4 h-4" />
-                        <span><strong>Especialidad:</strong> {solicitud.especialidad}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        padding: '0.5rem 0.75rem',
+                        background: 'rgba(167, 139, 250, 0.1)',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(167, 139, 250, 0.2)'
+                      }}>
+                        <AcademicCapIcon style={{ width: '1rem', height: '1rem', color: '#a78bfa', flexShrink: 0 }} />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          <strong style={{ color: '#a78bfa' }}>Especialidad:</strong> {solicitud.especialidad}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <UserGroupIcon className="w-4 h-4" />
-                        <span><strong>Cupos:</strong> {solicitud.numero_cupos}</span>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        padding: '0.5rem 0.75rem',
+                        background: 'rgba(20, 184, 166, 0.1)',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(20, 184, 166, 0.2)'
+                      }}>
+                        <UserGroupIcon style={{ width: '1rem', height: '1rem', color: '#14b8a6', flexShrink: 0 }} />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          <strong style={{ color: '#14b8a6' }}>Cupos:</strong> {solicitud.numero_cupos}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <CalendarDaysIcon className="w-4 h-4" />
-                        <span><strong>Período:</strong> {formatearFecha(solicitud.fecha_inicio)} - {formatearFecha(solicitud.fecha_termino)}</span>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        padding: '0.5rem 0.75rem',
+                        background: 'rgba(14, 165, 233, 0.1)',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(14, 165, 233, 0.2)'
+                      }}>
+                        <CalendarDaysIcon style={{ width: '1rem', height: '1rem', color: '#0ea5e9', flexShrink: 0 }} />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          <strong style={{ color: '#0ea5e9' }}>Período:</strong> {formatearFecha(solicitud.fecha_inicio)} - {formatearFecha(solicitud.fecha_termino)}
+                        </span>
                       </div>
                     </div>
 
                     {/* Comentarios */}
                     {solicitud.comentarios && (
-                      <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <div className="mb-3 p-3 bg-gradient-to-r from-sky-50 to-mint-50 dark:from-sky-900/20 dark:to-mint-900/20 rounded-lg border border-sky-200 dark:border-sky-800">
                         <p className="text-sm text-gray-700 dark:text-gray-300">
                           <strong>Comentarios:</strong> {solicitud.comentarios}
                         </p>

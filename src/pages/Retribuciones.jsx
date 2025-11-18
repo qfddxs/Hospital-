@@ -6,6 +6,7 @@ import Modal from '../components/UI/Modal';
 import ConfirmDialog from '../components/UI/ConfirmDialog';
 import Toast from '../components/UI/Toast';
 import { useNotificaciones } from '../context/NotificacionesContext';
+import '../pages/Dashboard.css';
 import {
   CurrencyDollarIcon,
   DocumentArrowDownIcon,
@@ -607,75 +608,117 @@ const Retribuciones = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Retribuciones y Reportes</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Gestión de pagos a centros formadores por uso de campos clínicos
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button
-            variant="secondary"
-            onClick={fetchRetribuciones}
-            className="flex items-center gap-2"
-          >
-            <ArrowPathIcon className="w-5 h-5" />
-            Actualizar
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleCalcularRetribuciones}
-            disabled={calculando}
-            className="flex items-center gap-2"
-          >
-            <CalculatorIcon className="w-5 h-5" />
-            {calculando ? 'Calculando...' : 'Calcular Retribuciones'}
-          </Button>
+      <div className="dashboard-header" style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              Retribuciones y Reportes
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Gestión de pagos a centros formadores por uso de campos clínicos
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              onClick={fetchRetribuciones}
+              className="flex items-center gap-2"
+            >
+              <ArrowPathIcon className="w-5 h-5" />
+              Actualizar
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCalcularRetribuciones}
+              disabled={calculando}
+              className="flex items-center gap-2"
+            >
+              <CalculatorIcon className="w-5 h-5" />
+              {calculando ? 'Calculando...' : 'Calcular Retribuciones'}
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Retribuciones</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.totalRetribuciones}</p>
+        <div className="stat-card-medical" style={{ cursor: 'default' }}>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <DocumentTextIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <DocumentTextIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                Total Retribuciones
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {estadisticas.totalRetribuciones}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Pendientes</p>
-              <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{estadisticas.pendientes}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatMonto(estadisticas.montoPendiente)}</p>
+        <div className="summary-item-pending" style={{ cursor: 'default', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-yellow">
+              <ClockIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <ClockIcon className="w-12 h-12 text-yellow-400 dark:text-yellow-500" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#92400e', margin: 0 }}>
+                Pendientes
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#b45309', margin: '0.25rem 0 0 0' }}>
+                {estadisticas.pendientes}
+              </p>
+              <p style={{ fontSize: '0.75rem', color: '#92400e', margin: '0.25rem 0 0 0' }}>
+                {formatMonto(estadisticas.montoPendiente)}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Pagadas</p>
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400">{estadisticas.pagadas}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatMonto(estadisticas.montoPagado)}</p>
+        <div className="summary-item-approved" style={{ cursor: 'default', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-health">
+              <CheckCircleIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <CheckCircleIcon className="w-12 h-12 text-green-400 dark:text-green-500" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#064e3b', margin: 0 }}>
+                Pagadas
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0d9488', margin: '0.25rem 0 0 0' }}>
+                {estadisticas.pagadas}
+              </p>
+              <p style={{ fontSize: '0.75rem', color: '#064e3b', margin: '0.25rem 0 0 0' }}>
+                {formatMonto(estadisticas.montoPagado)}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Monto Total</p>
-              <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{formatMonto(estadisticas.montoTotal)}</p>
+        <div style={{ 
+          background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.65) 0%, rgba(139, 92, 246, 0.65) 100%)',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          boxShadow: '0 4px 16px rgba(167, 139, 250, 0.2)',
+          transition: 'all 0.3s ease',
+          position: 'relative',
+          overflow: 'hidden',
+          cursor: 'default'
+        }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '128px', height: '128px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '50%', marginRight: '-64px', marginTop: '-64px' }}></div>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <CurrencyDollarIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <CurrencyDollarIcon className="w-12 h-12 text-teal-400 dark:text-teal-500" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                Monto Total
+              </p>
+              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {formatMonto(estadisticas.montoTotal)}
+              </p>
+            </div>
           </div>
         </div>
       </div>

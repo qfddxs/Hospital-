@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import Loader from '../components/Loader';
+import '../pages/Dashboard.css';
 import { 
   CheckIcon, 
   XMarkIcon, 
@@ -78,7 +79,8 @@ const ControlAsistencia = () => {
       setError('');
       
       // Obtener alumnos en rotación con sus datos
-      const { data: alumnosData, error: alumnosError } = await supabase
+      // Primero intentar con estado 'en_rotacion', si no hay resultados, obtener todos
+      let { data: alumnosData, error: alumnosError } = await supabase
         .from('alumnos')
         .select(`
           *,
@@ -93,6 +95,25 @@ const ControlAsistencia = () => {
         `)
         .eq('estado', 'en_rotacion');
 
+      // Si no hay alumnos con estado 'en_rotacion', intentar obtener todos los alumnos
+      if (!alumnosData || alumnosData.length === 0) {
+        const result = await supabase
+          .from('alumnos')
+          .select(`
+            *,
+            centro_formador:centros_formadores(nombre),
+            rotaciones!alumno_id(
+              id,
+              fecha_inicio,
+              fecha_termino,
+              estado,
+              servicio:servicios_clinicos(id, nombre)
+            )
+          `);
+        alumnosData = result.data;
+        alumnosError = result.error;
+      }
+
       if (alumnosError) {
         console.error('Error en alumnos:', alumnosError);
         throw alumnosError;
@@ -102,16 +123,20 @@ const ControlAsistencia = () => {
       const rotacionesMapeadas = (alumnosData || [])
         .filter(est => {
           // Verificar si tiene rotación activa
-          if (!est.rotaciones || est.rotaciones.length === 0) return false;
+          if (!est.rotaciones || est.rotaciones.length === 0) {
+            return false;
+          }
           
           const rotacion = est.rotaciones[0];
           const fechaInicio = new Date(rotacion.fecha_inicio);
           const fechaTermino = new Date(rotacion.fecha_termino);
           const fechaActual = new Date(fechaSeleccionada);
           
-          return rotacion.estado === 'activa' && 
-                 fechaActual >= fechaInicio && 
-                 fechaActual <= fechaTermino;
+          // Aceptar rotaciones con estado 'activa' o sin estado definido
+          const estadoValido = !rotacion.estado || rotacion.estado === 'activa' || rotacion.estado === 'en_curso';
+          const dentroRango = fechaActual >= fechaInicio && fechaActual <= fechaTermino;
+          
+          return estadoValido && dentroRango;
         })
         .map(alumno => {
           const rotacion = alumno.rotaciones[0];
@@ -281,7 +306,7 @@ const ControlAsistencia = () => {
       nuevasAsistencias[rot.id] = {
         ...nuevasAsistencias[rot.id],
         rotacion_id: rot.id,
-        alumno_id: rot.estudiante_id,
+        alumno_id: rot.alumno.id,
         fecha: fechaSeleccionada,
         tipo: 'alumno',
         estado: 'presente',
@@ -434,80 +459,120 @@ const ControlAsistencia = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Control de Asistencia</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Registro diario de asistencia de alumnos en rotación
-            <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-              <span className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></span>
-              Actualización en tiempo real
-            </span>
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="secondary" 
-            onClick={marcarTodosPresentes}
-            className="flex items-center gap-2"
-            disabled={rotaciones.length === 0}
-          >
-            <CheckIcon className="w-5 h-5" />
-            Marcar Todos Presentes
-          </Button>
-          <Button 
-            variant="primary" 
-            onClick={guardarAsistencias}
-            disabled={guardando || rotaciones.length === 0}
-            className="flex items-center gap-2"
-          >
-            <DocumentArrowDownIcon className="w-5 h-5" />
-            {guardando ? 'Guardando...' : 'Guardar Asistencia'}
-          </Button>
+      <div className="dashboard-header" style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              Control de Asistencia
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+              Registro diario de asistencia de alumnos en rotación
+              <span className="inline-flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400">
+                <span className="w-2 h-2 bg-sky-500 dark:bg-sky-400 rounded-full animate-pulse"></span>
+                Actualización en tiempo real
+              </span>
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button 
+              onClick={marcarTodosPresentes}
+              disabled={rotaciones.length === 0}
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <CheckIcon className="w-5 h-5" />
+              Marcar Todos Presentes
+            </button>
+            <button 
+              onClick={guardarAsistencias}
+              disabled={guardando || rotaciones.length === 0}
+              className="px-4 py-2 bg-teal-500 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <DocumentArrowDownIcon className="w-5 h-5" />
+              {guardando ? 'Guardando...' : 'Guardar Asistencia'}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-blue-500 dark:border-blue-400 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Alumnos</p>
-              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{totalRotaciones}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="stat-card-medical" style={{ cursor: 'default' }}>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <UserGroupIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <UserGroupIcon className="w-10 h-10 text-blue-500 dark:text-blue-400 opacity-50" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                Total Alumnos
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {totalRotaciones}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-green-500 dark:border-green-400 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Presentes</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{presentes}</p>
+
+        <div className="summary-item-approved" style={{ cursor: 'default', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-health">
+              <CheckCircleIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <CheckCircleIcon className="w-10 h-10 text-green-500 dark:text-green-400 opacity-50" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#064e3b', margin: 0 }}>
+                Presentes
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0d9488', margin: '0.25rem 0 0 0' }}>
+                {presentes}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-red-500 dark:border-red-400 transition-colors">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Ausentes</p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{ausentes}</p>
+
+        <div className="summary-item-rejected" style={{ cursor: 'default', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-red">
+              <XCircleIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
-            <XCircleIcon className="w-10 h-10 text-red-500 dark:text-red-400 opacity-50" />
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#7f1d1d', margin: 0 }}>
+                Ausentes
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#dc2626', margin: '0.25rem 0 0 0' }}>
+                {ausentes}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-purple-500 dark:border-purple-400 transition-colors">
-          <div className="flex items-center justify-between">
+
+        <div style={{ 
+          background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.65) 0%, rgba(139, 92, 246, 0.65) 100%)',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          boxShadow: '0 4px 16px rgba(167, 139, 250, 0.2)',
+          transition: 'all 0.3s ease',
+          position: 'relative',
+          overflow: 'hidden',
+          cursor: 'default'
+        }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '128px', height: '128px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '50%', marginRight: '-64px', marginTop: '-64px' }}></div>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <CheckCircleIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
+            </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">% Asistencia</p>
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{porcentajeAsistencia}%</p>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                % Asistencia
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {porcentajeAsistencia}%
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Selector de Fecha */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border-2 border-sky-100 dark:border-gray-700 transition-colors">
         <div className="flex gap-4 items-center justify-between">
           <div className="flex items-center gap-4">
             <CalendarIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />

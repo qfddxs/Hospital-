@@ -227,17 +227,27 @@ const SolicitudRotacion = () => {
       />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 transition-colors duration-300">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
-              {error}
-            </div>
-          )}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
+          <div className="bg-gradient-to-r from-teal-500 to-emerald-600 px-8 py-4">
+            <h2 className="text-xl font-semibold text-white">Formulario de Solicitud de Rotación</h2>
+          </div>
+          
+          <div className="p-8">
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+                {error}
+              </div>
+            )}
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
             {/* Información Básica */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-300 mb-4">Información de la Rotación</h3>
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 rounded-xl p-6 border border-teal-200 dark:border-teal-700">
+              <h3 className="text-lg font-semibold text-teal-900 dark:text-teal-300 mb-4 flex items-center gap-2">
+                <div className="p-2 bg-teal-500 rounded-lg">
+                  <UserGroupIcon className="w-5 h-5 text-white" />
+                </div>
+                Información de la Rotación
+              </h3>
               
               <div className="space-y-4">
                 <div>
@@ -255,7 +265,7 @@ const SolicitudRotacion = () => {
                       required
                       value={formData.especialidad}
                       onChange={handleChange}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent"
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-transparent"
                       placeholder="Ej: Enfermería, Medicina, etc."
                     />
                   </div>
@@ -264,9 +274,11 @@ const SolicitudRotacion = () => {
             </motion.div>
 
             {/* Fechas */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-4 flex items-center gap-2">
-                <CalendarDaysIcon className="w-5 h-5" />
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-cyan-200 dark:border-cyan-700">
+              <h3 className="text-lg font-semibold text-cyan-900 dark:text-cyan-300 mb-4 flex items-center gap-2">
+                <div className="p-2 bg-cyan-500 rounded-lg">
+                  <CalendarDaysIcon className="w-5 h-5 text-white" />
+                </div>
                 Duración de Práctica
               </h3>
               
@@ -316,9 +328,11 @@ const SolicitudRotacion = () => {
             </motion.div>
 
             {/* Planilla de Estudiantes */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-teal-900 dark:text-teal-300 mb-4 flex items-center gap-2">
-                <DocumentArrowUpIcon className="w-5 h-5" />
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl p-6 border border-emerald-200 dark:border-emerald-700">
+              <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-300 mb-4 flex items-center gap-2">
+                <div className="p-2 bg-emerald-500 rounded-lg">
+                  <DocumentArrowUpIcon className="w-5 h-5 text-white" />
+                </div>
                 Planilla de Estudiantes
               </h3>
               
@@ -330,17 +344,17 @@ const SolicitudRotacion = () => {
                   <button
                     type="button"
                     onClick={generarPlantillaExcel}
-                    className="text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium underline"
+                    className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium underline"
                   >
                     Descargar plantilla
                   </button>
                 </div>
 
                 {!excelFile ? (
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-teal-500 dark:hover:border-teal-400 transition-colors">
+                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-emerald-500 dark:hover:border-emerald-400 transition-colors">
                     <DocumentArrowUpIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
                     <label htmlFor="excel-upload" className="cursor-pointer">
-                      <span className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium">
+                      <span className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium">
                         Selecciona un archivo
                       </span>
                       <span className="text-gray-600 dark:text-gray-400"> o arrastra aquí</span>
@@ -357,10 +371,10 @@ const SolicitudRotacion = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="bg-white dark:bg-gray-700 border border-teal-200 dark:border-teal-700 rounded-lg p-4 flex items-center justify-between">
+                    <div className="bg-white dark:bg-gray-700 border border-emerald-200 dark:border-emerald-700 rounded-lg p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
-                          <DocumentArrowUpIcon className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                        <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+                          <DocumentArrowUpIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">{excelFile.name}</p>
@@ -462,7 +476,8 @@ const SolicitudRotacion = () => {
                 {submitting ? 'Enviando...' : 'Enviar Solicitud'}
               </Button>
             </div>
-          </form>
+            </form>
+          </div>
         </motion.div>
       </main>
     </div>

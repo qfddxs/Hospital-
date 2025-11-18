@@ -16,7 +16,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-0 z-10 transition-colors duration-200">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-0 z-20 transition-colors duration-200 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
@@ -29,9 +29,9 @@ const Header = () => {
           <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => setNivelFormacion('pregrado')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 nivelFormacion === 'pregrado'
-                  ? 'bg-teal-500 text-white'
+                  ? 'bg-gradient-to-r from-sky-500 to-mint-500 text-white shadow-md'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
               }`}
             >
@@ -39,9 +39,9 @@ const Header = () => {
             </button>
             <button
               onClick={() => setNivelFormacion('postgrado')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 nivelFormacion === 'postgrado'
-                  ? 'bg-teal-500 text-white'
+                  ? 'bg-gradient-to-r from-sky-500 to-mint-500 text-white shadow-md'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
               }`}
             >
@@ -72,7 +72,18 @@ const Header = () => {
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Sistema Hospital</p>
             </div>
-            <div className="w-10 h-10 bg-teal-500 dark:bg-teal-600 rounded-full flex items-center justify-center text-white font-bold">
+            <div style={{
+              width: '2.5rem',
+              height: '2.5rem',
+              background: 'linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)'
+            }}>
               {(user?.user_metadata?.nombre_completo || user?.email || 'U').charAt(0).toUpperCase()}
             </div>
           </div>

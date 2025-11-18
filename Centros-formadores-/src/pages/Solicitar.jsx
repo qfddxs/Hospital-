@@ -305,38 +305,45 @@ const PortalSolicitar = () => {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
         {/* Indicador de Cupos Disponibles */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-6 shadow-lg">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Cupos Disponibles</p>
-                <p className="text-4xl font-bold text-teal-600 dark:text-teal-400"><Counter to={cuposDisponibles} /></p>
+                <p className="text-sm font-medium text-teal-100 mb-1">Cupos Disponibles</p>
+                <p className="text-4xl font-bold text-white"><Counter to={cuposDisponibles} /></p>
               </div>
-              <div className="p-3 bg-teal-100 dark:bg-teal-900/40 rounded-lg"><UserGroupIcon className="w-6 h-6 text-teal-600 dark:text-teal-300" /></div>
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg"><UserGroupIcon className="w-6 h-6 text-white" /></div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl p-6 shadow-lg">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Cupos Totales Asignados</p>
-                <p className="text-4xl font-bold text-gray-900 dark:text-white"><Counter to={cuposTotales} /></p>
+                <p className="text-sm font-medium text-cyan-100 mb-1">Cupos Totales Asignados</p>
+                <p className="text-4xl font-bold text-white"><Counter to={cuposTotales} /></p>
               </div>
-              <div className="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg"><BuildingOffice2Icon className="w-6 h-6 text-gray-500 dark:text-gray-400" /></div>
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg"><BuildingOffice2Icon className="w-6 h-6 text-white" /></div>
             </div>
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 transition-colors duration-300">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
-              {error}
-            </div>
-          )}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
+          <div className="bg-gradient-to-r from-teal-500 to-emerald-600 px-8 py-4">
+            <h2 className="text-xl font-semibold text-white">Formulario de Solicitud</h2>
+          </div>
+          
+          <div className="p-8">
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+                {error}
+              </div>
+            )}
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
             {/* Información de la Solicitud */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-6 transition-colors duration-300">
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 rounded-xl p-6 border border-teal-200 dark:border-teal-700 transition-colors duration-300">
               <h3 className="text-lg font-semibold text-teal-900 dark:text-teal-300 mb-4 flex items-center gap-2 transition-colors">
-                <AcademicCapIcon className="w-5 h-5" />
+                <div className="p-2 bg-teal-500 rounded-lg">
+                  <AcademicCapIcon className="w-5 h-5 text-white" />
+                </div>
                 Información de la Solicitud
               </h3>
               
@@ -398,9 +405,11 @@ const PortalSolicitar = () => {
             </motion.div>
 
             {/* Fechas */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 transition-colors duration-300">
-              <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-4 flex items-center gap-2 transition-colors">
-                <CalendarDaysIcon className="w-5 h-5" />
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-cyan-200 dark:border-cyan-700 transition-colors duration-300">
+              <h3 className="text-lg font-semibold text-cyan-900 dark:text-cyan-300 mb-4 flex items-center gap-2 transition-colors">
+                <div className="p-2 bg-cyan-500 rounded-lg">
+                  <CalendarDaysIcon className="w-5 h-5 text-white" />
+                </div>
                 Duración de Práctica
               </h3>
               
@@ -440,9 +449,11 @@ const PortalSolicitar = () => {
             </motion.div>
 
             {/* Información Adicional */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6 transition-colors duration-300">
-              <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-300 mb-4 flex items-center gap-2 transition-colors">
-                <BuildingOffice2Icon className="w-5 h-5" />
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl p-6 border border-emerald-200 dark:border-emerald-700 transition-colors duration-300">
+              <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-300 mb-4 flex items-center gap-2 transition-colors">
+                <div className="p-2 bg-emerald-500 rounded-lg">
+                  <BuildingOffice2Icon className="w-5 h-5 text-white" />
+                </div>
                 Información Adicional
               </h3>
               
@@ -498,7 +509,8 @@ const PortalSolicitar = () => {
                 {submitting ? 'Enviando...' : cuposDisponibles === 0 ? 'Sin Cupos Disponibles' : 'Enviar Solicitud'}
               </Button>
             </div>
-          </form>
+            </form>
+          </div>
         </motion.div>
       </main>
     </div>

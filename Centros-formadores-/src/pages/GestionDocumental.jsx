@@ -215,14 +215,14 @@ const GestionDocumental = () => {
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
         {/* Pestañas */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8 transition-colors duration-300">
-          <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-8 overflow-hidden transition-colors duration-300">
+          <div className="flex">
             <button
               onClick={() => setPestañaActiva('centro')}
-              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+              className={`flex-1 px-6 py-4 text-sm font-semibold transition-all ${
                 pestañaActiva === 'centro'
-                  ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/20'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                  ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-md'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
               }`}
             >
               <div className="flex items-center justify-center gap-2">
@@ -232,10 +232,10 @@ const GestionDocumental = () => {
             </button>
             <button
               onClick={() => setPestañaActiva('estudiantes')}
-              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+              className={`flex-1 px-6 py-4 text-sm font-semibold transition-all ${
                 pestañaActiva === 'estudiantes'
-                  ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/20'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
               }`}
             >
               <div className="flex items-center justify-center gap-2">
@@ -254,8 +254,11 @@ const GestionDocumental = () => {
 
         {/* Área de Subida - Solo para documentos del centro */}
         {pestañaActiva === 'centro' && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8 transition-colors duration-300">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 transition-colors">Subir Documento</h2>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-8 transition-colors duration-300">
+          <div className="bg-gradient-to-r from-teal-500 to-emerald-600 px-8 py-4">
+            <h2 className="text-lg font-semibold text-white">Subir Documento</h2>
+          </div>
+          <div className="p-8">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 transition-colors">
             Sube documentos importantes como certificados de vacunación, seguros, o cualquier otro documento requerido.
           </p>
@@ -297,10 +300,12 @@ const GestionDocumental = () => {
             </div>
           </div>
 
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-blue-500 dark:hover:border-blue-400 transition-colors">
-            <DocumentArrowUpIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3 transition-colors" />
+          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-teal-500 dark:hover:border-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/10 transition-all">
+            <div className="p-4 bg-teal-100 dark:bg-teal-900/30 rounded-full w-fit mx-auto mb-4">
+              <DocumentArrowUpIcon className="w-12 h-12 text-teal-600 dark:text-teal-400 transition-colors" />
+            </div>
             <label htmlFor="pdf-upload" className="cursor-pointer">
-              <span className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
+              <span className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-semibold transition-colors">
                 {uploading ? 'Subiendo...' : 'Selecciona un archivo PDF'}
               </span>
               <span className="text-gray-600 dark:text-gray-400 transition-colors"> o arrastra aquí</span>
@@ -315,14 +320,18 @@ const GestionDocumental = () => {
             </label>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 transition-colors">PDF - Máx. 10MB</p>
           </div>
+          </div>
         </motion.div>
         )}
 
         {/* Lista de Documentos */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 transition-colors duration-300">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 transition-colors">
-            {pestañaActiva === 'centro' ? 'Documentos del Centro' : 'Documentos de Estudiantes'}
-          </h2>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
+          <div className={`px-8 py-4 ${pestañaActiva === 'centro' ? 'bg-gradient-to-r from-teal-500 to-emerald-600' : 'bg-gradient-to-r from-cyan-500 to-blue-600'}`}>
+            <h2 className="text-lg font-semibold text-white">
+              {pestañaActiva === 'centro' ? 'Documentos del Centro' : 'Documentos de Estudiantes'}
+            </h2>
+          </div>
+          <div className="p-8">
 
           {documentos.length === 0 ? (
             <div className="text-center py-12">
@@ -343,11 +352,11 @@ const GestionDocumental = () => {
                 <motion.div
                   key={doc.id}
                   variants={listItemVariants}
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-teal-50 dark:from-gray-700/50 dark:to-teal-900/10 rounded-xl hover:shadow-md transition-all border border-gray-200 dark:border-gray-600 hover:border-teal-300 dark:hover:border-teal-600"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center transition-colors">
-                      <DocumentTextIcon className="w-6 h-6 text-red-600 dark:text-red-400 transition-colors" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg flex items-center justify-center shadow-sm">
+                      <DocumentTextIcon className="w-6 h-6 text-white" />
                     </div>
                     <div>
                       {pestañaActiva === 'estudiantes' && doc.alumno && (
@@ -391,7 +400,7 @@ const GestionDocumental = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleDownload(doc)}
-                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                      className="p-2 text-teal-600 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/30 rounded-lg transition-all shadow-sm hover:shadow-md"
                       title="Ver/Descargar"
                     >
                       <ArrowDownTrayIcon className="w-5 h-5" />
@@ -399,7 +408,7 @@ const GestionDocumental = () => {
                     {pestañaActiva === 'centro' && (
                       <button
                         onClick={() => handleDelete(doc)}
-                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all shadow-sm hover:shadow-md"
                         title="Eliminar"
                       >
                         <TrashIcon className="w-5 h-5" />
@@ -410,6 +419,7 @@ const GestionDocumental = () => {
               ))}
             </motion.div>
           )}
+          </div>
         </motion.div>
       </main>
     </div>

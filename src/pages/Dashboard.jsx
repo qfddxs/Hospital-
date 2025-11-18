@@ -8,9 +8,13 @@ import {
   ClockIcon,
   XCircleIcon,
   ArrowRightIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  SparklesIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 import { useNivelFormacion } from '../context/NivelFormacionContext';
+import './Dashboard.css';
 
 const Dashboard = () => {
   const { nivelFormacion } = useNivelFormacion();
@@ -33,7 +37,6 @@ const Dashboard = () => {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
-          // Verificar si es un centro formador
           const { data: centroData } = await supabase
             .from('usuarios_centros')
             .select('rol')
@@ -41,7 +44,6 @@ const Dashboard = () => {
             .maybeSingle();
 
           if (centroData && centroData.rol === 'centro_formador') {
-            // Es un centro formador, NO puede acceder al dashboard del hospital
             await supabase.auth.signOut();
             navigate('/login', { 
               state: { error: 'Acceso denegado. Esta cuenta es de un Centro Formador.' }
@@ -50,7 +52,6 @@ const Dashboard = () => {
           }
         }
         
-        // Si llegamos aquí, el usuario está autorizado
         setIsAuthorized(true);
         fetchDashboardData();
       } catch (err) {
@@ -69,14 +70,12 @@ const Dashboard = () => {
     try {
       setLoading(true);
 
-      // Obtener centros formadores por nivel
       const { data: centros } = await supabase
         .from('centros_formadores')
         .select('*')
         .eq('nivel_formacion', nivelFormacion)
         .eq('activo', true);
 
-      // Obtener solicitudes por nivel
       const { data: solicitudes } = await supabase
         .from('solicitudes_cupos')
         .select(`
@@ -86,12 +85,10 @@ const Dashboard = () => {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      // Filtrar solicitudes por nivel
       const solicitudesFiltradas = solicitudes?.filter(
         s => s.centro_formador?.nivel_formacion === nivelFormacion
       ) || [];
 
-      // Calcular estadísticas
       const stats = {
         centrosFormadores: centros?.length || 0,
         solicitudesPendientes: solicitudesFiltradas.filter(s => s.estado === 'pendiente').length,
@@ -104,7 +101,6 @@ const Dashboard = () => {
 
       setEstadisticas(stats);
 
-      // Crear actividad reciente desde solicitudes
       const actividad = solicitudesFiltradas.slice(0, 5).map(sol => ({
         id: sol.id,
         titulo: `${sol.estado === 'pendiente' ? 'Nueva solicitud' : sol.estado === 'aprobada' ? 'Solicitud aprobada' : 'Solicitud rechazada'}`,
@@ -121,137 +117,232 @@ const Dashboard = () => {
     }
   };
 
-  // Mostrar loading mientras verifica
   if (checking || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 dark:border-teal-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">{checking ? 'Verificando acceso...' : 'Cargando datos...'}</p>
-        </div>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        background: 'transparent'
+      }}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          style={{ textAlign: 'center' }}
+        >
+          <div className="spinner-health"></div>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            style={{ marginTop: '1.5rem', fontSize: '1.125rem', fontWeight: '500', color: '#0ea5e9' }}
+          >
+            {checking ? 'Verificando acceso...' : 'Cargando datos...'}
+          </motion.p>
+        </motion.div>
       </div>
     );
   }
 
-  // Si no está autorizado, no mostrar nada (ya se redirigió)
   if (!isAuthorized) {
     return null;
   }
   
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          Dashboard de {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
-        </h1>
-        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-          Bienvenido. Aquí tienes un resumen de la actividad reciente del sistema.
-        </p>
-      </div>
-
-      {/* Contenido principal del Dashboard */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Columna principal (2/3) */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Tarjetas de estadísticas principales */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
-              <div className="bg-blue-100 dark:bg-blue-900/30 p-4 rounded-xl">
-                <BuildingOffice2Icon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Centros Formadores</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.centrosFormadores}</p>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-6 transition-colors">
-              <div className="bg-green-100 dark:bg-green-900/30 p-4 rounded-xl">
-                <UserGroupIcon className="w-8 h-8 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Cupos Aprobados</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.totalCupos}</p>
-              </div>
-            </div>
+    <div style={{ padding: '0' }}>
+      {/* Header limpio */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="dashboard-header"
+        style={{ marginBottom: '2rem' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              Dashboard de {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Bienvenido. Gestiona y monitorea la actividad del sistema en tiempo real.
+            </p>
           </div>
-
-          {/* Actividad Reciente */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Actividad Reciente</h3>
-              <Link to="/dashboard/solicitud-cupos" className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 flex items-center gap-1">
-                Ver todo <ArrowRightIcon className="w-4 h-4" />
-              </Link>
-            </div>
-            {actividadReciente.length === 0 ? (
-              <div className="text-center py-12">
-                <DocumentTextIcon className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600" />
-                <p className="mt-4 text-gray-500 dark:text-gray-400">No hay actividad reciente para mostrar.</p>
-              </div>
-            ) : (
-              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                {actividadReciente.map(actividad => {
-                  const icons = {
-                    solicitud: <DocumentTextIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />,
-                    aprobacion: <CheckCircleIcon className="w-5 h-5 text-green-600 dark:text-green-400" />,
-                    rechazo: <XCircleIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
-                  };
-                  return (
-                    <li key={actividad.id} className="py-4 flex items-center gap-4">
-                      <div className={`p-2 rounded-full ${
-                        actividad.tipo === 'solicitud' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
-                        actividad.tipo === 'aprobacion' ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
-                      }`}>
-                        {icons[actividad.tipo]}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{actividad.titulo}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{actividad.descripcion}</p>
-                      </div>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">hace poco</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+          <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
+            <ChartBarIcon className="w-8 h-8" />
           </div>
         </div>
+      </motion.div>
 
-        {/* Columna lateral (1/3) */}
-        <div className="space-y-8">
-          {/* Resumen de Solicitudes */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Resumen de Solicitudes</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <ClockIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-                  <span className="font-medium text-yellow-800 dark:text-yellow-300">Pendientes</span>
+      {/* Contenido principal */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+          {/* Columna principal */}
+          <div style={{ gridColumn: 'span 2' }}>
+            {/* Tarjetas de estadísticas */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="stat-card-medical"
+              >
+                <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                  <div className="icon-badge-medical">
+                    <BuildingOffice2Icon style={{ width: '2.5rem', height: '2.5rem', color: 'white' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                      Centros Formadores
+                    </p>
+                    <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                      {estadisticas.centrosFormadores}
+                    </p>
+                  </div>
                 </div>
-                <span className="font-bold text-lg text-yellow-800 dark:text-yellow-300">{estadisticas.solicitudesPendientes}</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
-                  <span className="font-medium text-green-800 dark:text-green-300">Aprobadas</span>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="stat-card-health"
+              >
+                <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                  <div className="icon-badge-medical">
+                    <UserGroupIcon style={{ width: '2.5rem', height: '2.5rem', color: 'white' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                      Total Cupos Aprobados
+                    </p>
+                    <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                      {estadisticas.totalCupos}
+                    </p>
+                  </div>
                 </div>
-                <span className="font-bold text-lg text-green-800 dark:text-green-300">{estadisticas.solicitudesAprobadas}</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <XCircleIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
-                  <span className="font-medium text-red-800 dark:text-red-300">Rechazadas</span>
-                </div>
-                <span className="font-bold text-lg text-red-800 dark:text-red-300">{estadisticas.solicitudesRechazadas}</span>
-              </div>
+              </motion.div>
             </div>
+
+            {/* Actividad Reciente */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="activity-card"
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="section-title-bar"></div>
+                  Actividad Reciente
+                </h3>
+                <Link to="/dashboard/solicitud-cupos" className="link-health" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+                  Ver todo <ArrowRightIcon style={{ width: '1rem', height: '1rem' }} />
+                </Link>
+              </div>
+              {actividadReciente.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+                  <DocumentTextIcon style={{ width: '3rem', height: '3rem', color: '#d1d5db', margin: '0 auto' }} />
+                  <p style={{ marginTop: '1rem', color: '#6b7280' }}>No hay actividad reciente para mostrar.</p>
+                </div>
+              ) : (
+                <div>
+                  {actividadReciente.map((actividad, index) => {
+                    const iconClass = actividad.tipo === 'solicitud' ? 'activity-icon-pending' : 
+                                     actividad.tipo === 'aprobacion' ? 'activity-icon-approved' : 'activity-icon-rejected';
+                    const IconComponent = actividad.tipo === 'solicitud' ? DocumentTextIcon :
+                                         actividad.tipo === 'aprobacion' ? CheckCircleIcon : XCircleIcon;
+                    const iconColor = actividad.tipo === 'solicitud' ? '#fbbf24' :
+                                     actividad.tipo === 'aprobacion' ? '#14b8a6' : '#ef4444';
+                    
+                    return (
+                      <div key={actividad.id} style={{ 
+                        padding: '1rem 0', 
+                        borderBottom: index < actividadReciente.length - 1 ? '1px solid #e5e7eb' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
+                      }}>
+                        <div className={iconClass}>
+                          <IconComponent style={{ width: '1.25rem', height: '1.25rem', color: iconColor }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#111827', margin: 0 }}>
+                            {actividad.titulo}
+                          </p>
+                          <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0.25rem 0 0 0' }}>
+                            {actividad.descripcion}
+                          </p>
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>hace poco</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+          </div>
+
+          {/* Columna lateral */}
+          <div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              className="summary-card"
+            >
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#111827', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="section-title-bar"></div>
+                Resumen de Solicitudes
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <motion.div whileHover={{ scale: 1.03 }} className="summary-item-pending">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div className="icon-badge-yellow">
+                        <ClockIcon style={{ width: '1.25rem', height: '1.25rem', color: 'white' }} />
+                      </div>
+                      <span style={{ fontWeight: '600', color: '#92400e' }}>Pendientes</span>
+                    </div>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#b45309' }}>
+                      {estadisticas.solicitudesPendientes}
+                    </span>
+                  </div>
+                </motion.div>
+
+                <motion.div whileHover={{ scale: 1.03 }} className="summary-item-approved">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div className="icon-badge-health">
+                        <CheckCircleIcon style={{ width: '1.25rem', height: '1.25rem', color: 'white' }} />
+                      </div>
+                      <span style={{ fontWeight: '600', color: '#064e3b' }}>Aprobadas</span>
+                    </div>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0d9488' }}>
+                      {estadisticas.solicitudesAprobadas}
+                    </span>
+                  </div>
+                </motion.div>
+
+                <motion.div whileHover={{ scale: 1.03 }} className="summary-item-rejected">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div className="icon-badge-red">
+                        <XCircleIcon style={{ width: '1.25rem', height: '1.25rem', color: 'white' }} />
+                      </div>
+                      <span style={{ fontWeight: '600', color: '#7f1d1d' }}>Rechazadas</span>
+                    </div>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#dc2626' }}>
+                      {estadisticas.solicitudesRechazadas}
+                    </span>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>
     </div>
   );
-
 };
 
 export default Dashboard;

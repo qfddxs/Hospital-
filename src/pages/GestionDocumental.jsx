@@ -6,6 +6,7 @@ import Modal from '../components/UI/Modal';
 import Loader from '../components/Loader';
 import DocumentosAlerta from '../components/DocumentosAlerta';
 import DocumentoCard from '../components/DocumentoCard';
+import '../pages/Dashboard.css';
 import {
   DocumentTextIcon,
   ClipboardDocumentListIcon,
@@ -732,49 +733,53 @@ const GestionDocumental = () => {
       <DocumentosAlerta />
 
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Gestión Documental</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {pestañaActiva === 'institucionales' 
-              ? 'Administra documentos normativos y protocolos institucionales'
-              : 'Revisa y aprueba documentos de centros formadores'
-            }
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {/* Toggle Vista */}
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            <button
-              onClick={() => setVistaActual('tabla')}
-              className={`p-2 rounded ${vistaActual === 'tabla' ? 'bg-white dark:bg-gray-800 shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}
-              title="Vista de tabla"
-            >
-              <TableCellsIcon className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setVistaActual('tarjetas')}
-              className={`p-2 rounded ${vistaActual === 'tarjetas' ? 'bg-white dark:bg-gray-800 shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}
-              title="Vista de tarjetas"
-            >
-              <Squares2X2Icon className="w-5 h-5" />
-            </button>
+      <div className="dashboard-header" style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              Gestión Documental
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {pestañaActiva === 'institucionales' 
+                ? 'Administra documentos normativos y protocolos institucionales'
+                : 'Revisa y aprueba documentos de centros formadores'
+              }
+            </p>
           </div>
-          <Button variant="primary" onClick={handleAddClick} className="flex items-center gap-2">
-            <ArrowUpTrayIcon className="w-5 h-5" />
-            Subir Documento
-          </Button>
+          <div className="flex gap-2">
+            {/* Toggle Vista */}
+            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <button
+                onClick={() => setVistaActual('tabla')}
+                className={`p-2 rounded ${vistaActual === 'tabla' ? 'bg-white dark:bg-gray-800 shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}
+                title="Vista de tabla"
+              >
+                <TableCellsIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setVistaActual('tarjetas')}
+                className={`p-2 rounded ${vistaActual === 'tarjetas' ? 'bg-white dark:bg-gray-800 shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}
+                title="Vista de tarjetas"
+              >
+                <Squares2X2Icon className="w-5 h-5" />
+              </button>
+            </div>
+            <Button variant="primary" onClick={handleAddClick} className="flex items-center gap-2">
+              <ArrowUpTrayIcon className="w-5 h-5" />
+              Subir Documento
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Pestañas */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-2 border-sky-100 dark:border-gray-700">
+        <div className="flex border-b-2 border-sky-100 dark:border-gray-700">
           <button
             onClick={() => setPestañaActiva('institucionales')}
-            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+            className={`flex-1 px-6 py-4 text-sm font-semibold transition-all ${
               pestañaActiva === 'institucionales'
-                ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/20'
+                ? 'text-sky-600 dark:text-sky-400 border-b-2 border-sky-600 dark:border-sky-400 bg-gradient-to-r from-sky-50 to-mint-50 dark:from-sky-900/20 dark:to-mint-900/20'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >
@@ -785,9 +790,9 @@ const GestionDocumental = () => {
           </button>
           <button
             onClick={() => setPestañaActiva('centros')}
-            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+            className={`flex-1 px-6 py-4 text-sm font-semibold transition-all ${
               pestañaActiva === 'centros'
-                ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/20'
+                ? 'text-sky-600 dark:text-sky-400 border-b-2 border-sky-600 dark:border-sky-400 bg-gradient-to-r from-sky-50 to-mint-50 dark:from-sky-900/20 dark:to-mint-900/20'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >

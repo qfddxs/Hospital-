@@ -4,7 +4,9 @@ import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import Modal from '../components/UI/Modal';
 import Loader from '../components/Loader';
-import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, ExclamationTriangleIcon, CalendarDaysIcon } from '@heroicons/react/24/solid';
+import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, ExclamationTriangleIcon, CalendarDaysIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { UserGroupIcon } from '@heroicons/react/24/outline';
+import '../pages/Dashboard.css';
 
 const GestionAlumnos = () => {
   const [alumnos, setAlumnos] = useState([]);
@@ -514,58 +516,108 @@ const GestionAlumnos = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Gestión de Alumnos</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Administración de estudiantes en rotación</p>
+      <div className="dashboard-header" style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              Gestión de Alumnos
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Administración de estudiantes en rotación
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
+            <UserGroupIcon className="w-8 h-8" />
+          </div>
         </div>
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Total Alumnos</p>
-          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{alumnos.length}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="stat-card-medical" style={{ cursor: 'default' }}>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <UserGroupIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                Total Alumnos
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {alumnos.length}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Rotación Activa</p>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {alumnos.filter(a => a.estado === 'activa' || a.estado === 'en_rotacion').length}
-          </p>
+
+        <div className="stat-card-health" style={{ cursor: 'default' }}>
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-medical">
+              <CalendarDaysIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>
+                Rotación Activa
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: '0.25rem 0 0 0' }}>
+                {alumnos.filter(a => a.estado === 'activa' || a.estado === 'en_rotacion').length}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Finalizadas</p>
-          <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-            {alumnos.filter(a => a.estado === 'finalizada').length}
-          </p>
+
+        <div className="summary-item-pending" style={{ cursor: 'default', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-yellow">
+              <CalendarDaysIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#92400e', margin: 0 }}>
+                Finalizadas
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#b45309', margin: '0.25rem 0 0 0' }}>
+                {alumnos.filter(a => a.estado === 'finalizada').length}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Canceladas</p>
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {alumnos.filter(a => a.estado === 'cancelada').length}
-          </p>
+
+        <div className="summary-item-rejected" style={{ cursor: 'default', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="icon-badge-red">
+              <XCircleIcon style={{ width: '2rem', height: '2rem', color: 'white' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#7f1d1d', margin: 0 }}>
+                Canceladas
+              </p>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#dc2626', margin: '0.25rem 0 0 0' }}>
+                {alumnos.filter(a => a.estado === 'cancelada').length}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Búsqueda y Filtros */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm transition-colors">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border-2 border-sky-100 dark:border-gray-700 transition-colors">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Buscar por RUT o Nombre:</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">Buscar por RUT o Nombre:</label>
             <input
               type="text"
               placeholder="Ej: 12345678-9 o Juan Pérez"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+              className="w-full border-2 border-sky-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 transition-all"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Centro Formador:</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">Centro Formador:</label>
             <select
               value={filtroCentro}
               onChange={(e) => setFiltroCentro(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+              className="w-full border-2 border-sky-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 transition-all"
             >
               <option value="todos">Todos los Centros</option>
               {centrosFormadores.map(centro => (

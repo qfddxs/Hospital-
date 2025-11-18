@@ -134,3 +134,30 @@ ción para los iconos médicos */
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out;
 }
+
+/* Gradientes personalizados para Dashboard de Salud */
+.health-gradient {
+  background: linear-gradient(135deg, #1ab35f 0%, #0f9148 100%);
+}
+
+.medical-gradient {
+  background: linear-gradient(135deg, #2ec56f 0%, #1fa855 100%);
+}
+
+.health-gradient-soft {
+  background: linear-gradient(135deg, #edfcf2 0%, #d3f8df 100%);
+}
+
+/* Animación de pulso para elementos importantes */
+@keyframes pulse-health {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(26, 179, 95, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(26, 179, 95, 0);
+  }
+}
+
+.pulse-health {
+  animation: pulse-health 2s infinite;
+}

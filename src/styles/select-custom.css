@@ -1,0 +1,64 @@
+/* Estilos personalizados para select */
+
+select {
+  scrollbar-width: thin;
+  scrollbar-color: #0d9488 #f3f4f6;
+}
+
+select::-webkit-scrollbar {
+  width: 8px;
+}
+
+select::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+select::-webkit-scrollbar-thumb {
+  background: #0d9488;
+  border-radius: 4px;
+}
+
+select::-webkit-scrollbar-thumb:hover {
+  background: #0f766e;
+}
+
+/* Estilos para opciones en dark mode */
+.dark select {
+  scrollbar-color: #0d9488 #374151;
+}
+
+.dark select::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+/* Mejorar apariencia de opciones */
+select option {
+  padding: 8px 12px;
+  background-color: white;
+  color: #1f2937;
+}
+
+select option:hover {
+  background-color: #ccfbf1;
+}
+
+select option:checked {
+  background-color: #0d9488;
+  color: white;
+  font-weight: 500;
+}
+
+.dark select option {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark select option:hover {
+  background-color: #134e4a;
+}
+
+.dark select option:checked {
+  background-color: #0d9488;
+  color: white;
+}

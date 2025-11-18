@@ -92,7 +92,26 @@ const Dashboard = () => {
         if (fullError) {
           setSolicitudes(simpleData)
         } else {
-          setSolicitudes(fullData || [])
+          // Para solicitudes aprobadas, contar desde alumnos
+          const solicitudesConConteo = await Promise.all(
+            (fullData || []).map(async (solicitud) => {
+              if (solicitud.estado === 'aprobada') {
+                // Contar desde alumnos
+                const { count } = await supabase
+                  .from('alumnos')
+                  .select('*', { count: 'exact', head: true })
+                  .eq('solicitud_id', solicitud.id);
+                
+                return {
+                  ...solicitud,
+                  estudiantes: [{ count: count || 0 }]
+                };
+              }
+              return solicitud;
+            })
+          );
+          
+          setSolicitudes(solicitudesConConteo)
         }
       } else {
         setSolicitudes(simpleData || [])

@@ -1,22 +1,41 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { useSession } from '../../context/SessionContext';
 import { useNivelFormacion } from '../../context/NivelFormacionContext';
 import ThemeToggle from '../UI/ThemeToggle';
 import NotificacionesSolicitudes from '../NotificacionesSolicitudes';
+import { ToastContainer } from '../Toast';
 
 const Header = () => {
   const { nivelFormacion, setNivelFormacion } = useNivelFormacion();
   const { user, signOut } = useSession();
   const navigate = useNavigate();
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = (message, type = 'success', duration = 3000) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type, duration }]);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
 
   const handleLogout = async () => {
-    await signOut();
-    navigate('/login', { replace: true });
+    addToast('Cerrando sesión...', 'info', 2000);
+    
+    // Esperar un momento para que se vea el toast
+    setTimeout(async () => {
+      await signOut();
+      navigate('/login', { replace: true });
+    }, 1500);
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-0 z-20 transition-colors duration-200 shadow-sm">
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-0 z-20 transition-colors duration-200 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
@@ -90,6 +109,7 @@ const Header = () => {
         </div>
       </div>
     </header>
+    </>
   );
 };
 

@@ -1,16 +1,75 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import Select from 'react-select';
 import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import Modal from '../components/UI/Modal';
 import Loader from '../components/Loader';
+import { useNivelFormacion } from '../context/NivelFormacionContext';
 import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, ExclamationTriangleIcon, CalendarDaysIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { UserGroupIcon } from '@heroicons/react/24/outline';
 import '../pages/Dashboard.css';
 
+// Estilos personalizados para react-select
+const customSelectStyles = {
+  control: (base, state) => ({
+    ...base,
+    minWidth: '200px',
+    borderRadius: '0.5rem',
+    borderColor: state.isFocused ? '#0d9488' : '#d1d5db',
+    boxShadow: state.isFocused ? '0 0 0 2px rgba(13, 148, 136, 0.2)' : 'none',
+    '&:hover': {
+      borderColor: '#0d9488'
+    },
+    backgroundColor: 'white',
+    padding: '2px'
+  }),
+  menu: (base) => ({
+    ...base,
+    borderRadius: '0.5rem',
+    overflow: 'hidden',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    zIndex: 9999
+  }),
+  menuList: (base) => ({
+    ...base,
+    padding: '4px',
+    maxHeight: '300px'
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected ? '#0d9488' : state.isFocused ? '#ccfbf1' : 'white',
+    color: state.isSelected ? 'white' : '#1f2937',
+    padding: '10px 12px',
+    borderRadius: '0.375rem',
+    cursor: 'pointer',
+    fontWeight: state.isSelected ? '600' : '400',
+    '&:active': {
+      backgroundColor: '#0f766e'
+    }
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: '#1f2937'
+  }),
+  placeholder: (base) => ({
+    ...base,
+    color: '#9ca3af'
+  }),
+  dropdownIndicator: (base) => ({
+    ...base,
+    color: '#6b7280',
+    '&:hover': {
+      color: '#0d9488'
+    }
+  })
+};
+
 const GestionAlumnos = () => {
+  const { nivelFormacion } = useNivelFormacion();
   const [alumnos, setAlumnos] = useState([]);
   const [centrosFormadores, setCentrosFormadores] = useState([]);
+  const [carreras, setCarreras] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [filtroCarrera, setFiltroCarrera] = useState('todos');
   const [filtroCentro, setFiltroCentro] = useState('todos');
@@ -114,28 +173,54 @@ const GestionAlumnos = () => {
       supabase.removeChannel(rotacionesChannel);
       supabase.removeChannel(solicitudesChannel);
     };
-  }, []);
+  }, [nivelFormacion]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
 
-      // Obtener centros formadores
-      const { data: centros, error: centrosError } = await supabase
+      // Obtener centros formadores con especialidades filtrados por nivel de formación
+      let centrosQuery = supabase
         .from('centros_formadores')
-        .select('id, nombre')
-        .eq('activo', true)
-        .order('nombre');
+        .select('id, nombre, nivel_formacion, especialidades')
+        .eq('activo', true);
+
+      // Filtrar por nivel de formación
+      if (nivelFormacion) {
+        centrosQuery = centrosQuery.or(`nivel_formacion.eq.${nivelFormacion},nivel_formacion.eq.ambos`);
+      }
+
+      const { data: centros, error: centrosError } = await centrosQuery.order('nombre');
 
       if (centrosError) throw centrosError;
       setCentrosFormadores(centros || []);
+
+      // Extraer todas las especialidades únicas de los centros formadores filtrados
+      const especialidadesSet = new Set();
+      centros?.forEach(centro => {
+        if (centro.especialidades && Array.isArray(centro.especialidades)) {
+          centro.especialidades.forEach(esp => {
+            if (esp && esp.trim()) {
+              especialidadesSet.add(esp.trim());
+            }
+          });
+        }
+      });
+
+      // Convertir a array y ordenar
+      const especialidadesArray = Array.from(especialidadesSet).sort().map(nombre => ({
+        nombre,
+        id: nombre // Usar el nombre como id para compatibilidad
+      }));
+
+      setCarreras(especialidadesArray);
 
       // Obtener alumnos en rotación con sus rotaciones asignadas
       const { data: alumnosData, error: alumnosError } = await supabase
         .from('alumnos')
         .select(`
           *,
-          centro_formador:centros_formadores(id, nombre),
+          centro_formador:centros_formadores(id, nombre, nivel_formacion),
           rotacion:rotaciones(
             id,
             fecha_inicio,
@@ -151,9 +236,15 @@ const GestionAlumnos = () => {
         .order('primer_apellido');
 
       if (alumnosError) throw alumnosError;
+
+      // Filtrar alumnos por nivel de formación del centro formador
+      const alumnosFiltrados = alumnosData?.filter(alumno => {
+        const nivelCentro = alumno.centro_formador?.nivel_formacion;
+        return nivelCentro === nivelFormacion || nivelCentro === 'ambos';
+      }) || [];
       
       // Los datos ya vienen en la estructura correcta
-      const alumnosMapeados = (alumnosData || []).map(alumno => ({
+      const alumnosMapeados = (alumnosFiltrados || []).map(alumno => ({
         ...alumno,
         carrera: alumno.carrera,
         estado: alumno.rotacion?.[0]?.estado || 'en_rotacion',
@@ -293,14 +384,26 @@ const GestionAlumnos = () => {
     {
       header: 'Acciones',
       render: (row) => (
-        <div className="flex items-center gap-1">
-          <button onClick={() => handleViewClick(row)} className="p-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" title="Ver Detalles">
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => handleViewClick(row)} 
+            className="group relative p-2 text-blue-600 dark:text-blue-400 hover:text-white hover:bg-blue-600 dark:hover:bg-blue-500 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
+            title="Ver Detalles"
+          >
             <EyeIcon className="w-4 h-4" />
           </button>
-          <button onClick={() => handleEditClick(row)} className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors" title="Editar">
+          <button 
+            onClick={() => handleEditClick(row)} 
+            className="group relative p-2 text-teal-600 dark:text-teal-400 hover:text-white hover:bg-teal-600 dark:hover:bg-teal-500 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
+            title="Editar"
+          >
             <PencilIcon className="w-4 h-4" />
           </button>
-          <button onClick={() => handleDeleteClick(row)} className="p-1.5 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" title="Eliminar">
+          <button 
+            onClick={() => handleDeleteClick(row)} 
+            className="group relative p-2 text-red-600 dark:text-red-400 hover:text-white hover:bg-red-600 dark:hover:bg-red-500 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
+            title="Eliminar"
+          >
             <TrashIcon className="w-4 h-4" />
           </button>
         </div>
@@ -520,10 +623,10 @@ const GestionAlumnos = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-              Gestión de Alumnos
+              Gestión de Alumnos - {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Administración de estudiantes en rotación
+              Administración de estudiantes en rotación de {nivelFormacion}
             </p>
           </div>
           <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
@@ -614,32 +717,35 @@ const GestionAlumnos = () => {
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">Centro Formador:</label>
-            <select
-              value={filtroCentro}
-              onChange={(e) => setFiltroCentro(e.target.value)}
-              className="w-full border-2 border-sky-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 transition-all"
-            >
-              <option value="todos">Todos los Centros</option>
-              {centrosFormadores.map(centro => (
-                <option key={centro.id} value={centro.id}>{centro.nombre}</option>
-              ))}
-            </select>
+            <Select
+              value={{ value: filtroCentro, label: filtroCentro === 'todos' ? 'Todos los Centros' : centrosFormadores.find(c => c.id === filtroCentro)?.nombre || 'Todos los Centros' }}
+              onChange={(option) => setFiltroCentro(option.value)}
+              options={[
+                { value: 'todos', label: 'Todos los Centros' },
+                ...centrosFormadores.map(centro => ({ value: centro.id, label: centro.nombre }))
+              ]}
+              menuPlacement="auto"
+              menuPosition="fixed"
+              styles={customSelectStyles}
+              className="react-select-container"
+              classNamePrefix="react-select"
+            />
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Carrera:</label>
-            <select
-              value={filtroCarrera}
-              onChange={(e) => setFiltroCarrera(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-            >
-              <option value="todos">Todas las Carreras</option>
-              <option value="Medicina">Medicina</option>
-              <option value="Enfermería">Enfermería</option>
-              <option value="Kinesiología">Kinesiología</option>
-              <option value="Obstetricia">Obstetricia</option>
-              <option value="Nutrición">Nutrición</option>
-              <option value="Tecnología Médica">Tecnología Médica</option>
-            </select>
+            <Select
+              value={{ value: filtroCarrera, label: filtroCarrera === 'todos' ? 'Todas las Carreras' : carreras.find(c => c.nombre === filtroCarrera)?.nombre || filtroCarrera }}
+              onChange={(option) => setFiltroCarrera(option.value)}
+              options={[
+                { value: 'todos', label: 'Todas las Carreras' },
+                ...carreras.map(carrera => ({ value: carrera.nombre, label: carrera.nombre }))
+              ]}
+              menuPlacement="auto"
+              menuPosition="fixed"
+              styles={customSelectStyles}
+              className="react-select-container"
+              classNamePrefix="react-select"
+            />
           </div>
         </div>
         {(busqueda || filtroCentro !== 'todos' || filtroCarrera !== 'todos') && (
@@ -983,18 +1089,18 @@ const GestionAlumnos = () => {
                 </div>
                 <div>
                   <label htmlFor="centro_formador_id" className="block text-sm font-medium text-gray-700 mb-1">Centro Formador</label>
-                  <select
-                    id="centro_formador_id"
-                    name="centro_formador_id"
-                    value={formData.centro_formador_id}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500"
-                  >
-                    <option value="">Seleccione...</option>
-                    {centrosFormadores.map(centro => (
-                      <option key={centro.id} value={centro.id}>{centro.nombre}</option>
-                    ))}
-                  </select>
+                  <Select
+                    value={formData.centro_formador_id ? { value: formData.centro_formador_id, label: centrosFormadores.find(c => c.id === formData.centro_formador_id)?.nombre || '' } : null}
+                    onChange={(option) => setFormData(prev => ({ ...prev, centro_formador_id: option?.value || '' }))}
+                    options={centrosFormadores.map(centro => ({ value: centro.id, label: centro.nombre }))}
+                    placeholder="Seleccione..."
+                    isClearable
+                    menuPlacement="auto"
+                    menuPosition="fixed"
+                    styles={customSelectStyles}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                  />
                 </div>
               </div>
 
@@ -1057,22 +1163,18 @@ const GestionAlumnos = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="carrera" className="block text-sm font-medium text-gray-700 mb-1">Carrera *</label>
-                  <select
-                    id="carrera"
-                    name="carrera"
-                    value={formData.carrera}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500"
-                  >
-                    <option value="">Seleccione...</option>
-                    <option value="Medicina">Medicina</option>
-                    <option value="Enfermería">Enfermería</option>
-                    <option value="Kinesiología">Kinesiología</option>
-                    <option value="Obstetricia">Obstetricia</option>
-                    <option value="Nutrición">Nutrición</option>
-                    <option value="Tecnología Médica">Tecnología Médica</option>
-                  </select>
+                  <Select
+                    value={formData.carrera ? { value: formData.carrera, label: formData.carrera } : null}
+                    onChange={(option) => setFormData(prev => ({ ...prev, carrera: option?.value || '' }))}
+                    options={carreras.map(carrera => ({ value: carrera.nombre, label: carrera.nombre }))}
+                    placeholder="Seleccione..."
+                    isClearable
+                    menuPlacement="auto"
+                    menuPosition="fixed"
+                    styles={customSelectStyles}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                  />
                 </div>
                 <div>
                   <label htmlFor="nivel" className="block text-sm font-medium text-gray-700 mb-1">Nivel</label>

@@ -4,6 +4,12 @@ import Table from '../components/UI/Table';
 import Button from '../components/UI/Button';
 import Loader from '../components/Loader';
 import { ToastContainer } from '../components/Toast';
+import { useNivelFormacion } from '../context/NivelFormacionContext';
+import DatePicker from 'react-datepicker';
+import Select from 'react-select';
+import 'react-datepicker/dist/react-datepicker.css';
+import '../styles/datepicker-custom.css';
+import '../styles/select-custom.css';
 import '../pages/Dashboard.css';
 import { 
   CheckIcon, 
@@ -14,16 +20,24 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 
 const ControlAsistencia = () => {
+  const { nivelFormacion } = useNivelFormacion();
   const [rotaciones, setRotaciones] = useState([]);
+  const [rotacionesFiltradas, setRotacionesFiltradas] = useState([]);
   const [asistencias, setAsistencias] = useState({});
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
+  
+  // Estados para filtros
+  const [centrosFormadores, setCentrosFormadores] = useState([]);
+  const [centroSeleccionado, setCentroSeleccionado] = useState('todos');
   
   // Estados para modal de observación obligatoria
   const [modalObservacion, setModalObservacion] = useState(false);
@@ -35,6 +49,7 @@ const ControlAsistencia = () => {
 
   useEffect(() => {
     fetchData();
+    fetchCentrosFormadores();
 
     // Suscribirse a cambios en tiempo real en rotaciones
     const rotacionesChannel = supabase
@@ -75,7 +90,40 @@ const ControlAsistencia = () => {
       supabase.removeChannel(rotacionesChannel);
       supabase.removeChannel(asistenciasChannel);
     };
-  }, [fechaSeleccionada]);
+  }, [fechaSeleccionada, nivelFormacion]);
+
+  // Filtrar rotaciones por centro formador
+  useEffect(() => {
+    if (centroSeleccionado === 'todos') {
+      setRotacionesFiltradas(rotaciones);
+    } else {
+      setRotacionesFiltradas(
+        rotaciones.filter(r => r.alumno.centro_formador?.nombre === centroSeleccionado)
+      );
+    }
+  }, [rotaciones, centroSeleccionado]);
+
+  const fetchCentrosFormadores = async () => {
+    try {
+      let query = supabase
+        .from('centros_formadores')
+        .select('nombre, nivel_formacion');
+
+      // Filtrar por nivel de formación
+      if (nivelFormacion) {
+        query = query.or(`nivel_formacion.eq.${nivelFormacion},nivel_formacion.eq.ambos`);
+      }
+
+      const { data, error } = await query.order('nombre');
+      
+      if (error) throw error;
+      
+      const centros = data.map(c => c.nombre);
+      setCentrosFormadores(centros);
+    } catch (err) {
+      console.error('Error al cargar centros formadores:', err);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -88,7 +136,7 @@ const ControlAsistencia = () => {
         .from('alumnos')
         .select(`
           *,
-          centro_formador:centros_formadores(nombre),
+          centro_formador:centros_formadores(nombre, nivel_formacion),
           rotaciones!alumno_id(
             id,
             fecha_inicio,
@@ -105,7 +153,7 @@ const ControlAsistencia = () => {
           .from('alumnos')
           .select(`
             *,
-            centro_formador:centros_formadores(nombre),
+            centro_formador:centros_formadores(nombre, nivel_formacion),
             rotaciones!alumno_id(
               id,
               fecha_inicio,
@@ -140,7 +188,11 @@ const ControlAsistencia = () => {
           const estadoValido = !rotacion.estado || rotacion.estado === 'activa' || rotacion.estado === 'en_curso';
           const dentroRango = fechaActual >= fechaInicio && fechaActual <= fechaTermino;
           
-          return estadoValido && dentroRango;
+          // Filtrar por nivel de formación del centro formador
+          const nivelCentro = est.centro_formador?.nivel_formacion;
+          const nivelValido = nivelCentro === nivelFormacion || nivelCentro === 'ambos';
+          
+          return estadoValido && dentroRango && nivelValido;
         })
         .map(alumno => {
           const rotacion = alumno.rotaciones[0];
@@ -224,6 +276,17 @@ const ControlAsistencia = () => {
 
   const removeToast = (id) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
+  // Funciones de navegación de fecha
+  const cambiarDia = (dias) => {
+    const fecha = new Date(fechaSeleccionada);
+    fecha.setDate(fecha.getDate() + dias);
+    setFechaSeleccionada(fecha.toISOString().split('T')[0]);
+  };
+
+  const irHoy = () => {
+    setFechaSeleccionada(new Date().toISOString().split('T')[0]);
   };
 
   const guardarAsistenciaJustificada = () => {
@@ -315,7 +378,7 @@ const ControlAsistencia = () => {
 
   const marcarTodosPresentes = () => {
     const nuevasAsistencias = { ...asistencias };
-    rotaciones.forEach(rot => {
+    rotacionesFiltradas.forEach(rot => {
       nuevasAsistencias[rot.id] = {
         ...nuevasAsistencias[rot.id],
         rotacion_id: rot.id,
@@ -329,11 +392,11 @@ const ControlAsistencia = () => {
     setAsistencias(nuevasAsistencias);
   };
 
-  // Calcular estadísticas - solo contar asistencias de rotaciones activas
-  const totalRotaciones = rotaciones.length;
-  const rotacionesIds = new Set(rotaciones.map(r => String(r.id)));
+  // Calcular estadísticas - solo contar asistencias de rotaciones filtradas
+  const totalRotaciones = rotacionesFiltradas.length;
+  const rotacionesIds = new Set(rotacionesFiltradas.map(r => String(r.id)));
   
-  // Filtrar solo asistencias que corresponden a rotaciones activas del día
+  // Filtrar solo asistencias que corresponden a rotaciones filtradas del día
   const asistenciasValidas = Object.entries(asistencias)
     .filter(([rotacionId]) => rotacionesIds.has(String(rotacionId)))
     .map(([_, asistencia]) => asistencia);
@@ -478,10 +541,10 @@ const ControlAsistencia = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-              Control de Asistencia
+              Control de Asistencia - {nivelFormacion === 'pregrado' ? 'Pregrado' : 'Postgrado'}
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
-              Registro diario de asistencia de alumnos en rotación
+              Registro diario de asistencia de alumnos en rotación de {nivelFormacion}
               <span className="inline-flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400">
                 <span className="w-2 h-2 bg-sky-500 dark:bg-sky-400 rounded-full animate-pulse"></span>
                 Actualización en tiempo real
@@ -491,7 +554,7 @@ const ControlAsistencia = () => {
           <div className="flex gap-2">
             <button 
               onClick={marcarTodosPresentes}
-              disabled={rotaciones.length === 0}
+              disabled={rotacionesFiltradas.length === 0}
               className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <CheckIcon className="w-5 h-5" />
@@ -499,7 +562,7 @@ const ControlAsistencia = () => {
             </button>
             <button 
               onClick={guardarAsistencias}
-              disabled={guardando || rotaciones.length === 0}
+              disabled={guardando || rotacionesFiltradas.length === 0}
               className="px-4 py-2 bg-teal-500 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <DocumentArrowDownIcon className="w-5 h-5" />
@@ -586,39 +649,153 @@ const ControlAsistencia = () => {
         </div>
       </div>
 
-      {/* Selector de Fecha */}
+      {/* Selector de Fecha con Navegación */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border-2 border-sky-100 dark:border-gray-700 transition-colors">
-        <div className="flex gap-4 items-center justify-between">
+        <div className="flex gap-4 items-center justify-between flex-wrap">
           <div className="flex items-center gap-4">
             <CalendarIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Fecha:</label>
-              <input
-                type="date"
-                value={fechaSeleccionada}
-                onChange={(e) => setFechaSeleccionada(e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            
+            {/* Botones de navegación */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => cambiarDia(-1)}
+                className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                title="Día anterior"
+              >
+                <ChevronLeftIcon className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={irHoy}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm min-w-[60px]"
+                title="Ir a hoy"
+              >
+                {fechaSeleccionada === new Date().toISOString().split('T')[0] 
+                  ? 'Hoy' 
+                  : fechaSeleccionada.split('-')[2]}
+              </button>
+              
+              <button
+                onClick={() => cambiarDia(1)}
+                className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                title="Día siguiente"
+              >
+                <ChevronRightIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* DatePicker personalizado */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha:</label>
+              <DatePicker
+                selected={new Date(fechaSeleccionada + 'T00:00:00')}
+                onChange={(date) => setFechaSeleccionada(date.toISOString().split('T')[0])}
+                dateFormat="dd-MM-yyyy"
+                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 cursor-pointer"
+                calendarClassName="custom-datepicker"
+                showPopperArrow={false}
               />
             </div>
-            <div className="text-sm">
-              {rotaciones.length === 0 ? (
-                <span className="text-orange-600 dark:text-orange-400 font-medium">
-                  ⚠️ No hay rotaciones activas para esta fecha
-                </span>
-              ) : (
-                <span className="text-gray-600 dark:text-gray-400">
-                  <span className="font-semibold text-blue-600 dark:text-blue-400">{rotaciones.length}</span> rotaciones activas
-                </span>
-              )}
+
+            {/* Filtro por Centro Formador */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Centro:</label>
+              <Select
+                value={{ value: centroSeleccionado, label: centroSeleccionado === 'todos' ? 'Todos los centros' : centroSeleccionado }}
+                onChange={(option) => setCentroSeleccionado(option.value)}
+                options={[
+                  { value: 'todos', label: 'Todos los centros' },
+                  ...centrosFormadores.map(centro => ({ value: centro, label: centro }))
+                ]}
+                menuPlacement="auto"
+                menuPosition="fixed"
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    minWidth: '250px',
+                    borderRadius: '0.5rem',
+                    borderColor: state.isFocused ? '#0d9488' : '#d1d5db',
+                    boxShadow: state.isFocused ? '0 0 0 2px rgba(13, 148, 136, 0.2)' : 'none',
+                    '&:hover': {
+                      borderColor: '#0d9488'
+                    },
+                    backgroundColor: 'white',
+                    padding: '2px'
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    borderRadius: '0.5rem',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                    zIndex: 9999
+                  }),
+                  menuList: (base) => ({
+                    ...base,
+                    padding: '4px',
+                    maxHeight: '300px'
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isSelected ? '#0d9488' : state.isFocused ? '#ccfbf1' : 'white',
+                    color: state.isSelected ? 'white' : '#1f2937',
+                    padding: '10px 12px',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    fontWeight: state.isSelected ? '600' : '400',
+                    '&:active': {
+                      backgroundColor: '#0f766e'
+                    }
+                  }),
+                  singleValue: (base) => ({
+                    ...base,
+                    color: '#1f2937'
+                  }),
+                  placeholder: (base) => ({
+                    ...base,
+                    color: '#9ca3af'
+                  }),
+                  dropdownIndicator: (base) => ({
+                    ...base,
+                    color: '#6b7280',
+                    '&:hover': {
+                      color: '#0d9488'
+                    }
+                  })
+                }}
+                className="react-select-container"
+                classNamePrefix="react-select"
+              />
             </div>
+          </div>
+
+          {/* Información de rotaciones */}
+          <div className="text-sm">
+            {rotaciones.length === 0 ? (
+              <span className="text-orange-600 dark:text-orange-400 font-medium">
+                ⚠️ No hay rotaciones activas para esta fecha
+              </span>
+            ) : (
+              <span className="text-gray-600 dark:text-gray-400">
+                <span className="font-semibold text-blue-600 dark:text-blue-400">{rotacionesFiltradas.length}</span> 
+                {centroSeleccionado !== 'todos' && <span> de {rotaciones.length}</span>} rotaciones activas
+              </span>
+            )}
           </div>
         </div>
       </div>
 
       {/* Tabla de Asistencia */}
-      {rotaciones.length > 0 ? (
+      {rotacionesFiltradas.length > 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden transition-colors">
-          <Table columns={columns} data={rotaciones} />
+          <Table columns={columns} data={rotacionesFiltradas} />
+        </div>
+      ) : rotaciones.length > 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center shadow-sm transition-colors">
+          <CalendarIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">No hay rotaciones para el centro seleccionado</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+            Selecciona <strong>Todos los centros</strong> o elige otro centro formador
+          </p>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center shadow-sm transition-colors">

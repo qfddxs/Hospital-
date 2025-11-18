@@ -4,6 +4,7 @@ import Logo from '../../assets/Logo.png';
 import logoCircular from '../../assets/logoCircular.png';
 import { useSession } from '../../context/SessionContext';
 import { supabase } from '../../supabaseClient';
+import { ToastContainer } from '../../components/Toast';
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,9 +13,19 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [toasts, setToasts] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, session } = useSession();
+
+  const addToast = (message, type = 'success', duration = 3000) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type, duration }]);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
 
   useEffect(() => {
     // Mostrar error si viene del Dashboard bloqueado
@@ -49,11 +60,14 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
 
+    addToast('Iniciando sesión...', 'info', 2000);
+
     const { data, error } = await signIn(email, password);
 
     if (error) {
       setLoading(false);
       setError('Email o contraseña incorrectos. Por favor, intente de nuevo.');
+      addToast('Error al iniciar sesión', 'error');
       console.error('Error de autenticación:', error);
       return;
     }
@@ -71,18 +85,25 @@ const LoginPage = () => {
         await supabase.auth.signOut();
         setLoading(false);
         setError('Acceso denegado. Esta cuenta es de un Centro Formador. Ingresa en: /portal-formadora/login');
+        addToast('Acceso denegado', 'error');
         return;
       }
     } catch (err) {
       console.error('Error verificando rol:', err);
     }
 
+    addToast('¡Bienvenido al sistema!', 'success', 2000);
     setLoading(false);
-    navigate('/dashboard');
+    
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 1500);
   };
 
   return (
-    <div className="min-h-screen flex">
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <div className="min-h-screen flex">
       {/* Sección izquierda - Formulario */}
       <div className="flex-1 bg-white flex flex-col justify-center items-center px-8">
         <div className="w-full max-w-md">
@@ -125,7 +146,7 @@ const LoginPage = () => {
             {/* Campo Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
+                Contraseña
               </label>
               <div className="relative">
                 <input
@@ -133,7 +154,7 @@ const LoginPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="Ingresa tu contraseña"
                   required
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
@@ -300,6 +321,7 @@ const LoginPage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
